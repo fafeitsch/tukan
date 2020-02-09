@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"github.com/fafeitsch/Tukan/pkg/mock"
 	"github.com/urfave/cli"
 	"log"
 	"os"
@@ -15,16 +15,19 @@ func main() {
 	app.Usage = "This application simulates a limited set of HTTP endpoints of the Elmeg IP 620/630 phones."
 	app.UsageText = "Call simulator with appropriate global options (see below)"
 
+	var port int
+	var login string
+	var password string
 	flags := []cli.Flag{
-		cli.Int64Flag{Name: "port", Value: 80, Usage: "The port the simulated phone will listen to"},
-		cli.StringFlag{Name: "login", Value: "Admin", Usage: "The login name for the simulator"},
-		cli.StringFlag{Name: "password", Value: "admin", Usage: "The password for the simulator"},
+		cli.IntFlag{Name: "port", Value: 80, Usage: "The port the simulated phone will listen to", Destination: &port},
+		cli.StringFlag{Name: "login", Value: "Admin", Usage: "The login name for the simulator", Destination: &login},
+		cli.StringFlag{Name: "password", Value: "admin", Usage: "The password for the simulator", Destination: &password},
 	}
 
 	app.HideHelp = true
 	app.Flags = flags
 	app.Action = func(c *cli.Context) error {
-		fmt.Print(cli.AppHelpTemplate)
+		mock.StartHandler(port, login, password)
 		return nil
 	}
 

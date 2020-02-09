@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/fafeitsch/Tukan/pkg/api"
 	"net/http"
 	"time"
 )
@@ -14,10 +15,7 @@ type PhoneClient interface {
 
 func fetchToken(ip string, login string, password string) (*string, error) {
 	url := fmt.Sprintf("http://{ip}/Login")
-	credentials := struct {
-		Password string `json:"password"`
-		Login    string `json:"login"`
-	}{
+	credentials := api.Credentials{
 		Login:    login,
 		Password: password,
 	}
@@ -31,9 +29,7 @@ func fetchToken(ip string, login string, password string) (*string, error) {
 	if err != nil {
 		return nil, err
 	}
-	tokenResp := &struct {
-		Token string `json:"token"`
-	}{}
+	tokenResp := api.TokenResponse{}
 	err = json.NewDecoder(resp.Body).Decode(&tokenResp)
 	if err != nil {
 		return nil, fmt.Errorf("could not unmarshal received token: %v", err)
