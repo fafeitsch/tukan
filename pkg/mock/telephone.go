@@ -95,6 +95,7 @@ func (t *Telephone) postPhoneBook(w http.ResponseWriter, r *http.Request) {
 	var buf bytes.Buffer
 	_, _ = io.Copy(&buf, file)
 	t.phonebook = buf.String()
+	log.Printf("Saved phone book from %s", r.RemoteAddr)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -106,6 +107,29 @@ func (t *Telephone) saveLocalPhoneBook(w http.ResponseWriter, r *http.Request) {
 	}
 	r.Header.Set("Content-Type", "application/xml")
 	_, _ = fmt.Fprintf(w, t.phonebook)
+}
+
+func (t *Telephone) changeFunctionKeys(w http.ResponseWriter, r *http.Request) {
+	if fail, status, msg := t.preconditionsFailWithAuth(r, "application/json", "POST"); fail {
+		w.WriteHeader(status)
+		_, _ = fmt.Fprintf(w, msg)
+		return
+	}
+	keys := &api.FunctionKeys{}
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&keys)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = fmt.Fprintf(w, err.Error())
+		return
+	}
+	if decoder.More() {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = fmt.Fprintf(w, "request body contained more than one json object, which is not allowed")
+		return
+	}
+	log.Printf("Received function keys from %s: %v", r.RemoteAddr, keys)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (t *Telephone) logout(w http.ResponseWriter, r *http.Request) {
