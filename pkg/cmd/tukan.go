@@ -41,8 +41,8 @@ func main() {
 		},
 	}
 
-	phonebookCommand := cli.Command{
-		Name:  "phonebook",
+	phonebookUploadCommand := cli.Command{
+		Name:  "pb-up",
 		Usage: "Uploads a phone book to a set of elmeg ip 620/630 phones",
 		Flags: []cli.Flag{
 			cli.StringFlag{Name: "ip", Required: true, Usage: "The IP of the first phone to upload to phone book to"},
@@ -67,7 +67,27 @@ func main() {
 		},
 	}
 
-	app.Commands = []cli.Command{scanCommand, phonebookCommand}
+	phonebookDownloadCommand := cli.Command{
+		Name:  "pb-down",
+		Usage: "Downloads a phone book from a elmeg ip 620/630 phone",
+		Flags: []cli.Flag{
+			cli.StringFlag{Name: "ip", Required: true, Usage: "The IP of the phone to download to phonebook from."},
+			loginFlag,
+			passwordFlag,
+			portFlag,
+		},
+		Action: func(c *cli.Context) error {
+			client := &http.Client{
+				Timeout: 20 * time.Second,
+			}
+			phoneClient := http2.PhoneClient{Client: client, Login: c.String("login"), Password: c.String("password"), Port: c.Int("port")}
+			down := phoneClient.DownloadPhoneBook(c.String("ip"))
+			fmt.Printf(down)
+			return nil
+		},
+	}
+
+	app.Commands = []cli.Command{scanCommand, phonebookUploadCommand, phonebookDownloadCommand}
 
 	err := app.Run(os.Args)
 	if err != nil {

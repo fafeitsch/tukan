@@ -57,6 +57,26 @@ func incrementIP(ip net.IP) {
 }
 
 func (p *PhoneClient) UploadPhoneBook(ip string, number int, payload string, delimiter string) {
+	todo := func(ip string, token string) {
+		defer p.logout(ip, token)
+		url := fmt.Sprintf("http://%s:%d/LocalPhonebook", ip, p.Port)
+		req, _ := http.NewRequest("POST", url, strings.NewReader(payload))
+		req.Header.Add("Authorization", "Bearer "+token)
+		multipartHeader := fmt.Sprintf("multipart/form-data; boundary=%s", delimiter)
+		req.Header.Add("Content-Type", multipartHeader)
+		resp, err := p.Client.Do(req)
+		if err == nil {
+			defer resp.Body.Close()
+		}
+		err = checkResponse(resp, err)
+		if err != nil {
+			log.Printf("could not upload phonebook to %s: %v", ip, err)
+		}
+	}
+	p.forEachPhoneIn(ip, number, todo)
+}
+
+func (p *PhoneClient) forEachPhoneIn(ip string, number int, todo func(string, string)) {
 	currentIp := net.ParseIP(ip)
 	for i := 0; i < number; i++ {
 		log.Printf("Try to fetch token for IP %s …", currentIp)
@@ -65,19 +85,31 @@ func (p *PhoneClient) UploadPhoneBook(ip string, number int, payload string, del
 			log.Printf("Fetching token for %s failed: %v", currentIp, err)
 			continue
 		}
-		defer p.logout(ip, *token)
-		url := fmt.Sprintf("http://%s:%d/LocalPhonebook", currentIp, p.Port)
-		req, _ := http.NewRequest("POST", url, strings.NewReader(payload))
-		req.Header.Add("Authorization", "Bearer "+*token)
-		multipartHeader := fmt.Sprintf("multipart/form-data; boundary=%s", delimiter)
-		req.Header.Add("Content-Type", multipartHeader)
-		resp, err := p.Client.Do(req)
-		err = checkResponse(resp, err)
-		if err != nil {
-			log.Printf("could not upload phonebook to %s: %v", ip, err)
-		}
-		incrementIP(currentIp)
+		todo(currentIp.String(), *token)
 	}
+}
+
+func (p *PhoneClient) DownloadPhoneBook(ip string) string {
+	log.Printf("Try to fetch token for IP %s …", ip)
+	token, err := p.fetchToken(ip)
+	if err != nil {
+		log.Printf("Fetching token for %s failed: %v", ip, err)
+	}
+	defer p.logout(ip, *token)
+	url := fmt.Sprintf("http://%s:%d/SaveLocalPhonebook", ip, p.Port)
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Add("Authorization", "Bearer "+*token)
+	resp, err := p.Client.Do(req)
+	if err == nil {
+		defer resp.Body.Close()
+	}
+	err = checkResponse(resp, err)
+	if err != nil {
+		log.Printf("could not get phonebook from %s: %v", ip, err)
+	}
+	buf := new(bytes.Buffer)
+	_, _ = buf.ReadFrom(resp.Body)
+	return buf.String()
 }
 
 func (p *PhoneClient) fetchToken(ip string) (*string, error) {
