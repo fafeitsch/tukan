@@ -8,13 +8,17 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strings"
 )
 
 type PhoneClient struct {
-	Client *http.Client
+	Client   *http.Client
+	Port     int
+	Login    string
+	Password string
 }
 
-func (p *PhoneClient) Scan(cidr string, port int, login string, password string) error {
+func (p *PhoneClient) Scan(cidr string) error {
 	ipaddress, ipnet, err := net.ParseCIDR(cidr)
 	if err != nil {
 		return fmt.Errorf("could not parse CIDR \"%s\": %v", cidr, err)
@@ -25,14 +29,14 @@ func (p *PhoneClient) Scan(cidr string, port int, login string, password string)
 	}
 	for _, ip := range ips {
 		log.Printf("Checking %s …", ip)
-		token, err := p.fetchToken(ip, port, login, password)
+		token, err := p.fetchToken(ip)
 		if err != nil {
 			log.Printf("Error getting token: %v", err)
 		} else {
 			log.Printf("Token obtained …")
 		}
 		if token != nil {
-			err = p.logout(ip, port, *token)
+			err = p.logout(ip, *token)
 			if err != nil {
 				log.Printf("Logout failed: %v", err)
 			} else {
@@ -52,11 +56,35 @@ func incrementIP(ip net.IP) {
 	}
 }
 
-func (p *PhoneClient) fetchToken(ip string, port int, login string, password string) (*string, error) {
-	url := fmt.Sprintf("http://%s:%d/Login", ip, port)
+func (p *PhoneClient) UploadPhoneBook(ip string, number int, payload string, delimiter string) {
+	currentIp := net.ParseIP(ip)
+	for i := 0; i < number; i++ {
+		log.Printf("Try to fetch token for IP %s …", currentIp)
+		token, err := p.fetchToken(currentIp.String())
+		if err != nil {
+			log.Printf("Fetching token for %s failed: %v", currentIp, err)
+			continue
+		}
+		defer p.logout(ip, *token)
+		url := fmt.Sprintf("http://%s:%d/LocalPhonebook", currentIp, p.Port)
+		req, _ := http.NewRequest("POST", url, strings.NewReader(payload))
+		req.Header.Add("Authorization", "Bearer "+*token)
+		multipartHeader := fmt.Sprintf("multipart/form-data; boundary=%s", delimiter)
+		req.Header.Add("Content-Type", multipartHeader)
+		resp, err := p.Client.Do(req)
+		err = checkResponse(resp, err)
+		if err != nil {
+			log.Printf("could not upload phonebook to %s: %v", ip, err)
+		}
+		incrementIP(currentIp)
+	}
+}
+
+func (p *PhoneClient) fetchToken(ip string) (*string, error) {
+	url := fmt.Sprintf("http://%s:%d/Login", ip, p.Port)
 	credentials := api.Credentials{
-		Login:    login,
-		Password: password,
+		Login:    p.Login,
+		Password: p.Password,
 	}
 	payload, _ := json.Marshal(credentials)
 	reader := bytes.NewBuffer(payload)
@@ -74,8 +102,8 @@ func (p *PhoneClient) fetchToken(ip string, port int, login string, password str
 	return &tokenResp.Token, nil
 }
 
-func (p *PhoneClient) logout(ip string, port int, token string) error {
-	url := fmt.Sprintf("http://%s:%d/Logout", ip, port)
+func (p *PhoneClient) logout(ip string, token string) error {
+	url := fmt.Sprintf("http://%s:%d/Logout", ip, p.Port)
 	request, _ := http.NewRequest("POST", url, nil)
 	request.Header.Add("Authorization", "Bearer "+token)
 	resp, err := p.Client.Do(request)
