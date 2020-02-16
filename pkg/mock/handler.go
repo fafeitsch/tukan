@@ -8,10 +8,10 @@ import (
 
 func StartHandler(port int, login string, password string) {
 	tele := Telephone{
-		login:    login,
-		password: password,
+		Login:    login,
+		Password: password,
 	}
-	http.HandleFunc("/Login", tele.attemptLogin)
+	http.HandleFunc("/Login", tele.AttemptLogin)
 	http.HandleFunc("/Logout", tele.logout)
 	http.HandleFunc("/LocalPhonebook", tele.postPhoneBook)
 	http.HandleFunc("/SaveLocalPhonebook", tele.saveLocalPhoneBook)

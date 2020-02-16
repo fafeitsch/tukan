@@ -13,14 +13,14 @@ import (
 )
 
 type Telephone struct {
-	login     string
-	password  string
-	token     *string
+	Login     string
+	Password  string
+	Token     *string
 	phonebook string
 }
 
-func (t *Telephone) attemptLogin(w http.ResponseWriter, r *http.Request) {
-	if t.token != nil {
+func (t *Telephone) AttemptLogin(w http.ResponseWriter, r *http.Request) {
+	if t.Token != nil {
 		w.WriteHeader(http.StatusConflict)
 		_, _ = fmt.Fprintf(w, "Login is already consumed, log out first")
 		return
@@ -43,13 +43,13 @@ func (t *Telephone) attemptLogin(w http.ResponseWriter, r *http.Request) {
 		_, _ = fmt.Fprintf(w, "request body contained more than one json object, which is not allowed")
 		return
 	}
-	if creds.Password != t.password || creds.Login != t.login {
+	if creds.Password != t.Password || creds.Login != t.Login {
 		w.WriteHeader(http.StatusForbidden)
 		_, _ = fmt.Fprintf(w, "provided credentials not valid")
 		return
 	}
 	token := uniuri.NewLen(1)
-	t.token = &token
+	t.Token = &token
 	payload, _ := json.Marshal(api.TokenResponse{Token: token})
 	_, _ = w.Write(payload)
 }
@@ -71,7 +71,7 @@ func (t *Telephone) preconditionsFailWithAuth(r *http.Request, contentType strin
 	}
 	auth := r.Header.Get("Authorization")
 	token := strings.TrimPrefix(auth, "Bearer ")
-	if t.token == nil || token != *t.token {
+	if t.Token == nil || token != *t.Token {
 		return true, http.StatusUnauthorized, fmt.Sprintf("Token not valid")
 	}
 	return false, http.StatusOK, ""
@@ -138,6 +138,6 @@ func (t *Telephone) logout(w http.ResponseWriter, r *http.Request) {
 		_, _ = fmt.Fprintf(w, msg)
 		return
 	}
-	t.token = nil
+	t.Token = nil
 	w.WriteHeader(http.StatusNoContent)
 }

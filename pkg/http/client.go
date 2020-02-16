@@ -50,9 +50,9 @@ func (p *PhoneClient) forEachPhoneIn(ip string, number int, todo func(string, st
 	currentIp := net.ParseIP(ip)
 	for i := 0; i < number; i++ {
 		log.Printf("Try to fetch token for IP %s …", currentIp)
-		token, err := p.fetchToken(currentIp.String())
-		if err != nil {
-			log.Printf("Fetching token for %s failed: %v", currentIp, err)
+		token := p.fetchToken(currentIp.String())
+		if token == nil {
+			log.Printf("fetching token for %s failed; skip %s", currentIp, currentIp)
 			continue
 		}
 		todo(currentIp.String(), *token)
@@ -70,10 +70,10 @@ func incrementIP(ip net.IP) {
 }
 
 func (p *PhoneClient) DownloadPhoneBook(ip string) string {
-	log.Printf("Try to fetch token for IP %s …", ip)
-	token, err := p.fetchToken(ip)
-	if err != nil {
-		log.Printf("Fetching token for %s failed: %v", ip, err)
+	token := p.fetchToken(ip)
+	if token == nil {
+		log.Printf("fetching token for %s failed", ip)
+		return ""
 	}
 	defer p.logout(ip, *token)
 	url := fmt.Sprintf("http://%s:%d/SaveLocalPhonebook", ip, p.Port)
@@ -92,8 +92,9 @@ func (p *PhoneClient) DownloadPhoneBook(ip string) string {
 	return buf.String()
 }
 
-func (p *PhoneClient) fetchToken(ip string) (*string, error) {
+func (p *PhoneClient) fetchToken(ip string) *string {
 	url := fmt.Sprintf("http://%s:%d/Login", ip, p.Port)
+	log.Printf("fetching token for %s (%s) …", ip, url)
 	credentials := api.Credentials{
 		Login:    p.Login,
 		Password: p.Password,
@@ -103,15 +104,18 @@ func (p *PhoneClient) fetchToken(ip string) (*string, error) {
 	resp, err := p.Client.Post(url, "application/json", reader)
 	err = checkResponse(resp, err)
 	if err != nil {
-		return nil, err
+		log.Printf("%v", err)
+		return nil
 	}
 	defer resp.Body.Close()
 	tokenResp := api.TokenResponse{}
 	err = json.NewDecoder(resp.Body).Decode(&tokenResp)
 	if err != nil {
-		return nil, fmt.Errorf("could not unmarshal received token: %v", err)
+		log.Printf("could not unmarshal token from %s: %v", ip, err)
+		return nil
 	}
-	return &tokenResp.Token, nil
+	log.Printf("Fetching token for %s successful", ip)
+	return &tokenResp.Token
 }
 
 func (p *PhoneClient) logout(ip string, token string) {
@@ -132,10 +136,10 @@ func checkResponse(resp *http.Response, err error) error {
 	if err != nil {
 		return err
 	}
-	if resp.StatusCode == http.StatusForbidden {
-		return fmt.Errorf("authentication error, status code: %d, message: \"%s\"", resp.StatusCode, resp.Status)
+	if resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusUnauthorized {
+		return fmt.Errorf("authentication error, status code: %d with message \"%s\"", resp.StatusCode, resp.Status)
 	}
-	if resp.StatusCode >= 399 {
+	if resp.StatusCode >= 299 {
 		return fmt.Errorf("unexpected status code: %d with message \"%s\"", resp.StatusCode, resp.Status)
 	}
 	return nil
