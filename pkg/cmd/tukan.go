@@ -21,12 +21,15 @@ func main() {
 	loginFlag := cli.StringFlag{Name: "login", Value: "Admin", Usage: "The login to be used"}
 	passwordFlag := cli.StringFlag{Name: "password", Value: "admin", Usage: "The password to be used"}
 	portFlag := cli.IntFlag{Name: "port", Value: 80, Usage: "The port to be used to connect to the telephones"}
+	ipFlag := cli.StringFlag{Name: "ip", Required: true, Usage: "The IP of the first phone to interact with"}
+	numberFlag := cli.IntFlag{Name: "number", Value: 1, Usage: "The number of phones to contact, including IP"}
 
 	scanCommand := cli.Command{
 		Name:  "scan",
 		Usage: "Scans an IP range for elmeg ip620/630 and tries to log into them",
 		Flags: []cli.Flag{
-			cli.StringFlag{Name: "cidr", Value: "192.168.2.0/24", Usage: "The IP range to scan"},
+			ipFlag,
+			numberFlag,
 			loginFlag,
 			passwordFlag,
 			portFlag,
@@ -36,7 +39,7 @@ func main() {
 				Timeout: 20 * time.Second,
 			}
 			phoneClient := http2.PhoneClient{Client: client, Login: c.String("login"), Password: c.String("password"), Port: c.Int("port")}
-			err := phoneClient.Scan(c.String("cidr"))
+			err := phoneClient.Scan(c.String("ip"), c.Int(numberFlag.Name))
 			return err
 		},
 	}

@@ -18,42 +18,12 @@ type PhoneClient struct {
 	Password string
 }
 
-func (p *PhoneClient) Scan(cidr string) error {
-	ipaddress, ipnet, err := net.ParseCIDR(cidr)
-	if err != nil {
-		return fmt.Errorf("could not parse CIDR \"%s\": %v", cidr, err)
+func (p *PhoneClient) Scan(ip string, number int) error {
+	forEach := func(ip string, token string) {
+		p.logout(ip, token)
 	}
-	ips := make([]string, 0, 0)
-	for ip := ipaddress.Mask(ipnet.Mask); ipnet.Contains(ip); incrementIP(ip) {
-		ips = append(ips, ip.String())
-	}
-	for _, ip := range ips {
-		log.Printf("Checking %s …", ip)
-		token, err := p.fetchToken(ip)
-		if err != nil {
-			log.Printf("Error getting token: %v", err)
-		} else {
-			log.Printf("Token obtained …")
-		}
-		if token != nil {
-			err = p.logout(ip, *token)
-			if err != nil {
-				log.Printf("Logout failed: %v", err)
-			} else {
-				log.Printf("Logout successful")
-			}
-		}
-	}
+	p.forEachPhoneIn(ip, number, forEach)
 	return nil
-}
-
-func incrementIP(ip net.IP) {
-	for j := len(ip) - 1; j >= 0; j-- {
-		ip[j]++
-		if ip[j] > 0 {
-			break
-		}
-	}
 }
 
 func (p *PhoneClient) UploadPhoneBook(ip string, number int, payload string, delimiter string) {
@@ -86,6 +56,16 @@ func (p *PhoneClient) forEachPhoneIn(ip string, number int, todo func(string, st
 			continue
 		}
 		todo(currentIp.String(), *token)
+		incrementIP(currentIp)
+	}
+}
+
+func incrementIP(ip net.IP) {
+	for j := len(ip) - 1; j >= 0; j-- {
+		ip[j]++
+		if ip[j] > 0 {
+			break
+		}
 	}
 }
 
@@ -134,12 +114,18 @@ func (p *PhoneClient) fetchToken(ip string) (*string, error) {
 	return &tokenResp.Token, nil
 }
 
-func (p *PhoneClient) logout(ip string, token string) error {
+func (p *PhoneClient) logout(ip string, token string) {
 	url := fmt.Sprintf("http://%s:%d/Logout", ip, p.Port)
+	log.Printf("logging out of %s (%s) …", ip, url)
 	request, _ := http.NewRequest("POST", url, nil)
 	request.Header.Add("Authorization", "Bearer "+token)
 	resp, err := p.Client.Do(request)
-	return checkResponse(resp, err)
+	err = checkResponse(resp, err)
+	if err != nil {
+		log.Printf("could not logout from %s: %v", ip, err)
+	} else {
+		log.Printf("logout of %s successful", ip)
+	}
 }
 
 func checkResponse(resp *http.Response, err error) error {
