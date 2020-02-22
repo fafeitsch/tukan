@@ -2,9 +2,7 @@ package http
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
-	"github.com/fafeitsch/Tukan/pkg/api"
 	"log"
 	"net"
 	"net/http"
@@ -12,15 +10,19 @@ import (
 )
 
 type PhoneClient struct {
-	Client   *http.Client
-	Port     int
-	Login    string
-	Password string
+	Client  *http.Client
+	Port    int
+	tokener tokener
+}
+
+func BuildPhoneClient(port int, login string, password string) PhoneClient {
+	tokener := tokenerImpl{port: port, login: login, password: password}
+	return PhoneClient{Port: port, Client: http.DefaultClient, tokener: &tokener}
 }
 
 func (p *PhoneClient) Scan(ip string, number int) error {
 	forEach := func(ip string, token string) {
-		p.logout(ip, token)
+		p.tokener.logout(ip, token)
 	}
 	p.forEachPhoneIn(ip, number, forEach)
 	return nil
@@ -28,7 +30,7 @@ func (p *PhoneClient) Scan(ip string, number int) error {
 
 func (p *PhoneClient) UploadPhoneBook(ip string, number int, payload string, delimiter string) {
 	todo := func(ip string, token string) {
-		defer p.logout(ip, token)
+		defer p.tokener.logout(ip, token)
 		url := fmt.Sprintf("http://%s:%d/LocalPhonebook", ip, p.Port)
 		req, _ := http.NewRequest("POST", url, strings.NewReader(payload))
 		req.Header.Add("Authorization", "Bearer "+token)
@@ -50,8 +52,8 @@ func (p *PhoneClient) forEachPhoneIn(ip string, number int, todo func(string, st
 	currentIp := net.ParseIP(ip)
 	for i := 0; i < number; i++ {
 		log.Printf("Try to fetch token for IP %s …", currentIp)
-		token := p.fetchToken(currentIp.String())
-		if token == nil {
+		token, err := p.tokener.fetchToken(currentIp.String())
+		if err != nil {
 			log.Printf("fetching token for %s failed; skip %s", currentIp, currentIp)
 			continue
 		}
@@ -70,12 +72,12 @@ func incrementIP(ip net.IP) {
 }
 
 func (p *PhoneClient) DownloadPhoneBook(ip string) string {
-	token := p.fetchToken(ip)
-	if token == nil {
+	token, err := p.tokener.fetchToken(ip)
+	if err != nil {
 		log.Printf("fetching token for %s failed", ip)
 		return ""
 	}
-	defer p.logout(ip, *token)
+	defer p.tokener.logout(ip, *token)
 	url := fmt.Sprintf("http://%s:%d/SaveLocalPhonebook", ip, p.Port)
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Add("Authorization", "Bearer "+*token)
@@ -90,46 +92,6 @@ func (p *PhoneClient) DownloadPhoneBook(ip string) string {
 	buf := new(bytes.Buffer)
 	_, _ = buf.ReadFrom(resp.Body)
 	return buf.String()
-}
-
-func (p *PhoneClient) fetchToken(ip string) *string {
-	url := fmt.Sprintf("http://%s:%d/Login", ip, p.Port)
-	log.Printf("fetching token for %s (%s) …", ip, url)
-	credentials := api.Credentials{
-		Login:    p.Login,
-		Password: p.Password,
-	}
-	payload, _ := json.Marshal(credentials)
-	reader := bytes.NewBuffer(payload)
-	resp, err := p.Client.Post(url, "application/json", reader)
-	err = checkResponse(resp, err)
-	if err != nil {
-		log.Printf("%v", err)
-		return nil
-	}
-	defer resp.Body.Close()
-	tokenResp := api.TokenResponse{}
-	err = json.NewDecoder(resp.Body).Decode(&tokenResp)
-	if err != nil {
-		log.Printf("could not unmarshal token from %s: %v", ip, err)
-		return nil
-	}
-	log.Printf("Fetching token for %s successful", ip)
-	return &tokenResp.Token
-}
-
-func (p *PhoneClient) logout(ip string, token string) {
-	url := fmt.Sprintf("http://%s:%d/Logout", ip, p.Port)
-	log.Printf("logging out of %s (%s) …", ip, url)
-	request, _ := http.NewRequest("POST", url, nil)
-	request.Header.Add("Authorization", "Bearer "+token)
-	resp, err := p.Client.Do(request)
-	err = checkResponse(resp, err)
-	if err != nil {
-		log.Printf("could not logout from %s: %v", ip, err)
-	} else {
-		log.Printf("logout of %s successful", ip)
-	}
 }
 
 func checkResponse(resp *http.Response, err error) error {
