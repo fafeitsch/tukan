@@ -3,11 +3,9 @@ package http
 import (
 	"bytes"
 	"fmt"
-	"github.com/fafeitsch/Tukan/pkg/mock"
 	"github.com/stretchr/testify/assert"
 	"log"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"regexp"
 	"strconv"

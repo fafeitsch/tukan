@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/fafeitsch/Tukan/pkg/api"
-	"log"
 	"net/http"
 )
 
@@ -18,12 +17,11 @@ type tokenerImpl struct {
 	login    string
 	password string
 	port     int
-	client   http.Client
+	client   *http.Client
 }
 
 func (t *tokenerImpl) fetchToken(ip string) (*string, error) {
 	url := fmt.Sprintf("http://%s:%d/Login", ip, t.port)
-	log.Printf("fetching token for %s (%s) …", ip, url)
 	credentials := api.Credentials{
 		Login:    t.login,
 		Password: t.password,

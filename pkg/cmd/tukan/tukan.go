@@ -6,9 +6,7 @@ import (
 	http2 "github.com/fafeitsch/Tukan/pkg/http"
 	"github.com/urfave/cli"
 	"log"
-	"net/http"
 	"os"
-	"time"
 )
 
 func main() {
@@ -35,10 +33,7 @@ func main() {
 			portFlag,
 		},
 		Action: func(c *cli.Context) error {
-			client := &http.Client{
-				Timeout: 20 * time.Second,
-			}
-			phoneClient := http2.PhoneClient{Client: client, Login: c.String("login"), Password: c.String("password"), Port: c.Int("port")}
+			phoneClient := http2.BuildPhoneClient(c.Int("port"), c.String("login"), c.String("password"))
 			err := phoneClient.Scan(c.String("ip"), c.Int(numberFlag.Name))
 			return err
 		},
@@ -57,10 +52,7 @@ func main() {
 			portFlag,
 		},
 		Action: func(c *cli.Context) error {
-			client := &http.Client{
-				Timeout: 20 * time.Second,
-			}
-			phoneClient := http2.PhoneClient{Client: client, Login: c.String("login"), Password: c.String("password"), Port: c.Int("port")}
+			phoneClient := http2.BuildPhoneClient(c.Int("port"), c.String("login"), c.String("password"))
 			payload, err := domain.LoadAndEmbedPhonebook(c.String("file"), c.String("delimiter"))
 			if err != nil {
 				return fmt.Errorf("could not prepare payload for sending to phones: %v", err)
@@ -80,10 +72,7 @@ func main() {
 			portFlag,
 		},
 		Action: func(c *cli.Context) error {
-			client := &http.Client{
-				Timeout: 20 * time.Second,
-			}
-			phoneClient := http2.PhoneClient{Client: client, Login: c.String("login"), Password: c.String("password"), Port: c.Int("port")}
+			phoneClient := http2.BuildPhoneClient(c.Int("port"), c.String("login"), c.String("password"))
 			down := phoneClient.DownloadPhoneBook(c.String("ip"))
 			fmt.Printf(down)
 			return nil

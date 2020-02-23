@@ -7,17 +7,21 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type PhoneClient struct {
-	Client  *http.Client
-	Port    int
+	client  *http.Client
+	port    int
 	tokener tokener
 }
 
 func BuildPhoneClient(port int, login string, password string) PhoneClient {
 	tokener := tokenerImpl{port: port, login: login, password: password}
-	return PhoneClient{Port: port, Client: http.DefaultClient, tokener: &tokener}
+	client := &http.Client{
+		Timeout: 20 * time.Second,
+	}
+	return PhoneClient{port: port, client: client, tokener: &tokener}
 }
 
 func (p *PhoneClient) Scan(ip string, number int) error {
@@ -31,12 +35,12 @@ func (p *PhoneClient) Scan(ip string, number int) error {
 func (p *PhoneClient) UploadPhoneBook(ip string, number int, payload string, delimiter string) {
 	todo := func(ip string, token string) {
 		defer p.tokener.logout(ip, token)
-		url := fmt.Sprintf("http://%s:%d/LocalPhonebook", ip, p.Port)
+		url := fmt.Sprintf("http://%s:%d/LocalPhonebook", ip, p.port)
 		req, _ := http.NewRequest("POST", url, strings.NewReader(payload))
 		req.Header.Add("Authorization", "Bearer "+token)
 		multipartHeader := fmt.Sprintf("multipart/form-data; boundary=%s", delimiter)
 		req.Header.Add("Content-Type", multipartHeader)
-		resp, err := p.Client.Do(req)
+		resp, err := p.client.Do(req)
 		if err == nil {
 			defer resp.Body.Close()
 		}
@@ -78,10 +82,10 @@ func (p *PhoneClient) DownloadPhoneBook(ip string) string {
 		return ""
 	}
 	defer p.tokener.logout(ip, *token)
-	url := fmt.Sprintf("http://%s:%d/SaveLocalPhonebook", ip, p.Port)
+	url := fmt.Sprintf("http://%s:%d/SaveLocalPhonebook", ip, p.port)
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Add("Authorization", "Bearer "+*token)
-	resp, err := p.Client.Do(req)
+	resp, err := p.client.Do(req)
 	if err == nil {
 		defer resp.Body.Close()
 	}
