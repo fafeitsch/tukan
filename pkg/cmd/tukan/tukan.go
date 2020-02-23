@@ -34,8 +34,8 @@ func main() {
 		},
 		Action: func(c *cli.Context) error {
 			phoneClient := http2.BuildPhoneClient(c.Int("port"), c.String("login"), c.String("password"))
-			err := phoneClient.Scan(c.String("ip"), c.Int(numberFlag.Name))
-			return err
+			_ = phoneClient.Scan(c.String("ip"), c.Int(numberFlag.Name))
+			return nil
 		},
 	}
 

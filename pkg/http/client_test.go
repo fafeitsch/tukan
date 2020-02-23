@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"log"
 	"net/http"
 	"os"
@@ -35,6 +36,42 @@ func resetLogger() {
 	log.SetOutput(os.Stdout)
 }
 
+func TestPhoneClient_Scan(t *testing.T) {
+	acl := map[string]bool{
+		"10.10.40.1": true,
+		"10.10.40.3": true,
+		"10.10.40.4": true,
+	}
+	failedLogouts := map[string]bool{
+		"10.10.40.4": true,
+	}
+	pc := BuildPhoneClient(8080, "username", "password")
+	pc.tokener = mockTokener{allowedIps: acl, failedLogouts: failedLogouts}
+	logWriter := &bytes.Buffer{}
+	logger := log.New(logWriter, "LOGGING ", 0)
+	pc.Logger = logger
+	result := pc.Scan("10.10.40.1", 4)
+	require.Equal(t, 4, len(result), "number of results not correct")
+	require.Equal(t, "phone is reachable, login worked", result["10.10.40.1"], "result of 10.10.40.1 incorrect")
+	require.Equal(t, "login failed", result["10.10.40.2"], "result of 10.10.40.2 incorrect")
+	require.Equal(t, "phone is reachable, login worked", result["10.10.40.3"], "result of 10.10.40.3 incorrect")
+	require.Equal(t, "logout failed", result["10.10.40.4"], "result of 10.10.40.4 incorrect")
+	want := `LOGGING fetching token for 10.10.40.1…
+LOGGING 10.10.40.1 is reachable and login is possible
+LOGGING logging out of 10.10.40.1…
+LOGGING fetching token for 10.10.40.2…
+LOGGING fetching token for 10.10.40.2 failed: authentication failed
+LOGGING fetching token for 10.10.40.3…
+LOGGING 10.10.40.3 is reachable and login is possible
+LOGGING logging out of 10.10.40.3…
+LOGGING fetching token for 10.10.40.4…
+LOGGING 10.10.40.4 is reachable and login is possible
+LOGGING logging out of 10.10.40.4…
+LOGGING could not logout from 10.10.40.4
+`
+	require.Equal(t, want, logWriter.String(), "logger output wrong")
+}
+
 func TestCheckResponse(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -55,4 +92,28 @@ func TestCheckResponse(t *testing.T) {
 			assert.Equal(t, tt.wantError, got)
 		})
 	}
+}
+
+type mockTokener struct {
+	allowedIps    map[string]bool
+	failedLogouts map[string]bool
+}
+
+func (m mockTokener) fetchToken(ip string) (*string, error) {
+	if _, ok := m.allowedIps[ip]; ok {
+		token := fmt.Sprintf("token for %s", ip)
+		return &token, nil
+	}
+	return nil, fmt.Errorf("authentication failed")
+}
+
+func (m mockTokener) logout(ip string, token string) error {
+	requiredToken := fmt.Sprintf("token for %s", ip)
+	if _, ok := m.allowedIps[ip]; ok && token == requiredToken {
+		if _, ok := m.failedLogouts[ip]; ok {
+			return fmt.Errorf("login failed for whatever reason")
+		}
+		return nil
+	}
+	return fmt.Errorf("ip or token not correct")
 }
