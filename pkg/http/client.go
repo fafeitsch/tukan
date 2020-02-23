@@ -36,13 +36,14 @@ func (p *PhoneClient) Scan(ip string, number int) map[string]string {
 	return result
 }
 
-func (p *PhoneClient) UploadPhoneBook(ip string, number int, payload string, delimiter string) {
+func (p *PhoneClient) UploadPhoneBook(ip string, number int, payload string, delimiter string) map[string]string {
 	todo := func(ip string, token string) string {
 		url := fmt.Sprintf("http://%s:%d/LocalPhonebook", ip, p.port)
 		req, _ := http.NewRequest("POST", url, strings.NewReader(payload))
 		req.Header.Add("Authorization", "Bearer "+token)
 		multipartHeader := fmt.Sprintf("multipart/form-data; boundary=%s", delimiter)
 		req.Header.Add("Content-Type", multipartHeader)
+		p.log("starting upload of phone book to %s", ip)
 		resp, err := p.client.Do(req)
 		if err == nil {
 			defer resp.Body.Close()
@@ -52,9 +53,10 @@ func (p *PhoneClient) UploadPhoneBook(ip string, number int, payload string, del
 			p.log("could not upload phone book to %s: %s", ip, err)
 			return "uploading phone book failed"
 		}
+		p.log("uploaded phone book successfully to %s", ip)
 		return "uploading phone book successful"
 	}
-	p.forEachPhoneIn(ip, number, todo)
+	return p.forEachPhoneIn(ip, number, todo)
 }
 
 func (p *PhoneClient) log(msg string, args ...interface{}) {

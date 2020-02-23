@@ -16,7 +16,7 @@ type Telephone struct {
 	Login     string
 	Password  string
 	Token     *string
-	phonebook string
+	Phonebook string
 }
 
 func (t *Telephone) AttemptLogin(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +77,7 @@ func (t *Telephone) preconditionsFailWithAuth(r *http.Request, contentType strin
 	return false, http.StatusOK, ""
 }
 
-func (t *Telephone) postPhoneBook(w http.ResponseWriter, r *http.Request) {
+func (t *Telephone) PostPhoneBook(w http.ResponseWriter, r *http.Request) {
 	if fail, status, msg := t.preconditionsFailWithAuth(r, "multipart/form-data; boundary=", "POST"); fail {
 		w.WriteHeader(status)
 		_, _ = fmt.Fprintf(w, msg)
@@ -94,7 +94,7 @@ func (t *Telephone) postPhoneBook(w http.ResponseWriter, r *http.Request) {
 	defer func() { _ = file.Close() }()
 	var buf bytes.Buffer
 	_, _ = io.Copy(&buf, file)
-	t.phonebook = buf.String()
+	t.Phonebook = buf.String()
 	log.Printf("Saved phone book from %s", r.RemoteAddr)
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -106,7 +106,7 @@ func (t *Telephone) saveLocalPhoneBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	r.Header.Set("Content-Type", "application/xml")
-	_, _ = fmt.Fprintf(w, t.phonebook)
+	_, _ = fmt.Fprintf(w, t.Phonebook)
 }
 
 func (t *Telephone) changeFunctionKeys(w http.ResponseWriter, r *http.Request) {

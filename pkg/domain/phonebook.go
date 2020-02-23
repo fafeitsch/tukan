@@ -26,3 +26,7 @@ func LoadAndEmbedPhonebook(file string, delimiter string) (*string, error) {
 	result := fmt.Sprintf(payloadTemplate, delimiter, text, delimiter)
 	return &result, nil
 }
+
+func InsertIntoTemplate(payload string, delimiter string) string {
+	return fmt.Sprintf(payloadTemplate, delimiter, payload, delimiter)
+}
