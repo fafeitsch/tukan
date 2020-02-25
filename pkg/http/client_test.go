@@ -124,6 +124,38 @@ func TestPhoneClient_UploadPhoneBook(t *testing.T) {
 	})
 }
 
+func TestPhoneClient_DownloadPhoneBook(t *testing.T) {
+	phone := mock.Telephone{}
+	srv := httptest.NewServer(http.HandlerFunc(phone.SaveLocalPhoneBook))
+	defer srv.Close()
+	ip, port := parseTestServerURL(srv.URL)
+	acl := map[string]bool{
+		ip: true,
+	}
+	tokener := mockTokener{allowedIps: acl}
+	token, _ := tokener.fetchToken(ip)
+	phone.Token = token
+	phone.Phonebook = "this is a telephone book"
+	pc := BuildPhoneClient(port, "username", "password")
+	pc.client = srv.Client()
+	t.Run("success", func(t *testing.T) {
+		logWriter := &bytes.Buffer{}
+		logger := log.New(logWriter, "TESTING ", 0)
+		pc.Logger = logger
+		pc.tokener = tokener
+		resultMap, result := pc.DownloadPhoneBook(ip)
+		assert.Equal(t, phone.Phonebook, result, "uploaded phone book wrong")
+		assert.Equal(t, 1, len(resultMap), "number of results wrong")
+		assert.Equal(t, "downloading phone book successful", resultMap[ip], "result string wrong")
+		wantTemplate := "TESTING fetching token for %s…\n" +
+			"TESTING start phone book download from %s…\n" +
+			"TESTING phone book download from %s successful\n" +
+			"TESTING logging out of %s…\n"
+		want := fmt.Sprintf(wantTemplate, ip, ip, ip, ip)
+		assert.Equal(t, want, logWriter.String(), "logging output is wrong")
+	})
+}
+
 func TestCheckResponse(t *testing.T) {
 	tests := []struct {
 		name       string

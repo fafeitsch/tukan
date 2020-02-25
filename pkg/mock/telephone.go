@@ -99,7 +99,7 @@ func (t *Telephone) PostPhoneBook(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (t *Telephone) saveLocalPhoneBook(w http.ResponseWriter, r *http.Request) {
+func (t *Telephone) SaveLocalPhoneBook(w http.ResponseWriter, r *http.Request) {
 	if fail, status, msg := t.preconditionsFailWithAuth(r, "", "GET"); fail {
 		w.WriteHeader(status)
 		_, _ = fmt.Fprintf(w, msg)

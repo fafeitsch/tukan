@@ -102,26 +102,30 @@ func incrementIP(ip net.IP) {
 	}
 }
 
-func (p *PhoneClient) DownloadPhoneBook(ip string) string {
-	token, err := p.tokener.fetchToken(ip)
-	if err != nil {
-		log.Printf("fetching token for %s failed", ip)
-		return ""
+func (p *PhoneClient) DownloadPhoneBook(ip string) (map[string]string, string) {
+	var result string
+	todo := func(ip string, token string) string {
+		url := fmt.Sprintf("http://%s:%d/SaveLocalPhonebook", ip, p.port)
+		req, _ := http.NewRequest("GET", url, nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+		p.log("start phone book download from %s…", ip)
+		resp, err := p.client.Do(req)
+		if err == nil {
+			defer resp.Body.Close()
+		}
+		err = checkResponse(resp, err)
+		if err != nil {
+			p.log("could not get phone book for %s: %v", ip, err)
+			return "could not get phone book"
+		}
+		p.log("phone book download from %s successful", ip)
+		buf := new(bytes.Buffer)
+		_, _ = buf.ReadFrom(resp.Body)
+		result = buf.String()
+		return "downloading phone book successful"
 	}
-	url := fmt.Sprintf("http://%s:%d/SaveLocalPhonebook", ip, p.port)
-	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Add("Authorization", "Bearer "+*token)
-	resp, err := p.client.Do(req)
-	if err == nil {
-		defer resp.Body.Close()
-	}
-	err = checkResponse(resp, err)
-	if err != nil {
-		log.Printf("could not get phonebook from %s: %v", ip, err)
-	}
-	buf := new(bytes.Buffer)
-	_, _ = buf.ReadFrom(resp.Body)
-	return buf.String()
+	resultMap := p.forEachPhoneIn(ip, 1, todo)
+	return resultMap, result
 }
 
 func checkResponse(resp *http.Response, err error) error {

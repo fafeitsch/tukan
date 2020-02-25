@@ -73,7 +73,7 @@ func main() {
 		},
 		Action: func(c *cli.Context) error {
 			phoneClient := http2.BuildPhoneClient(c.Int("port"), c.String("login"), c.String("password"))
-			down := phoneClient.DownloadPhoneBook(c.String("ip"))
+			_, down := phoneClient.DownloadPhoneBook(c.String("ip"))
 			fmt.Printf(down)
 			return nil
 		},
