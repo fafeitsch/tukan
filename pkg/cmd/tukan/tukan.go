@@ -34,7 +34,10 @@ func main() {
 		},
 		Action: func(c *cli.Context) error {
 			phoneClient := http2.BuildPhoneClient(c.Int("port"), c.String("login"), c.String("password"))
-			_ = phoneClient.Scan(c.String("ip"), c.Int(numberFlag.Name))
+			result := phoneClient.Scan(c.String("ip"), c.Int(numberFlag.Name))
+			for ip, result := range result {
+				fmt.Printf("%s: %s\n", ip, result)
+			}
 			return nil
 		},
 	}

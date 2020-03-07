@@ -19,10 +19,10 @@ type PhoneClient struct {
 }
 
 func BuildPhoneClient(port int, login string, password string) PhoneClient {
-	tokener := tokenerImpl{port: port, login: login, password: password}
 	client := &http.Client{
 		Timeout: 20 * time.Second,
 	}
+	tokener := tokenerImpl{port: port, login: login, password: password, client: client}
 	logger := log.New(os.Stdout, "", log.LstdFlags)
 	return PhoneClient{port: port, client: client, tokener: &tokener, Logger: logger}
 }
