@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/dchest/uniuri"
 	"github.com/fafeitsch/Tukan/pkg/api"
+	"github.com/fafeitsch/Tukan/pkg/domain"
 	"io"
 	"log"
 	"net/http"
@@ -13,10 +14,11 @@ import (
 )
 
 type Telephone struct {
-	Login     string
-	Password  string
-	Token     *string
-	Phonebook string
+	Login      string
+	Password   string
+	Token      *string
+	Phonebook  string
+	Parameters domain.Parameters
 }
 
 func (t *Telephone) AttemptLogin(w http.ResponseWriter, r *http.Request) {
@@ -130,6 +132,17 @@ func (t *Telephone) changeFunctionKeys(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Received function keys from %s: %v", r.RemoteAddr, keys)
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (t *Telephone) getParameters(w http.ResponseWriter, r *http.Request) {
+	if fail, status, msg := t.preconditionsFailWithAuth(r, "application/json", "GET"); fail {
+		w.WriteHeader(status)
+		_, _ = fmt.Fprintf(w, msg)
+		return
+	}
+	payload, _ := json.Marshal(t.Parameters)
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(payload)
 }
 
 func (t *Telephone) logout(w http.ResponseWriter, r *http.Request) {
