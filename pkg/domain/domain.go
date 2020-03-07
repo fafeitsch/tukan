@@ -3,6 +3,7 @@ package domain
 import (
 	"fmt"
 	"io/ioutil"
+	"sort"
 	"strings"
 )
 
@@ -29,4 +30,19 @@ func LoadAndEmbedPhonebook(file string, delimiter string) (*string, error) {
 
 func InsertIntoTemplate(payload string, delimiter string) string {
 	return fmt.Sprintf(payloadTemplate, delimiter, payload, delimiter)
+}
+
+type TukanResult map[string]string
+
+func (t TukanResult) String() string {
+	result := "\n==========\n Results\n==========\n"
+	keys := make([]string, 0, len(t))
+	for ip, _ := range t {
+		keys = append(keys, ip)
+	}
+	sort.Strings(keys)
+	for _, ip := range keys {
+		result = result + fmt.Sprintf("%s: %s\n", ip, t[ip])
+	}
+	return result
 }

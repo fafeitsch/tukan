@@ -3,6 +3,7 @@ package http
 import (
 	"bytes"
 	"fmt"
+	"github.com/fafeitsch/Tukan/pkg/domain"
 	"log"
 	"net"
 	"net/http"
@@ -27,7 +28,7 @@ func BuildPhoneClient(port int, login string, password string) PhoneClient {
 	return PhoneClient{port: port, client: client, tokener: &tokener, Logger: logger}
 }
 
-func (p *PhoneClient) Scan(ip string, number int) map[string]string {
+func (p *PhoneClient) Scan(ip string, number int) domain.TukanResult {
 	forEach := func(ip string, token string) string {
 		p.log("%s is reachable and login is possible", ip)
 		return "phone is reachable, login worked"
@@ -36,7 +37,7 @@ func (p *PhoneClient) Scan(ip string, number int) map[string]string {
 	return result
 }
 
-func (p *PhoneClient) UploadPhoneBook(ip string, number int, payload string, delimiter string) map[string]string {
+func (p *PhoneClient) UploadPhoneBook(ip string, number int, payload string, delimiter string) domain.TukanResult {
 	todo := func(ip string, token string) string {
 		url := fmt.Sprintf("http://%s:%d/LocalPhonebook", ip, p.port)
 		req, _ := http.NewRequest("POST", url, strings.NewReader(payload))
@@ -65,7 +66,7 @@ func (p *PhoneClient) log(msg string, args ...interface{}) {
 	}
 }
 
-func (p *PhoneClient) forEachPhoneIn(ip string, number int, todo func(string, string) string) map[string]string {
+func (p *PhoneClient) forEachPhoneIn(ip string, number int, todo func(string, string) string) domain.TukanResult {
 	currentIp := net.ParseIP(ip)
 	result := make(map[string]string)
 	for i := 0; i < number; i++ {
@@ -102,7 +103,7 @@ func incrementIP(ip net.IP) {
 	}
 }
 
-func (p *PhoneClient) DownloadPhoneBook(ip string) (map[string]string, string) {
+func (p *PhoneClient) DownloadPhoneBook(ip string) (domain.TukanResult, string) {
 	var result string
 	todo := func(ip string, token string) string {
 		url := fmt.Sprintf("http://%s:%d/SaveLocalPhonebook", ip, p.port)
