@@ -5,6 +5,7 @@ import (
 	"github.com/fafeitsch/Tukan/pkg/domain"
 	http2 "github.com/fafeitsch/Tukan/pkg/http"
 	"github.com/urfave/cli"
+	"io/ioutil"
 	"log"
 	"os"
 )
@@ -18,11 +19,13 @@ func main() {
 
 	var login, password string
 	var port int
+	var noLogging bool
 	loginFlag := cli.StringFlag{Name: "login", Value: "Admin", Usage: "The login to be used", Destination: &login}
 	passwordFlag := cli.StringFlag{Name: "password", Value: "admin", Usage: "The password to be used", Destination: &password}
 	portFlag := cli.IntFlag{Name: "port", Value: 80, Usage: "The port to be used to connect to the telephones", Destination: &port}
 	ipFlag := cli.StringFlag{Name: "ip", Required: true, Usage: "The IP of the first phone to interact with"}
 	numberFlag := cli.IntFlag{Name: "number", Value: 1, Usage: "The number of phones to contact, including IP"}
+	noLogFlag := cli.BoolFlag{Name: "nolog", Usage: "Disables the logging and only prints the final results", Destination: &noLogging}
 
 	scanCommand := cli.Command{
 		Name:  "scan",
@@ -33,6 +36,10 @@ func main() {
 		},
 		Action: func(c *cli.Context) error {
 			phoneClient := http2.BuildPhoneClient(port, login, password)
+			if noLogging {
+				phoneClient.Logger.SetFlags(0)
+				phoneClient.Logger.SetOutput(ioutil.Discard)
+			}
 			result := phoneClient.Scan(c.String("ip"), c.Int(numberFlag.Name))
 			fmt.Printf("%v", result)
 			return nil
@@ -50,6 +57,10 @@ func main() {
 		},
 		Action: func(c *cli.Context) error {
 			phoneClient := http2.BuildPhoneClient(port, login, password)
+			if noLogging {
+				phoneClient.Logger.SetFlags(0)
+				phoneClient.Logger.SetOutput(ioutil.Discard)
+			}
 			payload, err := domain.LoadAndEmbedPhonebook(c.String("file"), c.String("delimiter"))
 			if err != nil {
 				return fmt.Errorf("could not prepare payload for sending to phones: %v", err)
@@ -68,6 +79,10 @@ func main() {
 		},
 		Action: func(c *cli.Context) error {
 			phoneClient := http2.BuildPhoneClient(port, login, password)
+			if noLogging {
+				phoneClient.Logger.SetFlags(0)
+				phoneClient.Logger.SetOutput(ioutil.Discard)
+			}
 			_, down := phoneClient.DownloadPhoneBook(c.String("ip"))
 			fmt.Printf(down)
 			return nil
@@ -76,7 +91,7 @@ func main() {
 
 	app.Commands = []cli.Command{scanCommand, phonebookUploadCommand, phonebookDownloadCommand}
 
-	app.Flags = []cli.Flag{loginFlag, passwordFlag, portFlag}
+	app.Flags = []cli.Flag{loginFlag, passwordFlag, portFlag, noLogFlag}
 
 	err := app.Run(os.Args)
 	if err != nil {
