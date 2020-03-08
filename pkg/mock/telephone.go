@@ -18,15 +18,11 @@ type Telephone struct {
 	Password   string
 	Token      *string
 	Phonebook  string
+	Keys       api.FunctionKeys
 	Parameters domain.Parameters
 }
 
 func (t *Telephone) AttemptLogin(w http.ResponseWriter, r *http.Request) {
-	if t.Token != nil {
-		w.WriteHeader(http.StatusConflict)
-		_, _ = fmt.Fprintf(w, "Login is already consumed, log out first")
-		return
-	}
 	if fail, status, msg := t.preconditionsFail(r, "application/json", "POST"); fail {
 		w.WriteHeader(status)
 		_, _ = fmt.Fprintf(w, msg)
@@ -67,20 +63,8 @@ func (t *Telephone) preconditionsFail(r *http.Request, contentType string, metho
 	return false, http.StatusOK, ""
 }
 
-func (t *Telephone) preconditionsFailWithAuth(r *http.Request, contentType string, method string) (bool, int, string) {
-	if fail, status, msg := t.preconditionsFail(r, contentType, method); fail {
-		return fail, status, msg
-	}
-	auth := r.Header.Get("Authorization")
-	token := strings.TrimPrefix(auth, "Bearer ")
-	if t.Token == nil || token != *t.Token {
-		return true, http.StatusUnauthorized, fmt.Sprintf("Token not valid")
-	}
-	return false, http.StatusOK, ""
-}
-
 func (t *Telephone) PostPhoneBook(w http.ResponseWriter, r *http.Request) {
-	if fail, status, msg := t.preconditionsFailWithAuth(r, "multipart/form-data; boundary=", "POST"); fail {
+	if fail, status, msg := t.preconditionsFail(r, "multipart/form-data; boundary=", "POST"); fail {
 		w.WriteHeader(status)
 		_, _ = fmt.Fprintf(w, msg)
 		return
@@ -102,7 +86,7 @@ func (t *Telephone) PostPhoneBook(w http.ResponseWriter, r *http.Request) {
 }
 
 func (t *Telephone) SaveLocalPhoneBook(w http.ResponseWriter, r *http.Request) {
-	if fail, status, msg := t.preconditionsFailWithAuth(r, "", "GET"); fail {
+	if fail, status, msg := t.preconditionsFail(r, "", "GET"); fail {
 		w.WriteHeader(status)
 		_, _ = fmt.Fprintf(w, msg)
 		return
@@ -111,15 +95,28 @@ func (t *Telephone) SaveLocalPhoneBook(w http.ResponseWriter, r *http.Request) {
 	_, _ = fmt.Fprintf(w, t.Phonebook)
 }
 
-func (t *Telephone) changeFunctionKeys(w http.ResponseWriter, r *http.Request) {
-	if fail, status, msg := t.preconditionsFailWithAuth(r, "application/json", "POST"); fail {
-		w.WriteHeader(status)
-		_, _ = fmt.Fprintf(w, msg)
+func (t *Telephone) handleParameters(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		t.getParameters(w, r)
+		break
+	case http.MethodPost:
+		if r.Header.Get("Content-Type") != "application/json" {
+			w.WriteHeader(http.StatusUnsupportedMediaType)
+			_, _ = fmt.Fprintf(w, "contentType %s not supported", r.Header.Get("contentType"))
+		}
+		t.changeFunctionKeys(w, r.Body)
+		break
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		_, _ = fmt.Fprintf(w, "the method %s is not allowed. Only GET and POST are supported.", r.Method)
 		return
 	}
-	keys := &api.FunctionKeys{}
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&keys)
+}
+
+func (t *Telephone) changeFunctionKeys(w http.ResponseWriter, body io.ReadCloser) {
+	decoder := json.NewDecoder(body)
+	err := decoder.Decode(&(t.Keys))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = fmt.Fprintf(w, err.Error())
@@ -130,23 +127,33 @@ func (t *Telephone) changeFunctionKeys(w http.ResponseWriter, r *http.Request) {
 		_, _ = fmt.Fprintf(w, "request body contained more than one json object, which is not allowed")
 		return
 	}
-	log.Printf("Received function keys from %s: %v", r.RemoteAddr, keys)
+	log.Printf("Received function keys from: %v", t.Keys)
 	w.WriteHeader(http.StatusNoContent)
 }
 
 func (t *Telephone) getParameters(w http.ResponseWriter, r *http.Request) {
-	if fail, status, msg := t.preconditionsFailWithAuth(r, "application/json", "GET"); fail {
+	if fail, status, msg := t.preconditionsFail(r, "application/json", "GET"); fail {
 		w.WriteHeader(status)
 		_, _ = fmt.Fprintf(w, msg)
 		return
 	}
-	payload, _ := json.Marshal(t.Parameters)
+	parameters := domain.Parameters{}
+	keys := make([]domain.FunctionKey, 0, len(t.Keys.FunctionKeys))
+	for _, key := range t.Keys.FunctionKeys {
+		number := domain.Setting{Value: key.PhoneNumber}
+		display := domain.Setting{Value: key.DisplayName}
+		callpickup := domain.Setting{Value: key.CallPickupCode}
+		domKey := domain.FunctionKey{PhoneNumber: number, DisplayName: display, CallPickupCode: callpickup}
+		keys = append(keys, domKey)
+	}
+	parameters.FunctionKeys = keys
+	payload, _ := json.Marshal(parameters)
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(payload)
 }
 
 func (t *Telephone) logout(w http.ResponseWriter, r *http.Request) {
-	if fail, status, msg := t.preconditionsFailWithAuth(r, "", "POST"); fail {
+	if fail, status, msg := t.preconditionsFail(r, "", "POST"); fail {
 		w.WriteHeader(status)
 		_, _ = fmt.Fprintf(w, msg)
 		return
