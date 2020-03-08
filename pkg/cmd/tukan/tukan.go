@@ -18,7 +18,7 @@ func main() {
 	app.Usage = "This application configures some parts of Elmeg ip620/630 telephones"
 
 	var login, password string
-	var port int
+	var port, timeout int
 	var noLogging bool
 	loginFlag := cli.StringFlag{Name: "login", Value: "Admin", Usage: "The login to be used", Destination: &login}
 	passwordFlag := cli.StringFlag{Name: "password", Value: "admin", Usage: "The password to be used", Destination: &password}
@@ -26,6 +26,9 @@ func main() {
 	ipFlag := cli.StringFlag{Name: "ip", Required: true, Usage: "The IP of the first phone to interact with"}
 	numberFlag := cli.IntFlag{Name: "number", Value: 1, Usage: "The number of phones to contact, including IP"}
 	noLogFlag := cli.BoolFlag{Name: "nolog", Usage: "Disables the logging and only prints the final results", Destination: &noLogging}
+	timeoutFlag := cli.IntFlag{Name: "timeout", Value: 20, Usage: "Number of seconds to wait for remote connection", Destination: &timeout}
+
+	var phoneClient http2.PhoneClient
 
 	scanCommand := cli.Command{
 		Name:  "scan",
@@ -35,11 +38,6 @@ func main() {
 			ipFlag,
 		},
 		Action: func(c *cli.Context) error {
-			phoneClient := http2.BuildPhoneClient(port, login, password)
-			if noLogging {
-				phoneClient.Logger.SetFlags(0)
-				phoneClient.Logger.SetOutput(ioutil.Discard)
-			}
 			result := phoneClient.Scan(c.String("ip"), c.Int(numberFlag.Name))
 			fmt.Printf("%v", result)
 			return nil
@@ -56,11 +54,6 @@ func main() {
 			numberFlag,
 		},
 		Action: func(c *cli.Context) error {
-			phoneClient := http2.BuildPhoneClient(port, login, password)
-			if noLogging {
-				phoneClient.Logger.SetFlags(0)
-				phoneClient.Logger.SetOutput(ioutil.Discard)
-			}
 			payload, err := domain.LoadAndEmbedPhonebook(c.String("file"), c.String("delimiter"))
 			if err != nil {
 				return fmt.Errorf("could not prepare payload for sending to phones: %v", err)
@@ -78,11 +71,6 @@ func main() {
 			cli.StringFlag{Name: "ip", Required: true, Usage: "The IP of the phone to download to phonebook from."},
 		},
 		Action: func(c *cli.Context) error {
-			phoneClient := http2.BuildPhoneClient(port, login, password)
-			if noLogging {
-				phoneClient.Logger.SetFlags(0)
-				phoneClient.Logger.SetOutput(ioutil.Discard)
-			}
 			_, down := phoneClient.DownloadPhoneBook(c.String("ip"))
 			fmt.Printf(down)
 			return nil
@@ -91,7 +79,16 @@ func main() {
 
 	app.Commands = []cli.Command{scanCommand, phonebookUploadCommand, phonebookDownloadCommand}
 
-	app.Flags = []cli.Flag{loginFlag, passwordFlag, portFlag, noLogFlag}
+	app.Flags = []cli.Flag{loginFlag, passwordFlag, portFlag, timeoutFlag, noLogFlag}
+
+	app.Before = func(context *cli.Context) error {
+		phoneClient = http2.BuildPhoneClient(port, login, password, timeout)
+		if noLogging {
+			phoneClient.Logger.SetFlags(0)
+			phoneClient.Logger.SetOutput(ioutil.Discard)
+		}
+		return nil
+	}
 
 	err := app.Run(os.Args)
 	if err != nil {

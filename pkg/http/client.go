@@ -19,9 +19,9 @@ type PhoneClient struct {
 	Logger  *log.Logger
 }
 
-func BuildPhoneClient(port int, login string, password string) PhoneClient {
+func BuildPhoneClient(port int, login string, password string, timeoutSeconds int) PhoneClient {
 	client := &http.Client{
-		Timeout: 20 * time.Second,
+		Timeout: time.Duration(timeoutSeconds) * time.Second,
 	}
 	tokener := tokenerImpl{port: port, login: login, password: password, client: client}
 	logger := log.New(os.Stdout, "", log.LstdFlags)
