@@ -48,7 +48,7 @@ func TestPhoneClient_Scan(t *testing.T) {
 	failedLogouts := map[string]bool{
 		"10.10.40.4": true,
 	}
-	pc := BuildPhoneClient(8080, "username", "password")
+	pc := BuildPhoneClient(8080, "username", "password", 5)
 	pc.tokener = mockTokener{allowedIps: acl, failedLogouts: failedLogouts}
 	logWriter := &bytes.Buffer{}
 	logger := log.New(logWriter, "LOGGING ", 0)
@@ -89,7 +89,7 @@ func TestPhoneClient_UploadPhoneBook(t *testing.T) {
 	delimiter := "DELIMITER"
 	payloadContent := "<phonebook>some dummy entries</phonebook>"
 	payload := domain.InsertIntoTemplate(payloadContent, delimiter)
-	pc := BuildPhoneClient(port, "username", "password")
+	pc := BuildPhoneClient(port, "username", "password", 5)
 	pc.client = srv.Client()
 	t.Run("success", func(t *testing.T) {
 		logWriter := &bytes.Buffer{}
@@ -136,7 +136,7 @@ func TestPhoneClient_DownloadPhoneBook(t *testing.T) {
 	token, _ := tokener.fetchToken(ip)
 	phone.Token = token
 	phone.Phonebook = "this is a telephone book"
-	pc := BuildPhoneClient(port, "username", "password")
+	pc := BuildPhoneClient(port, "username", "password", 5)
 	pc.client = srv.Client()
 	t.Run("success", func(t *testing.T) {
 		logWriter := &bytes.Buffer{}

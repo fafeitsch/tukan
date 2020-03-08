@@ -32,12 +32,12 @@ func (t *Telephone) AttemptLogin(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&creds)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusUnprocessableEntity)
 		_, _ = fmt.Fprintf(w, err.Error())
 		return
 	}
 	if decoder.More() {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusUnprocessableEntity)
 		_, _ = fmt.Fprintf(w, "request body contained more than one json object, which is not allowed")
 		return
 	}
@@ -46,7 +46,7 @@ func (t *Telephone) AttemptLogin(w http.ResponseWriter, r *http.Request) {
 		_, _ = fmt.Fprintf(w, "provided credentials not valid")
 		return
 	}
-	token := uniuri.NewLen(1)
+	token := uniuri.NewLen(32)
 	t.Token = &token
 	payload, _ := json.Marshal(api.TokenResponse{Token: token})
 	_, _ = w.Write(payload)
@@ -54,11 +54,11 @@ func (t *Telephone) AttemptLogin(w http.ResponseWriter, r *http.Request) {
 
 func (t *Telephone) preconditionsFail(r *http.Request, contentType string, method string) (bool, int, string) {
 	if r.Method != method {
-		return true, http.StatusBadRequest, fmt.Sprintf("Unsupported method \"%s\", want method \"%s", r.Method, method)
+		return true, http.StatusMethodNotAllowed, fmt.Sprintf("Unsupported method \"%s\", want method \"%s\"", r.Method, method)
 	}
 	declaredType := r.Header.Get("Content-Type")
 	if !strings.HasPrefix(declaredType, contentType) {
-		return true, http.StatusBadRequest, fmt.Sprintf("Header \"Content-Type\" must begin with value \"%s\", but was \"%s\"", contentType, r.Header.Get("Content-Type"))
+		return true, http.StatusUnsupportedMediaType, fmt.Sprintf("Header \"Content-Type\" must begin with value \"%s\", but was \"%s\"", contentType, r.Header.Get("Content-Type"))
 	}
 	return false, http.StatusOK, ""
 }
