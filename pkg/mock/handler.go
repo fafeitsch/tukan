@@ -16,7 +16,7 @@ func StartHandler(port int, login string, password string) {
 	http.Handle("/Logout", enforceTokenHandler(&tele, tele.logout))
 	http.Handle("/LocalPhonebook", enforceTokenHandler(&tele, tele.PostPhoneBook))
 	http.Handle("/SaveLocalPhonebook", enforceTokenHandler(&tele, tele.SaveLocalPhoneBook))
-	http.Handle("/Parameters", enforceTokenHandler(&tele, tele.handleParameters))
+	http.Handle("/Parameters", enforceTokenHandler(&tele, tele.HandleParameters))
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
 

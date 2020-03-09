@@ -2,6 +2,7 @@ package mock
 
 import (
 	"fmt"
+	"github.com/fafeitsch/Tukan/pkg/api"
 	"github.com/fafeitsch/Tukan/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -39,9 +40,8 @@ func TestTelephone_AttemptLogin(t *testing.T) {
 			recorder := httptest.NewRecorder()
 			assert.Nil(t, telephone.Token, "token should be nil before anything happens on it")
 			telephone.AttemptLogin(recorder, request)
-			response := recorder.Result()
-			data, _ := ioutil.ReadAll(response.Body)
-			assert.Equal(t, tt.wantStatus, response.StatusCode, "the status code is wrong")
+			status, data := getStatusAndData(recorder)
+			assert.Equal(t, tt.wantStatus, status, "the status code is wrong")
 			if tt.wantStatus == http.StatusOK {
 				require.NotNil(t, telephone.Token, "token should be set now")
 				want := fmt.Sprintf("{\"token\":\"%s\"}", *telephone.Token)
@@ -52,6 +52,12 @@ func TestTelephone_AttemptLogin(t *testing.T) {
 			}
 		})
 	}
+}
+
+func getStatusAndData(recorder *httptest.ResponseRecorder) (int, string) {
+	response := recorder.Result()
+	data, _ := ioutil.ReadAll(response.Body)
+	return response.StatusCode, string(data)
 }
 
 func TestTelephone_PostPhoneBook(t *testing.T) {
@@ -77,10 +83,67 @@ func TestTelephone_PostPhoneBook(t *testing.T) {
 			assert.Empty(t, telephone.Phonebook, "phonebook should be empty before anything happens")
 			recorder := httptest.NewRecorder()
 			telephone.PostPhoneBook(recorder, request)
-			response := recorder.Result()
-			assert.Equal(t, tt.wantStatus, response.StatusCode, "status code is wrong")
-			data, _ := ioutil.ReadAll(response.Body)
+			status, data := getStatusAndData(recorder)
+			assert.Equal(t, tt.wantStatus, status, "status code is wrong")
 			assert.Equal(t, tt.wantMsg, string(data), "received payload is wrong")
+		})
+	}
+}
+
+func TestTelephone_SaveLocalPhoneBook(t *testing.T) {
+	phonebook := "this is the phonebook"
+	tests := []struct {
+		name       string
+		method     string
+		wantStatus int
+		wantMsg    string
+	}{
+		{name: "success", method: "GET", wantStatus: http.StatusOK, wantMsg: phonebook},
+		{name: "wrong method", method: "POST", wantStatus: http.StatusMethodNotAllowed, wantMsg: "Unsupported method \"POST\", want method \"GET\""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			telephone := Telephone{Phonebook: phonebook}
+			request := httptest.NewRequest(tt.method, "/SaveLocalPhoneBook", strings.NewReader(""))
+			recorder := httptest.NewRecorder()
+			telephone.SaveLocalPhoneBook(recorder, request)
+			status, data := getStatusAndData(recorder)
+			assert.Equal(t, tt.wantStatus, status, "status code is wrong")
+			assert.Equal(t, tt.wantMsg, string(data), "received phonebook wrong")
+		})
+	}
+}
+
+func TestTelephone_HandleParameters_GET(t *testing.T) {
+	keys := []api.FunctionKey{
+		{DisplayName: "Shep Alves", PhoneNumber: "854", CallPickupCode: "***"},
+		{DisplayName: "", PhoneNumber: "", CallPickupCode: ""},
+		{DisplayName: "Koren Wolledge", PhoneNumber: "294", CallPickupCode: "##"},
+		{DisplayName: "Ossi Lisimore", PhoneNumber: "929", CallPickupCode: "##"},
+		{DisplayName: "Jordana Jeromson", PhoneNumber: "245", CallPickupCode: "##"},
+		{DisplayName: "", PhoneNumber: "", CallPickupCode: ""},
+		{DisplayName: "", PhoneNumber: "", CallPickupCode: ""},
+		{DisplayName: "", PhoneNumber: "", CallPickupCode: ""},
+	}
+	wantBytes, _ := ioutil.ReadFile("../mockdata/parameters.json")
+	telephone := Telephone{Keys: api.FunctionKeys{FunctionKeys: keys}}
+	tests := []struct {
+		name       string
+		method     string
+		wantStatus int
+		wantMsg    string
+	}{
+		{name: "get parameters successfully", method: "GET", wantStatus: http.StatusOK, wantMsg: string(wantBytes)},
+		{name: "wrong method", method: "PUT", wantStatus: http.StatusMethodNotAllowed, wantMsg: "The method \"PUT\" is not allowed. Only \"GET\" and \"POST\" are supported"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			request := httptest.NewRequest(tt.method, "/Parameters", strings.NewReader(""))
+			recorder := httptest.NewRecorder()
+			telephone.HandleParameters(recorder, request)
+			status, data := getStatusAndData(recorder)
+			assert.Equal(t, tt.wantStatus, status, "status code is wrong")
+			assert.Equal(t, tt.wantMsg, string(data), "received phonebook wrong")
 		})
 	}
 }

@@ -95,10 +95,10 @@ func (t *Telephone) SaveLocalPhoneBook(w http.ResponseWriter, r *http.Request) {
 	_, _ = fmt.Fprintf(w, t.Phonebook)
 }
 
-func (t *Telephone) handleParameters(w http.ResponseWriter, r *http.Request) {
+func (t *Telephone) HandleParameters(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		t.getParameters(w, r)
+		t.getParameters(w)
 		break
 	case http.MethodPost:
 		if r.Header.Get("Content-Type") != "application/json" {
@@ -109,7 +109,7 @@ func (t *Telephone) handleParameters(w http.ResponseWriter, r *http.Request) {
 		break
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		_, _ = fmt.Fprintf(w, "the method %s is not allowed. Only GET and POST are supported.", r.Method)
+		_, _ = fmt.Fprintf(w, "The method \"%s\" is not allowed. Only \"GET\" and \"POST\" are supported", r.Method)
 		return
 	}
 }
@@ -131,23 +131,22 @@ func (t *Telephone) changeFunctionKeys(w http.ResponseWriter, body io.ReadCloser
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (t *Telephone) getParameters(w http.ResponseWriter, r *http.Request) {
-	if fail, status, msg := t.preconditionsFail(r, "application/json", "GET"); fail {
-		w.WriteHeader(status)
-		_, _ = fmt.Fprintf(w, msg)
-		return
-	}
+func (t *Telephone) getParameters(w http.ResponseWriter) {
 	parameters := domain.Parameters{}
 	keys := make([]domain.FunctionKey, 0, len(t.Keys.FunctionKeys))
 	for _, key := range t.Keys.FunctionKeys {
-		number := domain.Setting{Value: key.PhoneNumber}
-		display := domain.Setting{Value: key.DisplayName}
-		callpickup := domain.Setting{Value: key.CallPickupCode}
-		domKey := domain.FunctionKey{PhoneNumber: number, DisplayName: display, CallPickupCode: callpickup}
+		number := domain.Setting{Value: key.PhoneNumber, Options: []interface{}{}}
+		display := domain.Setting{Value: key.DisplayName, Options: []interface{}{}}
+		callpickup := domain.Setting{Value: key.CallPickupCode, Options: []interface{}{}}
+		keyType := domain.Setting{Value: domain.KeyTypeBLF, Options: []interface{}{0, 1, 2, 3, domain.KeyTypeBLF, 5, 6, 7}}
+		if number.Value == "" && display.Value == "" {
+			keyType.Value = domain.KeyTypeNone
+		}
+		domKey := domain.FunctionKey{DisplayName: display, PhoneNumber: number, CallPickupCode: callpickup, Type: keyType}
 		keys = append(keys, domKey)
 	}
 	parameters.FunctionKeys = keys
-	payload, _ := json.Marshal(parameters)
+	payload, _ := json.MarshalIndent(parameters, "", "  ")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(payload)
 }

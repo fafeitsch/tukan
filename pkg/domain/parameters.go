@@ -19,8 +19,8 @@ func (p *Parameters) PurgeTrailingFunctionKeys() {
 }
 
 type FunctionKey struct {
-	PhoneNumber    Setting `json:"PhoneNumber"`
 	DisplayName    Setting `json:"DisplayName"`
+	PhoneNumber    Setting `json:"PhoneNumber"`
 	CallPickupCode Setting `json:"CallPickupCode"`
 	Type           Setting `json:"Type"`
 }
@@ -39,3 +39,6 @@ type Setting struct {
 type Validator struct {
 	Regexp string `json:"regexp"`
 }
+
+const KeyTypeBLF = "4"
+const KeyTypeNone = "-1"
