@@ -1,4 +1,4 @@
-package domain
+package down
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -16,7 +16,7 @@ func TestParameters_PurgeTrailingFunctionKeys(t *testing.T) {
 	cases := []struct {
 		name       string
 		input      []FunctionKey
-		wantOutput []FunctionKey
+		wantOutput FunctionKeys
 	}{
 		{name: "delete nothing", input: keys[0:4], wantOutput: keys[0:4]},
 		{name: "delete last two", input: keys, wantOutput: keys[0:4]},

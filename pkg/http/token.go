@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/fafeitsch/Tukan/pkg/api"
+	"github.com/fafeitsch/Tukan/pkg/api/down"
+	"github.com/fafeitsch/Tukan/pkg/api/up"
 	"net/http"
 )
 
@@ -22,7 +23,7 @@ type tokenerImpl struct {
 
 func (t *tokenerImpl) fetchToken(ip string) (*string, error) {
 	url := fmt.Sprintf("http://%s:%d/Login", ip, t.port)
-	credentials := api.Credentials{
+	credentials := up.Credentials{
 		Login:    t.login,
 		Password: t.password,
 	}
@@ -34,7 +35,7 @@ func (t *tokenerImpl) fetchToken(ip string) (*string, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	tokenResp := api.TokenResponse{}
+	tokenResp := down.TokenResponse{}
 	err = json.NewDecoder(resp.Body).Decode(&tokenResp)
 	if err != nil {
 		return nil, fmt.Errorf("could not unmarshal token from %s: %v", ip, err)

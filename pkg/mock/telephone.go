@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dchest/uniuri"
-	"github.com/fafeitsch/Tukan/pkg/api"
-	"github.com/fafeitsch/Tukan/pkg/domain"
+	"github.com/fafeitsch/Tukan/pkg/api/down"
+	"github.com/fafeitsch/Tukan/pkg/api/up"
 	"io"
 	"log"
 	"net/http"
@@ -18,8 +18,8 @@ type Telephone struct {
 	Password   string
 	Token      *string
 	Phonebook  string
-	Keys       api.FunctionKeys
-	Parameters domain.Parameters
+	Keys       up.FunctionKeys
+	Parameters down.Parameters
 }
 
 func (t *Telephone) AttemptLogin(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +28,7 @@ func (t *Telephone) AttemptLogin(w http.ResponseWriter, r *http.Request) {
 		_, _ = fmt.Fprintf(w, msg)
 		return
 	}
-	creds := api.Credentials{}
+	creds := up.Credentials{}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&creds)
 	if err != nil {
@@ -48,7 +48,7 @@ func (t *Telephone) AttemptLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	token := uniuri.NewLen(32)
 	t.Token = &token
-	payload, _ := json.Marshal(api.TokenResponse{Token: token})
+	payload, _ := json.Marshal(down.TokenResponse{Token: token})
 	_, _ = w.Write(payload)
 }
 
@@ -132,17 +132,17 @@ func (t *Telephone) changeFunctionKeys(w http.ResponseWriter, body io.ReadCloser
 }
 
 func (t *Telephone) getParameters(w http.ResponseWriter) {
-	parameters := domain.Parameters{}
-	keys := make([]domain.FunctionKey, 0, len(t.Keys.FunctionKeys))
+	parameters := down.Parameters{}
+	keys := make([]down.FunctionKey, 0, len(t.Keys.FunctionKeys))
 	for _, key := range t.Keys.FunctionKeys {
-		number := domain.Setting{Value: key.PhoneNumber, Options: []interface{}{}}
-		display := domain.Setting{Value: key.DisplayName, Options: []interface{}{}}
-		callpickup := domain.Setting{Value: key.CallPickupCode, Options: []interface{}{}}
-		keyType := domain.Setting{Value: domain.KeyTypeBLF, Options: []interface{}{0, 1, 2, 3, domain.KeyTypeBLF, 5, 6, 7}}
+		number := down.Setting{Value: key.PhoneNumber, Options: []interface{}{}}
+		display := down.Setting{Value: key.DisplayName, Options: []interface{}{}}
+		callpickup := down.Setting{Value: key.CallPickupCode, Options: []interface{}{}}
+		keyType := down.Setting{Value: down.KeyTypeBLF, Options: []interface{}{0, 1, 2, 3, down.KeyTypeBLF, 5, 6, 7}}
 		if number.Value == "" && display.Value == "" {
-			keyType.Value = domain.KeyTypeNone
+			keyType.Value = down.KeyTypeNone
 		}
-		domKey := domain.FunctionKey{DisplayName: display, PhoneNumber: number, CallPickupCode: callpickup, Type: keyType}
+		domKey := down.FunctionKey{DisplayName: display, PhoneNumber: number, CallPickupCode: callpickup, Type: keyType}
 		keys = append(keys, domKey)
 	}
 	parameters.FunctionKeys = keys

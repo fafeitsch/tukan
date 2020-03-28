@@ -101,7 +101,7 @@ func TestPhoneClient_UploadPhoneBook(t *testing.T) {
 		assert.Equal(t, 1, len(result), "number of results wrong")
 		assert.Equal(t, "uploading phone book successful", result[ip], "result string wrong")
 		wantTemplate := "TESTING fetching token for %s…\n" +
-			"TESTING starting upload of phone book to %s\n" +
+			"TESTING starting up of phone book to %s\n" +
 			"TESTING uploaded phone book successfully to %s\n" +
 			"TESTING logging out of %s…\n"
 		want := fmt.Sprintf(wantTemplate, ip, ip, ip, ip)
@@ -116,8 +116,8 @@ func TestPhoneClient_UploadPhoneBook(t *testing.T) {
 		assert.Equal(t, 1, len(result), "number of results wrong")
 		assert.Equal(t, "uploading phone book failed", result[ip], "result string wrong")
 		wantTemplate := "TESTING fetching token for %s…\n" +
-			"TESTING starting upload of phone book to %s\n" +
-			"TESTING could not upload phone book to %s: unexpected status code: 400 with message \"400 Bad Request\"\n" +
+			"TESTING starting up of phone book to %s\n" +
+			"TESTING could not up phone book to %s: unexpected status code: 400 with message \"400 Bad Request\"\n" +
 			"TESTING logging out of %s…\n"
 		want := fmt.Sprintf(wantTemplate, ip, ip, ip, ip)
 		assert.Equal(t, want, logWriter.String(), "logging output is wrong")

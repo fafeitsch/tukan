@@ -48,8 +48,8 @@ func main() {
 		Name:  "pb-up",
 		Usage: "Uploads a phone book to a set of elmeg ip 620/630 phones",
 		Flags: []cli.Flag{
-			cli.StringFlag{Name: "file", Required: true, Usage: "The phone book file to upload", TakesFile: true},
-			cli.StringFlag{Name: "delimiter", Usage: "A string that is not contained in the phone book. Needed for the upload. Must consist of at most 70 bytes of ASCII printable-characters", Value: "XXXXX"},
+			cli.StringFlag{Name: "file", Required: true, Usage: "The phone book file to up", TakesFile: true},
+			cli.StringFlag{Name: "delimiter", Usage: "A string that is not contained in the phone book. Needed for the up. Must consist of at most 70 bytes of ASCII printable-characters", Value: "XXXXX"},
 			ipFlag,
 			numberFlag,
 		},

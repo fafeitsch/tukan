@@ -2,7 +2,7 @@ package mock
 
 import (
 	"fmt"
-	"github.com/fafeitsch/Tukan/pkg/api"
+	"github.com/fafeitsch/Tukan/pkg/api/up"
 	"github.com/fafeitsch/Tukan/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -115,7 +115,7 @@ func TestTelephone_SaveLocalPhoneBook(t *testing.T) {
 }
 
 func TestTelephone_HandleParameters_GET(t *testing.T) {
-	keys := []api.FunctionKey{
+	keys := []up.FunctionKey{
 		{DisplayName: "Shep Alves", PhoneNumber: "854", CallPickupCode: "***"},
 		{DisplayName: "", PhoneNumber: "", CallPickupCode: ""},
 		{DisplayName: "Koren Wolledge", PhoneNumber: "294", CallPickupCode: "##"},
@@ -126,7 +126,7 @@ func TestTelephone_HandleParameters_GET(t *testing.T) {
 		{DisplayName: "", PhoneNumber: "", CallPickupCode: ""},
 	}
 	wantBytes, _ := ioutil.ReadFile("../mockdata/parameters.json")
-	telephone := Telephone{Keys: api.FunctionKeys{FunctionKeys: keys}}
+	telephone := Telephone{Keys: up.FunctionKeys{FunctionKeys: keys}}
 	tests := []struct {
 		name       string
 		method     string

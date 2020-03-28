@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/fafeitsch/Tukan/pkg/api/down"
 	"github.com/fafeitsch/Tukan/pkg/domain"
 	"log"
 	"net"
@@ -45,14 +46,14 @@ func (p *PhoneClient) UploadPhoneBook(ip string, number int, payload string, del
 		req.Header.Add("Authorization", "Bearer "+token)
 		multipartHeader := fmt.Sprintf("multipart/form-data; boundary=%s", delimiter)
 		req.Header.Add("Content-Type", multipartHeader)
-		p.log("starting upload of phone book to %s", ip)
+		p.log("starting up of phone book to %s", ip)
 		resp, err := p.client.Do(req)
 		if err == nil {
 			defer resp.Body.Close()
 		}
 		err = checkResponse(resp, err)
 		if err != nil {
-			p.log("could not upload phone book to %s: %s", ip, err)
+			p.log("could not up phone book to %s: %s", ip, err)
 			return "uploading phone book failed"
 		}
 		p.log("uploaded phone book successfully to %s", ip)
@@ -146,7 +147,7 @@ func (p *PhoneClient) DownloadFunctionKeys(ip string, number int) domain.TukanRe
 			return "could not get function keys"
 		}
 		p.log("function keys successfully downloaded from %s", ip)
-		params := domain.Parameters{}
+		params := down.Parameters{}
 		err = json.NewDecoder(resp.Body).Decode(&params)
 		if err != nil {
 			p.log("error deserializing the function keys from %s: %v", ip, err)
