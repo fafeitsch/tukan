@@ -184,7 +184,7 @@ type mockTokener struct {
 }
 
 func (m mockTokener) fetchToken(ip string) (*string, error) {
-	if _, ok := m.allowedIps[ip]; ok {
+	if val, ok := m.allowedIps[ip]; ok && val {
 		token := fmt.Sprintf("token for %s", ip)
 		return &token, nil
 	}

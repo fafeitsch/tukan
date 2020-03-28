@@ -77,7 +77,21 @@ func main() {
 		},
 	}
 
-	app.Commands = []cli.Command{scanCommand, phonebookUploadCommand, phonebookDownloadCommand}
+	functionKeysDownloadCommand := cli.Command{
+		Name:  "fnKeys-down",
+		Usage: "Downloads the function keys from an elmeg ip 620/630 phone",
+		Flags: []cli.Flag{
+			ipFlag,
+			numberFlag,
+		},
+		Action: func(c *cli.Context) error {
+			result := phoneClient.DownloadFunctionKeys(c.String("ip"), c.Int("number"))
+			fmt.Printf("%v", result)
+			return nil
+		},
+	}
+
+	app.Commands = []cli.Command{scanCommand, phonebookUploadCommand, phonebookDownloadCommand, functionKeysDownloadCommand}
 
 	app.Flags = []cli.Flag{loginFlag, passwordFlag, portFlag, timeoutFlag, noLogFlag}
 
