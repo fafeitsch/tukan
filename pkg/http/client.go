@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/fafeitsch/Tukan/pkg/api/down"
+	"github.com/fafeitsch/Tukan/pkg/api/up"
 	"github.com/fafeitsch/Tukan/pkg/domain"
 	"log"
 	"net"
@@ -157,6 +158,62 @@ func (p *PhoneClient) DownloadFunctionKeys(ip string, number int) domain.TukanRe
 		return params.FunctionKeys.String()
 	}
 	return p.forEachPhoneIn(ip, number, todo)
+}
+
+func (p *PhoneClient) ReplaceFunctionKeyName(ip string, number int, original string, replace string) domain.TukanResult {
+	todo := func(ip string, token string) string {
+		url := fmt.Sprintf("http://%s:%d/Parameters", ip, p.port)
+		req, _ := http.NewRequest("GET", url, nil)
+		req.Header.Add("Authorization", "Bearer "+token)
+		p.log("downloading function keys from %s …", ip)
+		resp, err := p.client.Do(req)
+		if err == nil {
+			defer resp.Body.Close()
+		}
+		err = checkResponse(resp, err)
+		if err != nil {
+			p.log("could not get function keys from %s: %v", ip, err)
+			return "could not get function keys"
+		}
+		p.log("function keys successfully downloaded from %s", ip)
+		params := down.Parameters{}
+		err = json.NewDecoder(resp.Body).Decode(&params)
+		if err != nil {
+			p.log("error deserializing the function keys from %s: %v", ip, err)
+			return "could not deserialize function keys"
+		}
+		params.PurgeTrailingFunctionKeys()
+		newKeys := p.buildNewFunctionKeys(params, original, replace)
+		payload, _ := json.Marshal(&newKeys)
+		reader := bytes.NewBuffer(payload)
+		req, _ = http.NewRequest("POST", url, reader)
+		req.Header.Add("Authorization", "Bearer "+token)
+		p.log("uploading new function keys from %s …", ip)
+		resp, err = p.client.Do(req)
+		if err == nil {
+			defer resp.Body.Close()
+		}
+		err = checkResponse(resp, err)
+		if err != nil {
+			p.log("could not upload function keys to %s: %v", ip, err)
+			return "could not upload function keys"
+		}
+		return "function keys updated"
+	}
+	return p.forEachPhoneIn(ip, number, todo)
+}
+
+func (p *PhoneClient) buildNewFunctionKeys(params down.Parameters, original string, replace string) up.FunctionKeys {
+	keys := make([]map[string]string, 0, len(params.FunctionKeys))
+	for index, fnKey := range params.FunctionKeys {
+		var key = map[string]string{}
+		if fnKey.DisplayName.Value == original {
+			key = map[string]string{"DisplayName": replace}
+			p.log("replacing display name \"%s\" of %dth function key with display name \"%s\"", fnKey.DisplayName.Value, index, replace)
+		}
+		keys = append(keys, key)
+	}
+	return up.FunctionKeys{FunctionKeys: keys}
 }
 
 func checkResponse(resp *http.Response, err error) error {

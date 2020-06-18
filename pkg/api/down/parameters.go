@@ -58,10 +58,10 @@ func (f *FunctionKey) String() string {
 }
 
 type Setting struct {
-	Value     string        `json:"value"`
-	Flags     int           `json:"flags"`
-	Validator Validator     `json:"validator"`
-	Options   []interface{} `json:"options"`
+	Value     string      `json:"value"`
+	Flags     int         `json:"flags"`
+	Validator Validator   `json:"validator"`
+	Options   interface{} `json:"options"`
 }
 
 type Validator struct {

@@ -17,7 +17,7 @@ func main() {
 	app.Name = "Elmeg ip620/630 HTTP Configurator"
 	app.Usage = "This application configures some parts of Elmeg ip620/630 telephones"
 
-	var login, password string
+	var login, password, original, replace string
 	var port, timeout int
 	var noLogging bool
 	loginFlag := cli.StringFlag{Name: "login", Value: "Admin", Usage: "The login to be used", Destination: &login}
@@ -27,6 +27,8 @@ func main() {
 	numberFlag := cli.IntFlag{Name: "number", Value: 1, Usage: "The number of phones to contact, including IP"}
 	noLogFlag := cli.BoolFlag{Name: "nolog", Usage: "Disables the logging and only prints the final results", Destination: &noLogging}
 	timeoutFlag := cli.IntFlag{Name: "timeout", Value: 20, Usage: "Number of seconds to wait for remote connection", Destination: &timeout}
+	originalFlag := cli.StringFlag{Name: "original", Value: "", Usage: "The display name to be replaced", Destination: &original, Required: true}
+	replaceFlag := cli.StringFlag{Name: "replace", Value: "", Usage: "The new display name", Destination: &replace, Required: true}
 
 	var phoneClient http2.PhoneClient
 
@@ -91,7 +93,23 @@ func main() {
 		},
 	}
 
-	app.Commands = []cli.Command{scanCommand, phonebookUploadCommand, phonebookDownloadCommand, functionKeysDownloadCommand}
+	functionKeysReplaceCommand := cli.Command{
+		Name:  "fnKeys-replace",
+		Usage: "Replaces display names of function keys from an elmeg ip 620/630 phone",
+		Flags: []cli.Flag{
+			ipFlag,
+			numberFlag,
+			replaceFlag,
+			originalFlag,
+		},
+		Action: func(c *cli.Context) error {
+			result := phoneClient.ReplaceFunctionKeyName(c.String("ip"), c.Int("number"), original, replace)
+			fmt.Printf("%v", result)
+			return nil
+		},
+	}
+
+	app.Commands = []cli.Command{scanCommand, phonebookUploadCommand, phonebookDownloadCommand, functionKeysDownloadCommand, functionKeysReplaceCommand}
 
 	app.Flags = []cli.Flag{loginFlag, passwordFlag, portFlag, timeoutFlag, noLogFlag}
 
