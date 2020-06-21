@@ -2,6 +2,7 @@ package mock
 
 import (
 	"fmt"
+	"github.com/fafeitsch/Tukan/pkg/api/up"
 	"log"
 	"net/http"
 	"strings"
@@ -9,8 +10,9 @@ import (
 
 func StartHandler(port int, login string, password string) {
 	tele := Telephone{
-		Login:    login,
-		Password: password,
+		Login:      login,
+		Password:   password,
+		Parameters: up.Parameters{FunctionKeys: make([]map[string]string, 8)},
 	}
 	http.HandleFunc("/Login", tele.AttemptLogin)
 	http.Handle("/Logout", enforceTokenHandler(&tele, tele.logout))

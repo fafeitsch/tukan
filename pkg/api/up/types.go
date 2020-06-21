@@ -17,6 +17,6 @@ func (f *FunctionKey) String() string {
 	return fmt.Sprintf("DisplayName: %s, Pickup: %s, Number: %s", f.DisplayName, f.CallPickupCode, f.PhoneNumber)
 }
 
-type FunctionKeys struct {
+type Parameters struct {
 	FunctionKeys []map[string]string `json:"FunctionKeys"`
 }

@@ -1,0 +1,30 @@
+POST http://localhost:8080/Login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "login": "Admin",
+  "password": "admin"
+}
+
+> {%client.global.set("token", response.body.token);%}
+
+###
+GET http://localhost:8080/Parameters
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+POST http://localhost:8080/Parameters
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "FunctionKeys": [
+    {},
+    {
+      "DisplayName": "John Doe"
+    }
+  ]
+}

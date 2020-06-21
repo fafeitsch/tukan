@@ -1,6 +1,7 @@
 package mock
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/fafeitsch/Tukan/pkg/api/up"
 	"github.com/fafeitsch/Tukan/pkg/domain"
@@ -115,18 +116,18 @@ func TestTelephone_SaveLocalPhoneBook(t *testing.T) {
 }
 
 func TestTelephone_HandleParameters_GET(t *testing.T) {
-	keys := []up.FunctionKey{
-		{DisplayName: "Shep Alves", PhoneNumber: "854", CallPickupCode: "***"},
-		{DisplayName: "", PhoneNumber: "", CallPickupCode: ""},
-		{DisplayName: "Koren Wolledge", PhoneNumber: "294", CallPickupCode: "##"},
-		{DisplayName: "Ossi Lisimore", PhoneNumber: "929", CallPickupCode: "##"},
-		{DisplayName: "Jordana Jeromson", PhoneNumber: "245", CallPickupCode: "##"},
-		{DisplayName: "", PhoneNumber: "", CallPickupCode: ""},
-		{DisplayName: "", PhoneNumber: "", CallPickupCode: ""},
-		{DisplayName: "", PhoneNumber: "", CallPickupCode: ""},
+	keys := []map[string]string{
+		{"DisplayName": "Shep Alves", "PhoneNumber": "854", "CallPickupCode": "***"},
+		{"DisplayName": "", "PhoneNumber": "", "CallPickupCode": ""},
+		{"DisplayName": "Koren Wolledge", "PhoneNumber": "294", "CallPickupCode": "##"},
+		{"DisplayName": "Ossi Lisimore", "PhoneNumber": "929", "CallPickupCode": "##"},
+		{"DisplayName": "Jordana Jeromson", "PhoneNumber": "245", "CallPickupCode": "##"},
+		{"DisplayName": "", "PhoneNumber": "", "CallPickupCode": ""},
+		{"DisplayName": "", "PhoneNumber": "", "CallPickupCode": ""},
+		{"DisplayName": "", "PhoneNumber": "", "CallPickupCode": ""},
 	}
 	wantBytes, _ := ioutil.ReadFile("../mockdata/parameters.json")
-	telephone := Telephone{Keys: up.FunctionKeys{FunctionKeys: keys}}
+	telephone := Telephone{Parameters: up.Parameters{FunctionKeys: keys}}
 	tests := []struct {
 		name       string
 		method     string
@@ -146,4 +147,49 @@ func TestTelephone_HandleParameters_GET(t *testing.T) {
 			assert.Equal(t, tt.wantMsg, string(data), "received phonebook wrong")
 		})
 	}
+}
+
+func TestTelephone_HandleParameters_POST(t *testing.T) {
+	payload := up.Parameters{FunctionKeys: []map[string]string{{}, {"DisplayName": "Ossi Lisimore"}}}
+	marsh, err := json.Marshal(&payload)
+	require.NoError(t, err, "no error expected")
+	tooLongPayload := up.Parameters{FunctionKeys: []map[string]string{{}, {"DisplayName": "Ossi Lisimore"}, {}, {"PhoneNumber": "10"}}}
+	marshTooLong, err := json.Marshal(&tooLongPayload)
+	require.NoError(t, err, "no error expected")
+	tests := []struct {
+		name        string
+		method      string
+		contentType string
+		payload     string
+		wantStatus  int
+		wantMsg     string
+	}{
+		{name: "success", method: "POST", contentType: "application/json", payload: string(marsh), wantStatus: http.StatusNoContent},
+		{name: "payload too long", method: "POST", contentType: "application/json", payload: string(marshTooLong), wantStatus: http.StatusBadRequest, wantMsg: "the request contained 4 function keys, but the phone only has 2\n"},
+		{name: "wrong media type", method: "POST", contentType: "application/xml", payload: string(marsh), wantStatus: http.StatusUnsupportedMediaType, wantMsg: "contentType \"application/xml\" not supported"},
+		{name: "invalid json", method: "POST", contentType: "application/json", payload: "{", wantStatus: http.StatusBadRequest, wantMsg: "could not deserialize json: unexpected EOF\n"},
+		{name: "double json", method: "POST", contentType: "application/json", payload: "{}{}", wantStatus: http.StatusBadRequest, wantMsg: "request body contained more than one json object, which is not allowed"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			keys := []map[string]string{
+				{"DisplayName": "Shep Alves", "PhoneNumber": "854", "CallPickupCode": "***"},
+				nil,
+			}
+			telephone := Telephone{Parameters: up.Parameters{FunctionKeys: keys}}
+			request := httptest.NewRequest(tt.method, "/Parameters", strings.NewReader(tt.payload))
+			request.Header.Add("Content-Type", tt.contentType)
+			recorder := httptest.NewRecorder()
+			telephone.HandleParameters(recorder, request)
+			status, data := getStatusAndData(recorder)
+			assert.Equal(t, tt.wantStatus, status, "status code is wrong")
+			assert.Equal(t, tt.wantMsg, data, "data is wrong")
+			if status == http.StatusNoContent {
+				assert.Equal(t, "Ossi Lisimore", telephone.Parameters.FunctionKeys[1]["DisplayName"], "display name should be changed")
+			} else {
+				assert.Nil(t, telephone.Parameters.FunctionKeys[1], "display name should not be changed in case of an error")
+			}
+		})
+	}
+
 }

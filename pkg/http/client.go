@@ -203,7 +203,7 @@ func (p *PhoneClient) ReplaceFunctionKeyName(ip string, number int, original str
 	return p.forEachPhoneIn(ip, number, todo)
 }
 
-func (p *PhoneClient) buildNewFunctionKeys(params down.Parameters, original string, replace string) up.FunctionKeys {
+func (p *PhoneClient) buildNewFunctionKeys(params down.Parameters, original string, replace string) up.Parameters {
 	keys := make([]map[string]string, 0, len(params.FunctionKeys))
 	for index, fnKey := range params.FunctionKeys {
 		var key = map[string]string{}
@@ -213,7 +213,7 @@ func (p *PhoneClient) buildNewFunctionKeys(params down.Parameters, original stri
 		}
 		keys = append(keys, key)
 	}
-	return up.FunctionKeys{FunctionKeys: keys}
+	return up.Parameters{FunctionKeys: keys}
 }
 
 func checkResponse(resp *http.Response, err error) error {

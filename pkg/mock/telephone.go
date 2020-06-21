@@ -18,8 +18,7 @@ type Telephone struct {
 	Password   string
 	Token      *string
 	Phonebook  string
-	Keys       up.FunctionKeys
-	Parameters down.Parameters
+	Parameters up.Parameters
 }
 
 func (t *Telephone) AttemptLogin(w http.ResponseWriter, r *http.Request) {
@@ -49,6 +48,7 @@ func (t *Telephone) AttemptLogin(w http.ResponseWriter, r *http.Request) {
 	token := uniuri.NewLen(32)
 	t.Token = &token
 	payload, _ := json.Marshal(down.TokenResponse{Token: token})
+	w.Header().Add("Content-Type", "application/json")
 	_, _ = w.Write(payload)
 }
 
@@ -103,7 +103,8 @@ func (t *Telephone) HandleParameters(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		if r.Header.Get("Content-Type") != "application/json" {
 			w.WriteHeader(http.StatusUnsupportedMediaType)
-			_, _ = fmt.Fprintf(w, "contentType %s not supported", r.Header.Get("contentType"))
+			_, _ = fmt.Fprintf(w, "contentType \"%s\" not supported", r.Header.Get("Content-Type"))
+			return
 		}
 		t.changeFunctionKeys(w, r.Body)
 		break
@@ -116,10 +117,10 @@ func (t *Telephone) HandleParameters(w http.ResponseWriter, r *http.Request) {
 
 func (t *Telephone) changeFunctionKeys(w http.ResponseWriter, body io.ReadCloser) {
 	decoder := json.NewDecoder(body)
-	err := decoder.Decode(&(t.Keys))
+	keys := up.Parameters{}
+	err := decoder.Decode(&(keys))
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprintf(w, err.Error())
+		http.Error(w, fmt.Sprintf("could not deserialize json: %v", err), http.StatusBadRequest)
 		return
 	}
 	if decoder.More() {
@@ -127,17 +128,30 @@ func (t *Telephone) changeFunctionKeys(w http.ResponseWriter, body io.ReadCloser
 		_, _ = fmt.Fprintf(w, "request body contained more than one json object, which is not allowed")
 		return
 	}
-	log.Printf("Received function keys from: %v", t.Keys)
+	if len(t.Parameters.FunctionKeys) < len(keys.FunctionKeys) {
+		msg := fmt.Sprintf("the request contained %d function keys, but the phone only has %d", len(keys.FunctionKeys), len(t.Parameters.FunctionKeys))
+		http.Error(w, msg, http.StatusBadRequest)
+		return
+	}
+	for index, key := range keys.FunctionKeys {
+		if t.Parameters.FunctionKeys[index] == nil {
+			t.Parameters.FunctionKeys[index] = make(map[string]string)
+		}
+		for propertyName, value := range key {
+			t.Parameters.FunctionKeys[index][propertyName] = value
+		}
+	}
+	log.Printf("Received function keys")
 	w.WriteHeader(http.StatusNoContent)
 }
 
 func (t *Telephone) getParameters(w http.ResponseWriter) {
 	parameters := down.Parameters{}
-	keys := make([]down.FunctionKey, 0, len(t.Keys.FunctionKeys))
-	for _, key := range t.Keys.FunctionKeys {
-		number := down.Setting{Value: key.PhoneNumber, Options: []interface{}{}}
-		display := down.Setting{Value: key.DisplayName, Options: []interface{}{}}
-		callpickup := down.Setting{Value: key.CallPickupCode, Options: []interface{}{}}
+	keys := make([]down.FunctionKey, 0, len(t.Parameters.FunctionKeys))
+	for _, key := range t.Parameters.FunctionKeys {
+		number := down.Setting{Value: key["PhoneNumber"], Options: []interface{}{}}
+		display := down.Setting{Value: key["DisplayName"], Options: []interface{}{}}
+		callpickup := down.Setting{Value: key["CallPickupCode"], Options: []interface{}{}}
 		keyType := down.Setting{Value: down.KeyTypeBLF, Options: []interface{}{0, 1, 2, 3, down.KeyTypeBLF, 5, 6, 7}}
 		if number.Value == "" && display.Value == "" {
 			keyType.Value = down.KeyTypeNone
