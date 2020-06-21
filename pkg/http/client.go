@@ -7,6 +7,7 @@ import (
 	"github.com/fafeitsch/Tukan/pkg/api/down"
 	"github.com/fafeitsch/Tukan/pkg/api/up"
 	"github.com/fafeitsch/Tukan/pkg/domain"
+	"github.com/fafeitsch/Tukan/pkg/tukan"
 	"log"
 	"net"
 	"net/http"
@@ -16,19 +17,19 @@ import (
 )
 
 type PhoneClient struct {
-	client  *http.Client
-	port    int
-	tokener tokener
-	Logger  *log.Logger
+	client   *http.Client
+	port     int
+	login    string
+	password string
+	Logger   *log.Logger
 }
 
 func BuildPhoneClient(port int, login string, password string, timeoutSeconds int) PhoneClient {
 	client := &http.Client{
 		Timeout: time.Duration(timeoutSeconds) * time.Second,
 	}
-	tokener := tokenerImpl{port: port, login: login, password: password, client: client}
 	logger := log.New(os.Stdout, "", log.LstdFlags)
-	return PhoneClient{port: port, client: client, tokener: &tokener, Logger: logger}
+	return PhoneClient{port: port, client: client, login: login, password: password, Logger: logger}
 }
 
 func (p *PhoneClient) Scan(ip string, number int) domain.TukanResult {
@@ -75,7 +76,8 @@ func (p *PhoneClient) forEachPhoneIn(ip string, number int, todo func(string, st
 	for i := 0; i < number; i++ {
 		func() {
 			p.log("fetching token for %s…", currentIp.String())
-			token, err := p.tokener.fetchToken(currentIp.String())
+			url := fmt.Sprintf("http://%s:%d", ip, p.port)
+			phone, err := tukan.Connect(p.client, url, p.login, p.password)
 			if err != nil {
 				p.log("fetching token for %s failed: %v", currentIp.String(), err)
 				result[currentIp.String()] = "login failed"
@@ -83,13 +85,13 @@ func (p *PhoneClient) forEachPhoneIn(ip string, number int, todo func(string, st
 			}
 			defer func() {
 				p.log("logging out of %s…", currentIp.String())
-				err := p.tokener.logout(currentIp.String(), *token)
+				err := phone.Logout()
 				if err != nil {
 					p.log("could not logout from %s", currentIp.String())
 					result[currentIp.String()] = "logout failed"
 				}
 			}()
-			msg := todo(currentIp.String(), *token)
+			msg := todo(currentIp.String(), phone.Token())
 			result[currentIp.String()] = msg
 		}()
 		incrementIP(currentIp)

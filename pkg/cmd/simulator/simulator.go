@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"github.com/fafeitsch/Tukan/pkg/mock"
 	"github.com/urfave/cli"
 	"log"
+	"net/http"
 	"os"
 )
 
@@ -27,7 +29,8 @@ func main() {
 	app.HideHelp = true
 	app.Flags = flags
 	app.Action = func(c *cli.Context) error {
-		mock.StartHandler(port, login, password)
+		phone, _ := mock.CreatePhone(login, password)
+		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), phone))
 		return nil
 	}
 

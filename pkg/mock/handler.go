@@ -3,23 +3,24 @@ package mock
 import (
 	"fmt"
 	"github.com/fafeitsch/Tukan/pkg/api/up"
-	"log"
+	"github.com/gorilla/mux"
 	"net/http"
 	"strings"
 )
 
-func StartHandler(port int, login string, password string) {
+func CreatePhone(login string, password string) (http.Handler, *Telephone) {
+	router := mux.NewRouter()
 	tele := Telephone{
 		Login:      login,
 		Password:   password,
 		Parameters: up.Parameters{FunctionKeys: make([]map[string]string, 8)},
 	}
-	http.HandleFunc("/Login", tele.AttemptLogin)
-	http.Handle("/Logout", enforceTokenHandler(&tele, tele.logout))
-	http.Handle("/LocalPhonebook", enforceTokenHandler(&tele, tele.PostPhoneBook))
-	http.Handle("/SaveLocalPhonebook", enforceTokenHandler(&tele, tele.SaveLocalPhoneBook))
-	http.Handle("/Parameters", enforceTokenHandler(&tele, tele.HandleParameters))
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+	router.HandleFunc("/Login", tele.AttemptLogin)
+	router.Handle("/Logout", enforceTokenHandler(&tele, tele.logout))
+	router.Handle("/LocalPhonebook", enforceTokenHandler(&tele, tele.PostPhoneBook))
+	router.Handle("/SaveLocalPhonebook", enforceTokenHandler(&tele, tele.SaveLocalPhoneBook))
+	router.Handle("/Parameters", enforceTokenHandler(&tele, tele.HandleParameters))
+	return router, &tele
 }
 
 func enforceTokenHandler(telephone *Telephone, next http.HandlerFunc) http.Handler {
