@@ -12,7 +12,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -33,27 +32,17 @@ func BuildPhoneClient(port int, login string, password string, timeoutSeconds in
 }
 
 func (p *PhoneClient) Scan(ip string, number int) domain.TukanResult {
-	forEach := func(ip string, token string) string {
-		p.log("%s is reachable and login is possible", ip)
+	forEach := func(phone tukan.Phone) string {
+		p.log("%v is reachable and login is possible", phone)
 		return "phone is reachable, login worked"
 	}
 	result := p.forEachPhoneIn(ip, number, forEach)
 	return result
 }
 
-func (p *PhoneClient) UploadPhoneBook(ip string, number int, payload string, delimiter string) domain.TukanResult {
-	todo := func(ip string, token string) string {
-		url := fmt.Sprintf("http://%s:%d/LocalPhonebook", ip, p.port)
-		req, _ := http.NewRequest("POST", url, strings.NewReader(payload))
-		req.Header.Add("Authorization", "Bearer "+token)
-		multipartHeader := fmt.Sprintf("multipart/form-data; boundary=%s", delimiter)
-		req.Header.Add("Content-Type", multipartHeader)
-		p.log("starting up of phone book to %s", ip)
-		resp, err := p.client.Do(req)
-		if err == nil {
-			defer resp.Body.Close()
-		}
-		err = checkResponse(resp, err)
+func (p *PhoneClient) UploadPhoneBook(ip string, number int, payload string) domain.TukanResult {
+	todo := func(phone tukan.Phone) string {
+		err := phone.UploadPhoneBook(payload)
 		if err != nil {
 			p.log("could not up phone book to %s: %s", ip, err)
 			return "uploading phone book failed"
@@ -70,7 +59,7 @@ func (p *PhoneClient) log(msg string, args ...interface{}) {
 	}
 }
 
-func (p *PhoneClient) forEachPhoneIn(ip string, number int, todo func(string, string) string) domain.TukanResult {
+func (p *PhoneClient) forEachPhoneIn(ip string, number int, todo func(phone tukan.Phone) string) domain.TukanResult {
 	currentIp := net.ParseIP(ip)
 	result := make(map[string]string)
 	for i := 0; i < number; i++ {
@@ -91,7 +80,7 @@ func (p *PhoneClient) forEachPhoneIn(ip string, number int, todo func(string, st
 					result[currentIp.String()] = "logout failed"
 				}
 			}()
-			msg := todo(currentIp.String(), phone.Token())
+			msg := todo(*phone)
 			result[currentIp.String()] = msg
 		}()
 		incrementIP(currentIp)
@@ -110,35 +99,23 @@ func incrementIP(ip net.IP) {
 
 func (p *PhoneClient) DownloadPhoneBook(ip string) (domain.TukanResult, string) {
 	var result string
-	todo := func(ip string, token string) string {
-		url := fmt.Sprintf("http://%s:%d/SaveLocalPhonebook", ip, p.port)
-		req, _ := http.NewRequest("GET", url, nil)
-		req.Header.Add("Authorization", "Bearer "+token)
-		p.log("start phone book download from %s…", ip)
-		resp, err := p.client.Do(req)
-		if err == nil {
-			defer resp.Body.Close()
-		}
-		err = checkResponse(resp, err)
+	todo := func(phone tukan.Phone) string {
+		ptr, err := phone.DownloadPhoneBook()
 		if err != nil {
-			p.log("could not get phone book for %s: %v", ip, err)
-			return "could not get phone book"
+			return "could not get phonebook"
 		}
-		p.log("phone book download from %s successful", ip)
-		buf := new(bytes.Buffer)
-		_, _ = buf.ReadFrom(resp.Body)
-		result = buf.String()
-		return "downloading phone book successful"
+		result = *ptr
+		return "Success"
 	}
 	resultMap := p.forEachPhoneIn(ip, 1, todo)
 	return resultMap, result
 }
 
 func (p *PhoneClient) DownloadFunctionKeys(ip string, number int) domain.TukanResult {
-	todo := func(ip string, token string) string {
-		url := fmt.Sprintf("http://%s:%d/Parameters", ip, p.port)
+	todo := func(phone tukan.Phone) string {
+		url := fmt.Sprintf("%s/Parameters", phone.Host())
 		req, _ := http.NewRequest("GET", url, nil)
-		req.Header.Add("Authorization", "Bearer "+token)
+		req.Header.Add("Authorization", "Bearer "+phone.Token())
 		p.log("start function key download from %s…", ip)
 		resp, err := p.client.Do(req)
 		if err == nil {
@@ -163,25 +140,25 @@ func (p *PhoneClient) DownloadFunctionKeys(ip string, number int) domain.TukanRe
 }
 
 func (p *PhoneClient) ReplaceFunctionKeyName(ip string, number int, original string, replace string) domain.TukanResult {
-	todo := func(ip string, token string) string {
-		url := fmt.Sprintf("http://%s:%d/Parameters", ip, p.port)
+	todo := func(phone tukan.Phone) string {
+		url := fmt.Sprintf("%s/Parameters", phone.Host())
 		req, _ := http.NewRequest("GET", url, nil)
-		req.Header.Add("Authorization", "Bearer "+token)
-		p.log("downloading function keys from %s …", ip)
+		req.Header.Add("Authorization", "Bearer "+phone.Token())
+		p.log("downloading function keys from %s …", phone.Host())
 		resp, err := p.client.Do(req)
 		if err == nil {
 			defer resp.Body.Close()
 		}
 		err = checkResponse(resp, err)
 		if err != nil {
-			p.log("could not get function keys from %s: %v", ip, err)
+			p.log("could not get function keys from %s: %v", phone.Host(), err)
 			return "could not get function keys"
 		}
-		p.log("function keys successfully downloaded from %s", ip)
+		p.log("function keys successfully downloaded from %s", phone.Host())
 		params := down.Parameters{}
 		err = json.NewDecoder(resp.Body).Decode(&params)
 		if err != nil {
-			p.log("error deserializing the function keys from %s: %v", ip, err)
+			p.log("error deserializing the function keys from %s: %v", phone.Host(), err)
 			return "could not deserialize function keys"
 		}
 		params.PurgeTrailingFunctionKeys()
@@ -189,8 +166,8 @@ func (p *PhoneClient) ReplaceFunctionKeyName(ip string, number int, original str
 		payload, _ := json.Marshal(&newKeys)
 		reader := bytes.NewBuffer(payload)
 		req, _ = http.NewRequest("POST", url, reader)
-		req.Header.Add("Authorization", "Bearer "+token)
-		p.log("uploading new function keys from %s …", ip)
+		req.Header.Add("Authorization", "Bearer "+phone.Token())
+		p.log("uploading new function keys from %s …", phone.Host())
 		resp, err = p.client.Do(req)
 		if err == nil {
 			defer resp.Body.Close()

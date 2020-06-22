@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/fafeitsch/Tukan/pkg/api/up"
-	"github.com/fafeitsch/Tukan/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
@@ -61,8 +60,16 @@ func getStatusAndData(recorder *httptest.ResponseRecorder) (int, string) {
 	return response.StatusCode, string(data)
 }
 
+const payloadTemplate = `--%s
+Content-Disposition: form-data; name="file"; filename="LocalPhonebook.xml"
+Content-Type: text/xml
+
+%s
+
+--%s--`
+
 func TestTelephone_PostPhoneBook(t *testing.T) {
-	payload := domain.InsertIntoTemplate("hooray, a phonebook", "BOUNDARY-42")
+	payload := fmt.Sprintf(payloadTemplate, "BOUNDARY-42", "hooray, a phonebook", "BOUNDARY-42")
 	tests := []struct {
 		name       string
 		method     string

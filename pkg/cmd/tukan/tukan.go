@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/fafeitsch/Tukan/pkg/domain"
 	http2 "github.com/fafeitsch/Tukan/pkg/http"
 	"github.com/urfave/cli"
 	"io/ioutil"
@@ -51,16 +50,16 @@ func main() {
 		Usage: "Uploads a phone book to a set of elmeg ip 620/630 phones",
 		Flags: []cli.Flag{
 			cli.StringFlag{Name: "file", Required: true, Usage: "The phone book file to up", TakesFile: true},
-			cli.StringFlag{Name: "delimiter", Usage: "A string that is not contained in the phone book. Needed for the up. Must consist of at most 70 bytes of ASCII printable-characters", Value: "XXXXX"},
 			ipFlag,
 			numberFlag,
 		},
 		Action: func(c *cli.Context) error {
-			payload, err := domain.LoadAndEmbedPhonebook(c.String("file"), c.String("delimiter"))
+			content, err := ioutil.ReadFile(c.String("file"))
 			if err != nil {
-				return fmt.Errorf("could not prepare payload for sending to phones: %v", err)
+				return fmt.Errorf("could not read phone book file %s: %v", c.String("file"), err)
 			}
-			result := phoneClient.UploadPhoneBook(c.String("ip"), c.Int("number"), *payload, c.String("delimiter"))
+			phonebook := string(content)
+			result := phoneClient.UploadPhoneBook(c.String("ip"), c.Int("number"), phonebook)
 			fmt.Printf("%v", result)
 			return nil
 		},
