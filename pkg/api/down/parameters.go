@@ -20,20 +20,6 @@ func (f FunctionKeys) String() string {
 	return strings.Join(keys, ", ")
 }
 
-func (p *Parameters) PurgeTrailingFunctionKeys() {
-	index := len(p.FunctionKeys) - 1
-	for index >= 0 && p.FunctionKeys[index].isEmpty() {
-		index = index - 1
-	}
-	current := 0
-	result := make([]FunctionKey, 0, 8)
-	for current <= index {
-		result = append(result, p.FunctionKeys[current])
-		current = current + 1
-	}
-	p.FunctionKeys = result
-}
-
 type FunctionKey struct {
 	DisplayName    Setting `json:"DisplayName"`
 	PhoneNumber    Setting `json:"PhoneNumber"`
@@ -41,7 +27,7 @@ type FunctionKey struct {
 	Type           Setting `json:"Type"`
 }
 
-func (f *FunctionKey) isEmpty() bool {
+func (f *FunctionKey) IsEmpty() bool {
 	return f.Type.Value == "-1"
 }
 
