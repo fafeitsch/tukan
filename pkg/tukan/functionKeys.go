@@ -12,7 +12,7 @@ import (
 func (p *Phone) DownloadParameters() (*down.Parameters, error) {
 	url := fmt.Sprintf("%s/Parameters", p.address)
 	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Add("Authorization", "Bearer "+p.address)
+	req.Header.Add("Authorization", "Bearer "+p.token)
 	resp, err := p.client.Do(req)
 	if err == nil {
 		defer resp.Body.Close()
@@ -24,12 +24,13 @@ func (p *Phone) DownloadParameters() (*down.Parameters, error) {
 	params := down.Parameters{}
 	err = json.NewDecoder(resp.Body).Decode(&params)
 	if err == nil {
-		purgeTrailingFunctionKeys(params.FunctionKeys)
+		params.FunctionKeys = purgeTrailingFunctionKeys(params.FunctionKeys)
+		return &params, nil
 	}
-	return &params, err
+	return nil, err
 }
 
-func purgeTrailingFunctionKeys(keys down.FunctionKeys) {
+func purgeTrailingFunctionKeys(keys down.FunctionKeys) down.FunctionKeys {
 	index := len(keys) - 1
 	for index >= 0 && keys[index].IsEmpty() {
 		index = index - 1
@@ -40,4 +41,5 @@ func purgeTrailingFunctionKeys(keys down.FunctionKeys) {
 		result = append(result, keys[current])
 		current = current + 1
 	}
+	return result
 }

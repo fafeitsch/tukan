@@ -113,28 +113,11 @@ func (p *PhoneClient) DownloadPhoneBook(ip string) (domain.TukanResult, string) 
 
 func (p *PhoneClient) DownloadFunctionKeys(ip string, number int) domain.TukanResult {
 	todo := func(phone tukan.Phone) string {
-		url := fmt.Sprintf("%s/Parameters", phone.Host())
-		req, _ := http.NewRequest("GET", url, nil)
-		req.Header.Add("Authorization", "Bearer "+phone.Token())
-		p.log("start function key download from %s…", ip)
-		resp, err := p.client.Do(req)
-		if err == nil {
-			defer resp.Body.Close()
-		}
-		err = checkResponse(resp, err)
+		ptr, err := phone.DownloadParameters()
 		if err != nil {
-			p.log("could not get function keys from %s: %v", ip, err)
-			return "could not get function keys"
+			return "could not download function keys"
 		}
-		p.log("function keys successfully downloaded from %s", ip)
-		params := down.Parameters{}
-		err = json.NewDecoder(resp.Body).Decode(&params)
-		if err != nil {
-			p.log("error deserializing the function keys from %s: %v", ip, err)
-			return "could not deserialize function keys"
-		}
-		params.PurgeTrailingFunctionKeys()
-		return params.FunctionKeys.String()
+		return ptr.FunctionKeys.String()
 	}
 	return p.forEachPhoneIn(ip, number, todo)
 }
@@ -161,7 +144,7 @@ func (p *PhoneClient) ReplaceFunctionKeyName(ip string, number int, original str
 			p.log("error deserializing the function keys from %s: %v", phone.Host(), err)
 			return "could not deserialize function keys"
 		}
-		params.PurgeTrailingFunctionKeys()
+		//params.PurgeTrailingFunctionKeys()
 		newKeys := p.buildNewFunctionKeys(params, original, replace)
 		payload, _ := json.Marshal(&newKeys)
 		reader := bytes.NewBuffer(payload)

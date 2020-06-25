@@ -47,7 +47,12 @@ func (t *Telephone) AttemptLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	token := uniuri.NewLen(32)
 	t.Token = &token
-	payload, _ := json.Marshal(down.TokenResponse{Token: token})
+	tokenObject := struct {
+		Token string `json:"token"`
+	}{
+		Token: token,
+	}
+	payload, _ := json.Marshal(tokenObject)
 	w.Header().Add("Content-Type", "application/json")
 	_, _ = w.Write(payload)
 }
