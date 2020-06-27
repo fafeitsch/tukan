@@ -133,7 +133,7 @@ func TestTelephone_HandleParameters_GET(t *testing.T) {
 		{"DisplayName": "", "PhoneNumber": "", "CallPickupCode": ""},
 		{"DisplayName": "", "PhoneNumber": "", "CallPickupCode": ""},
 	}
-	wantBytes, _ := ioutil.ReadFile("../mockdata/parameters.json")
+	wantBytes, _ := ioutil.ReadFile("./mockdata/parameters.json")
 	telephone := Telephone{Parameters: RawParameters{FunctionKeys: keys}}
 	tests := []struct {
 		name       string
