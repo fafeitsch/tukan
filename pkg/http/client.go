@@ -1,8 +1,6 @@
 package http
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"github.com/fafeitsch/Tukan/pkg/api/down"
 	"github.com/fafeitsch/Tukan/pkg/api/up"
@@ -124,43 +122,18 @@ func (p *PhoneClient) DownloadFunctionKeys(ip string, number int) domain.TukanRe
 
 func (p *PhoneClient) ReplaceFunctionKeyName(ip string, number int, original string, replace string) domain.TukanResult {
 	todo := func(phone tukan.Phone) string {
-		url := fmt.Sprintf("%s/Parameters", phone.Host())
-		req, _ := http.NewRequest("GET", url, nil)
-		req.Header.Add("Authorization", "Bearer "+phone.Token())
-		p.log("downloading function keys from %s …", phone.Host())
-		resp, err := p.client.Do(req)
-		if err == nil {
-			defer resp.Body.Close()
-		}
-		err = checkResponse(resp, err)
+		parameters, err := phone.DownloadParameters()
 		if err != nil {
 			p.log("could not get function keys from %s: %v", phone.Host(), err)
 			return "could not get function keys"
 		}
-		p.log("function keys successfully downloaded from %s", phone.Host())
-		params := down.Parameters{}
-		err = json.NewDecoder(resp.Body).Decode(&params)
-		if err != nil {
-			p.log("error deserializing the function keys from %s: %v", phone.Host(), err)
-			return "could not deserialize function keys"
-		}
-		//params.PurgeTrailingFunctionKeys()
-		newKeys := p.buildNewFunctionKeys(params, original, replace)
-		payload, _ := json.Marshal(&newKeys)
-		reader := bytes.NewBuffer(payload)
-		req, _ = http.NewRequest("POST", url, reader)
-		req.Header.Add("Authorization", "Bearer "+phone.Token())
-		p.log("uploading new function keys from %s …", phone.Host())
-		resp, err = p.client.Do(req)
-		if err == nil {
-			defer resp.Body.Close()
-		}
-		err = checkResponse(resp, err)
+		newKeys := p.buildNewFunctionKeys(*parameters, original, replace)
+		err = phone.UploadParameters(newKeys)
 		if err != nil {
 			p.log("could not upload function keys to %s: %v", ip, err)
 			return "could not upload function keys"
 		}
-		return "function keys updated"
+		return "function keys replaced successfully"
 	}
 	return p.forEachPhoneIn(ip, number, todo)
 }

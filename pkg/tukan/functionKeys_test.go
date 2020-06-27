@@ -43,3 +43,30 @@ func TestPhone_DownloadParameters(t *testing.T) {
 		require.Nil(t, got, "result should be nil in case of an error")
 	})
 }
+
+func TestPhone_UploadParameters(t *testing.T) {
+	handler, telephone := mock.CreatePhone(username, password)
+	telephone.Parameters.FunctionKeys[0] = map[string]string{
+		"DisplayName": "Joe",
+	}
+	telephone.Parameters.FunctionKeys[1] = map[string]string{
+		"CallPickUpCode": "***",
+	}
+	keys := []map[string]string{
+		{},
+		{"DisplayName": "Ellen", "PhoneNumber": "42"},
+	}
+	server := httptest.NewServer(handler)
+	defer server.Close()
+	phone, err := Connect(http.DefaultClient, server.URL, username, password)
+	require.NoError(t, err, "no error expected")
+	t.Run("success", func(t *testing.T) {
+		assert.Equal(t, "", telephone.Parameters.FunctionKeys[1]["DisplayName"], "Display name of first function key should be empty before")
+		err = phone.UploadParameters(up.Parameters{FunctionKeys: keys})
+		require.NoError(t, err, "no error is expected")
+		assert.Equal(t, "Joe", telephone.Parameters.FunctionKeys[0]["DisplayName"], "Display name of first function key should not have been changed")
+		assert.Equal(t, "Ellen", telephone.Parameters.FunctionKeys[1]["DisplayName"], "Display name of first function key is wrong")
+		assert.Equal(t, "42", telephone.Parameters.FunctionKeys[1]["PhoneNumber"], "Phone number of first function key is wrong")
+		assert.Equal(t, "***", telephone.Parameters.FunctionKeys[1]["CallPickUpCode"], "CallPickupCode should not have been changed")
+	})
+}

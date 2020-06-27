@@ -1,9 +1,11 @@
 package tukan
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/fafeitsch/Tukan/pkg/api/down"
+	"github.com/fafeitsch/Tukan/pkg/api/up"
 	"net/http"
 )
 
@@ -42,4 +44,18 @@ func purgeTrailingFunctionKeys(keys down.FunctionKeys) down.FunctionKeys {
 		current = current + 1
 	}
 	return result
+}
+
+func (p *Phone) UploadParameters(params up.Parameters) error {
+	url := fmt.Sprintf("%s/Parameters", p.address)
+	payload, _ := json.Marshal(params)
+	reader := bytes.NewBuffer(payload)
+	req, _ := http.NewRequest("POST", url, reader)
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+p.token)
+	resp, err := p.client.Do(req)
+	if err == nil {
+		defer resp.Body.Close()
+	}
+	return checkResponse(resp, err)
 }
