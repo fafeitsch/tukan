@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/fafeitsch/Tukan/pkg/api/down"
-	"github.com/fafeitsch/Tukan/pkg/api/up"
+	"github.com/fafeitsch/Tukan/pkg/tukan/down"
+	"github.com/fafeitsch/Tukan/pkg/tukan/up"
 	"net/http"
 )
 
@@ -46,6 +46,8 @@ func purgeTrailingFunctionKeys(keys down.FunctionKeys) down.FunctionKeys {
 	return result
 }
 
+// Uploads the parameters to the telephone. Returns an error if
+// an error occurred during the request or if the response code was not successful.
 func (p *Phone) UploadParameters(params up.Parameters) error {
 	url := fmt.Sprintf("%s/Parameters", p.address)
 	payload, _ := json.Marshal(params)

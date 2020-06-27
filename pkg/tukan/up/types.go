@@ -8,9 +8,9 @@ type Credentials struct {
 }
 
 type FunctionKey struct {
-	DisplayName    string `json:"DisplayName,omitEmpty"`
-	CallPickupCode string `json:"CallPickupCode,omitEmpty"`
-	PhoneNumber    string `json:"PhoneNumber,omitEmpty"`
+	DisplayName    string `json:"DisplayName,omitempty"`
+	CallPickupCode string `json:"CallPickupCode,omitempty"`
+	PhoneNumber    string `json:"PhoneNumber,omitempty"`
 }
 
 func (f *FunctionKey) String() string {
@@ -18,5 +18,5 @@ func (f *FunctionKey) String() string {
 }
 
 type Parameters struct {
-	FunctionKeys []map[string]string `json:"FunctionKeys"`
+	FunctionKeys []FunctionKey `json:"FunctionKeys"`
 }

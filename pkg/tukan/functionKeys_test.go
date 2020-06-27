@@ -1,8 +1,8 @@
 package tukan
 
 import (
-	"github.com/fafeitsch/Tukan/pkg/api/up"
-	"github.com/fafeitsch/Tukan/pkg/mock"
+	"github.com/fafeitsch/Tukan/pkg/tukan/mock"
+	"github.com/fafeitsch/Tukan/pkg/tukan/up"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -24,7 +24,7 @@ func TestPhone_DownloadParameters(t *testing.T) {
 	defer server.Close()
 	phone, err := Connect(http.DefaultClient, server.URL, username, password)
 	require.NoError(t, err, "no error expected")
-	telephone.Parameters = up.Parameters{FunctionKeys: keys}
+	telephone.Parameters = mock.RawParameters{FunctionKeys: keys}
 	t.Run("success", func(t *testing.T) {
 		got, err := phone.DownloadParameters()
 		require.NoError(t, err, "error should be nil")
@@ -52,9 +52,9 @@ func TestPhone_UploadParameters(t *testing.T) {
 	telephone.Parameters.FunctionKeys[1] = map[string]string{
 		"CallPickUpCode": "***",
 	}
-	keys := []map[string]string{
+	keys := []up.FunctionKey{
 		{},
-		{"DisplayName": "Ellen", "PhoneNumber": "42"},
+		{DisplayName: "Ellen", PhoneNumber: "42"},
 	}
 	server := httptest.NewServer(handler)
 	defer server.Close()

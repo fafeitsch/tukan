@@ -3,7 +3,7 @@ package mock
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/fafeitsch/Tukan/pkg/api/up"
+	"github.com/fafeitsch/Tukan/pkg/tukan/up"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
@@ -39,7 +39,7 @@ func TestTelephone_AttemptLogin(t *testing.T) {
 			telephone := Telephone{Login: "username", Password: "pass"}
 			recorder := httptest.NewRecorder()
 			assert.Nil(t, telephone.Token, "token should be nil before anything happens on it")
-			telephone.AttemptLogin(recorder, request)
+			telephone.attemptLogin(recorder, request)
 			status, data := getStatusAndData(recorder)
 			assert.Equal(t, tt.wantStatus, status, "the status code is wrong")
 			if tt.wantStatus == http.StatusOK {
@@ -90,7 +90,7 @@ func TestTelephone_PostPhoneBook(t *testing.T) {
 			telephone := Telephone{}
 			assert.Empty(t, telephone.Phonebook, "phonebook should be empty before anything happens")
 			recorder := httptest.NewRecorder()
-			telephone.PostPhoneBook(recorder, request)
+			telephone.postPhoneBook(recorder, request)
 			status, data := getStatusAndData(recorder)
 			assert.Equal(t, tt.wantStatus, status, "status code is wrong")
 			assert.Equal(t, tt.wantMsg, string(data), "received payload is wrong")
@@ -114,7 +114,7 @@ func TestTelephone_SaveLocalPhoneBook(t *testing.T) {
 			telephone := Telephone{Phonebook: phonebook}
 			request := httptest.NewRequest(tt.method, "/SaveLocalPhoneBook", strings.NewReader(""))
 			recorder := httptest.NewRecorder()
-			telephone.SaveLocalPhoneBook(recorder, request)
+			telephone.saveLocalPhoneBook(recorder, request)
 			status, data := getStatusAndData(recorder)
 			assert.Equal(t, tt.wantStatus, status, "status code is wrong")
 			assert.Equal(t, tt.wantMsg, string(data), "received phonebook wrong")
@@ -134,7 +134,7 @@ func TestTelephone_HandleParameters_GET(t *testing.T) {
 		{"DisplayName": "", "PhoneNumber": "", "CallPickupCode": ""},
 	}
 	wantBytes, _ := ioutil.ReadFile("../mockdata/parameters.json")
-	telephone := Telephone{Parameters: up.Parameters{FunctionKeys: keys}}
+	telephone := Telephone{Parameters: RawParameters{FunctionKeys: keys}}
 	tests := []struct {
 		name       string
 		method     string
@@ -148,7 +148,7 @@ func TestTelephone_HandleParameters_GET(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest(tt.method, "/Parameters", strings.NewReader(""))
 			recorder := httptest.NewRecorder()
-			telephone.HandleParameters(recorder, request)
+			telephone.handleParameters(recorder, request)
 			status, data := getStatusAndData(recorder)
 			assert.Equal(t, tt.wantStatus, status, "status code is wrong")
 			assert.Equal(t, tt.wantMsg, string(data), "received phonebook wrong")
@@ -157,10 +157,10 @@ func TestTelephone_HandleParameters_GET(t *testing.T) {
 }
 
 func TestTelephone_HandleParameters_POST(t *testing.T) {
-	payload := up.Parameters{FunctionKeys: []map[string]string{{}, {"DisplayName": "Ossi Lisimore"}}}
+	payload := up.Parameters{FunctionKeys: []up.FunctionKey{{}, {DisplayName: "Ossi Lisimore"}}}
 	marsh, err := json.Marshal(&payload)
 	require.NoError(t, err, "no error expected")
-	tooLongPayload := up.Parameters{FunctionKeys: []map[string]string{{}, {"DisplayName": "Ossi Lisimore"}, {}, {"PhoneNumber": "10"}}}
+	tooLongPayload := up.Parameters{FunctionKeys: []up.FunctionKey{{}, {DisplayName: "Ossi Lisimore"}, {}, {PhoneNumber: "10"}}}
 	marshTooLong, err := json.Marshal(&tooLongPayload)
 	require.NoError(t, err, "no error expected")
 	tests := []struct {
@@ -183,15 +183,16 @@ func TestTelephone_HandleParameters_POST(t *testing.T) {
 				{"DisplayName": "Shep Alves", "PhoneNumber": "854", "CallPickupCode": "***"},
 				nil,
 			}
-			telephone := Telephone{Parameters: up.Parameters{FunctionKeys: keys}}
+			telephone := Telephone{Parameters: RawParameters{FunctionKeys: keys}}
 			request := httptest.NewRequest(tt.method, "/Parameters", strings.NewReader(tt.payload))
 			request.Header.Add("Content-Type", tt.contentType)
 			recorder := httptest.NewRecorder()
-			telephone.HandleParameters(recorder, request)
+			telephone.handleParameters(recorder, request)
 			status, data := getStatusAndData(recorder)
 			assert.Equal(t, tt.wantStatus, status, "status code is wrong")
 			assert.Equal(t, tt.wantMsg, data, "data is wrong")
 			if status == http.StatusNoContent {
+				assert.Equal(t, keys[0], telephone.Parameters.FunctionKeys[0], "first entry should not be touched")
 				assert.Equal(t, "Ossi Lisimore", telephone.Parameters.FunctionKeys[1]["DisplayName"], "display name should be changed")
 			} else {
 				assert.Nil(t, telephone.Parameters.FunctionKeys[1], "display name should not be changed in case of an error")

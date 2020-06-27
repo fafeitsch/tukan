@@ -5,23 +5,29 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dchest/uniuri"
-	"github.com/fafeitsch/Tukan/pkg/api/down"
-	"github.com/fafeitsch/Tukan/pkg/api/up"
+	"github.com/fafeitsch/Tukan/pkg/tukan/down"
+	"github.com/fafeitsch/Tukan/pkg/tukan/up"
 	"io"
 	"log"
 	"net/http"
 	"strings"
 )
 
+// A mock telephone for using in test environments. It has similar properties
+// to those of the IP620/630 telephones and can be manipulated directly.
 type Telephone struct {
 	Login      string
 	Password   string
 	Token      *string
 	Phonebook  string
-	Parameters up.Parameters
+	Parameters RawParameters
 }
 
-func (t *Telephone) AttemptLogin(w http.ResponseWriter, r *http.Request) {
+type RawParameters struct {
+	FunctionKeys []map[string]string
+}
+
+func (t *Telephone) attemptLogin(w http.ResponseWriter, r *http.Request) {
 	if fail, status, msg := t.preconditionsFail(r, "application/json", "POST"); fail {
 		w.WriteHeader(status)
 		_, _ = fmt.Fprintf(w, msg)
@@ -68,7 +74,7 @@ func (t *Telephone) preconditionsFail(r *http.Request, contentType string, metho
 	return false, http.StatusOK, ""
 }
 
-func (t *Telephone) PostPhoneBook(w http.ResponseWriter, r *http.Request) {
+func (t *Telephone) postPhoneBook(w http.ResponseWriter, r *http.Request) {
 	if fail, status, msg := t.preconditionsFail(r, "multipart/form-data; boundary=", "POST"); fail {
 		w.WriteHeader(status)
 		_, _ = fmt.Fprintf(w, msg)
@@ -90,7 +96,7 @@ func (t *Telephone) PostPhoneBook(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (t *Telephone) SaveLocalPhoneBook(w http.ResponseWriter, r *http.Request) {
+func (t *Telephone) saveLocalPhoneBook(w http.ResponseWriter, r *http.Request) {
 	if fail, status, msg := t.preconditionsFail(r, "", "GET"); fail {
 		w.WriteHeader(status)
 		_, _ = fmt.Fprintf(w, msg)
@@ -100,7 +106,7 @@ func (t *Telephone) SaveLocalPhoneBook(w http.ResponseWriter, r *http.Request) {
 	_, _ = fmt.Fprintf(w, t.Phonebook)
 }
 
-func (t *Telephone) HandleParameters(w http.ResponseWriter, r *http.Request) {
+func (t *Telephone) handleParameters(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		t.getParameters(w)
@@ -122,7 +128,7 @@ func (t *Telephone) HandleParameters(w http.ResponseWriter, r *http.Request) {
 
 func (t *Telephone) changeFunctionKeys(w http.ResponseWriter, body io.ReadCloser) {
 	decoder := json.NewDecoder(body)
-	keys := up.Parameters{}
+	keys := RawParameters{}
 	err := decoder.Decode(&(keys))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("could not deserialize json: %v", err), http.StatusBadRequest)

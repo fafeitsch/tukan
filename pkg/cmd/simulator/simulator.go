@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/fafeitsch/Tukan/pkg/mock"
+	"github.com/fafeitsch/Tukan/pkg/tukan/mock"
 	"github.com/urfave/cli"
 	"log"
 	"net/http"

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/fafeitsch/Tukan/pkg/tukan/up"
 	"net/http"
 )
 
@@ -23,10 +24,7 @@ type Phone struct {
 // this method returns an error.
 func Connect(client *http.Client, address, username, password string) (*Phone, error) {
 	url := fmt.Sprintf("%s/Login", address)
-	credentials := struct {
-		Login    string `json:"login"`
-		Password string `json:"password"`
-	}{
+	credentials := up.Credentials{
 		Login:    username,
 		Password: password,
 	}

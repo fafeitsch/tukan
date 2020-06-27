@@ -2,10 +2,10 @@ package http
 
 import (
 	"fmt"
-	"github.com/fafeitsch/Tukan/pkg/api/down"
-	"github.com/fafeitsch/Tukan/pkg/api/up"
 	"github.com/fafeitsch/Tukan/pkg/domain"
 	"github.com/fafeitsch/Tukan/pkg/tukan"
+	"github.com/fafeitsch/Tukan/pkg/tukan/down"
+	"github.com/fafeitsch/Tukan/pkg/tukan/up"
 	"log"
 	"net"
 	"net/http"
@@ -139,11 +139,11 @@ func (p *PhoneClient) ReplaceFunctionKeyName(ip string, number int, original str
 }
 
 func (p *PhoneClient) buildNewFunctionKeys(params down.Parameters, original string, replace string) up.Parameters {
-	keys := make([]map[string]string, 0, len(params.FunctionKeys))
+	keys := make([]up.FunctionKey, 0, len(params.FunctionKeys))
 	for index, fnKey := range params.FunctionKeys {
-		var key = map[string]string{}
+		var key = up.FunctionKey{}
 		if fnKey.DisplayName.Value == original {
-			key = map[string]string{"DisplayName": replace}
+			key = up.FunctionKey{DisplayName: replace}
 			p.log("replacing display name \"%s\" of %dth function key with display name \"%s\"", fnKey.DisplayName.Value, index, replace)
 		}
 		keys = append(keys, key)

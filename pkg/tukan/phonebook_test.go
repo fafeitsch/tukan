@@ -1,7 +1,7 @@
 package tukan
 
 import (
-	"github.com/fafeitsch/Tukan/pkg/mock"
+	"github.com/fafeitsch/Tukan/pkg/tukan/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
