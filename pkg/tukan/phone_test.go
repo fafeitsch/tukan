@@ -1,6 +1,7 @@
 package tukan
 
 import (
+	"fmt"
 	"github.com/fafeitsch/Tukan/pkg/tukan/mock"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -8,38 +9,86 @@ import (
 	"testing"
 )
 
+func ExamplePhone() {
+	connector := Connector{Client: http.DefaultClient, UserName: username, Password: password}
+	phone, _ := connector.SingleConnect("http://example.com:8080")
+	book, _ := phone.DownloadPhoneBook()
+	fmt.Print(book)
+}
+
 var password = "ken sent me"
 var username = "larry"
-var token = "abc1234"
 
-func TestConnect(t *testing.T) {
+func TestConnector_SingleConnect(t *testing.T) {
 	handler, telephone := mock.CreatePhone(username, password)
 	server := httptest.NewServer(handler)
 	defer server.Close()
+	connector := Connector{
+		Client:   http.DefaultClient,
+		UserName: username,
+		Password: password,
+	}
 	t.Run("success", func(t *testing.T) {
-		phone, err := Connect(http.DefaultClient, server.URL, username, password)
+		phone, err := connector.SingleConnect(server.URL)
 		assert.NoError(t, err, "no error expected")
 		assert.Equal(t, *telephone.Token, phone.token, "token not equal")
 	})
 	t.Run("invalid logins", func(t *testing.T) {
-		phone, err := Connect(http.DefaultClient, server.URL, "", "")
+		connector.Password = ""
+		phone, err := connector.SingleConnect(server.URL)
 		assert.EqualError(t, err, "authentication error, status code: 403 with message \"403 Forbidden\"", "error message not as expected")
 		assert.Nil(t, phone, "phone should be nil in case of error")
 	})
+}
+
+func TestConnector_MultipleConnect(t *testing.T) {
+	handler1, telephone1 := mock.CreatePhone(username, password)
+	handler2, telephone2 := mock.CreatePhone(username, password)
+	server1 := httptest.NewServer(handler1)
+	defer server1.Close()
+	server2 := httptest.NewServer(handler2)
+	defer server2.Close()
+	connector := Connector{Client: http.DefaultClient, UserName: username, Password: password}
+
+	results := make(chan ConnectResult)
+	connector.MultipleConnect(results, server2.URL, server1.URL, "htp://invalid_url")
+	var firstFound, secondFound, thirdFound bool
+	for result := range results {
+		if result.Phone != nil && result.Phone.address == server1.URL {
+			assert.Equal(t, *telephone1.Token, result.Phone.token, "token of first telephone wrong")
+			firstFound = true
+		}
+		if result.Phone != nil && result.Phone.address == server2.URL {
+			assert.Equal(t, *telephone2.Token, result.Phone.token, "token of second telephone wrong")
+			secondFound = true
+		}
+		if result.Phone == nil {
+			assert.EqualError(t, result.Error, "could not connect to address 2 \"htp://invalid_url\": Post \"htp://invalid_url/Login\": unsupported protocol scheme \"htp\"", "error message of third telephone is wrong")
+			thirdFound = true
+		}
+	}
+	assert.True(t, firstFound, "first telephone must be handled")
+	assert.True(t, secondFound, "second telephone must be handled")
+	assert.True(t, thirdFound, "third (erroneous) telephone must be handled")
 }
 
 func TestPhone_Logout(t *testing.T) {
 	handler, _ := mock.CreatePhone(username, password)
 	server := httptest.NewServer(handler)
 	defer server.Close()
+	connector := Connector{
+		Client:   http.DefaultClient,
+		UserName: username,
+		Password: password,
+	}
 	t.Run("success", func(t *testing.T) {
-		phone, err := Connect(http.DefaultClient, server.URL, username, password)
+		phone, err := connector.SingleConnect(server.URL)
 		assert.NoError(t, err, "no error expected")
 		err = phone.Logout()
 		assert.NoError(t, err, "no error expected")
 	})
 	t.Run("invalid token", func(t *testing.T) {
-		phone, err := Connect(http.DefaultClient, server.URL, username, password)
+		phone, err := connector.SingleConnect(server.URL)
 		assert.NoError(t, err, "no error expected")
 		phone.token = "invalid"
 		err = phone.Logout()

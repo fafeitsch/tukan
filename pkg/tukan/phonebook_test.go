@@ -11,10 +11,11 @@ import (
 
 func TestPhone_UploadPhoneBook(t *testing.T) {
 	handler, telephone := mock.CreatePhone(username, password)
-	srv := httptest.NewServer(handler)
-	defer srv.Close()
+	server := httptest.NewServer(handler)
+	defer server.Close()
 	payloadContent := "<phonebook>some dummy entries</phonebook>"
-	phone, err := Connect(http.DefaultClient, srv.URL, username, password)
+	connector := Connector{Client: http.DefaultClient, UserName: username, Password: password}
+	phone, err := connector.SingleConnect(server.URL)
 	defer func() { _ = phone.Logout() }()
 	require.NoError(t, err, "no error expected")
 	t.Run("success", func(t *testing.T) {
@@ -27,9 +28,10 @@ func TestPhone_UploadPhoneBook(t *testing.T) {
 
 func TestPhone_DownloadPhoneBook(t *testing.T) {
 	handler, telephone := mock.CreatePhone(username, password)
-	srv := httptest.NewServer(handler)
-	defer srv.Close()
-	phone, err := Connect(http.DefaultClient, srv.URL, username, password)
+	server := httptest.NewServer(handler)
+	defer server.Close()
+	connector := Connector{Client: http.DefaultClient, UserName: username, Password: password}
+	phone, err := connector.SingleConnect(server.URL)
 	require.NoError(t, err, "no error expected")
 	telephone.Phonebook = "this is a telephone book"
 	t.Run("success", func(t *testing.T) {

@@ -22,7 +22,8 @@ func TestPhone_DownloadParameters(t *testing.T) {
 	}
 	server := httptest.NewServer(handler)
 	defer server.Close()
-	phone, err := Connect(http.DefaultClient, server.URL, username, password)
+	connector := Connector{Client: http.DefaultClient, UserName: username, Password: password}
+	phone, err := connector.SingleConnect(server.URL)
 	require.NoError(t, err, "no error expected")
 	telephone.Parameters = mock.RawParameters{FunctionKeys: keys}
 	t.Run("success", func(t *testing.T) {
@@ -58,7 +59,8 @@ func TestPhone_UploadParameters(t *testing.T) {
 	}
 	server := httptest.NewServer(handler)
 	defer server.Close()
-	phone, err := Connect(http.DefaultClient, server.URL, username, password)
+	connector := Connector{Client: http.DefaultClient, UserName: username, Password: password}
+	phone, err := connector.SingleConnect(server.URL)
 	require.NoError(t, err, "no error expected")
 	t.Run("success", func(t *testing.T) {
 		assert.Equal(t, "", telephone.Parameters.FunctionKeys[1]["DisplayName"], "Display name of first function key should be empty before")

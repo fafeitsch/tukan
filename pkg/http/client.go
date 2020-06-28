@@ -64,7 +64,8 @@ func (p *PhoneClient) forEachPhoneIn(ip string, number int, todo func(phone tuka
 		func() {
 			p.log("fetching token for %s…", currentIp.String())
 			url := fmt.Sprintf("http://%s:%d", ip, p.port)
-			phone, err := tukan.Connect(p.client, url, p.login, p.password)
+			connector := tukan.Connector{Client: p.client, UserName: p.login, Password: p.password}
+			phone, err := connector.SingleConnect(url)
 			if err != nil {
 				p.log("fetching token for %s failed: %v", currentIp.String(), err)
 				result[currentIp.String()] = "login failed"
