@@ -41,6 +41,30 @@ func TestConnector_SingleConnect(t *testing.T) {
 	})
 }
 
+func ExampleCreateAddresses() {
+	addresses := CreateAddresses("http", "10.1.254.254", 8081, 3)
+	fmt.Printf("Length of addresses is %d.\n", len(addresses))
+	fmt.Printf("%s\n", addresses[0])
+	fmt.Printf("%s\n", addresses[1])
+	fmt.Printf("%s\n", addresses[2])
+	// Output: Length of addresses is 3.
+	// http://10.1.254.254:8081
+	// http://10.1.254.255:8081
+	// http://10.1.255.0:8081
+}
+
+func TestCreateAddresses(t *testing.T) {
+	t.Run("invalid address", func(t *testing.T) {
+		addresses := CreateAddresses("http", "not an ip", 8080, 4)
+		assert.Empty(t, addresses, "addresses should be empty if the ip is not valid")
+	})
+	t.Run("success", func(t *testing.T) {
+		addresses := CreateAddresses("http", "10.1.254.253", 8081, 5)
+		want := []string{"http://10.1.254.253:8081", "http://10.1.254.254:8081", "http://10.1.254.255:8081", "http://10.1.255.0:8081", "http://10.1.255.1:8081"}
+		assert.Equal(t, want, addresses, "generated addresses not correct")
+	})
+}
+
 func TestConnector_MultipleConnect(t *testing.T) {
 	handler1, telephone1 := mock.CreatePhone(username, password)
 	handler2, telephone2 := mock.CreatePhone(username, password)
@@ -50,8 +74,7 @@ func TestConnector_MultipleConnect(t *testing.T) {
 	defer server2.Close()
 	connector := Connector{Client: http.DefaultClient, UserName: username, Password: password}
 
-	results := make(chan ConnectResult)
-	connector.MultipleConnect(results, server2.URL, server1.URL, "htp://invalid_url")
+	results := connector.MultipleConnect(server2.URL, server1.URL, "htp://invalid_url")
 	var firstFound, secondFound, thirdFound bool
 	for result := range results {
 		if result.Phone != nil && result.Phone.address == server1.URL {

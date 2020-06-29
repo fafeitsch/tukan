@@ -5,9 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/fafeitsch/Tukan/pkg/tukan/up"
+	"net"
 	"net/http"
+	"sync"
 )
 
+// A connector is used to obtain a login token from a telephone and
+// perform REST actions on the telephone. The connector can be used to either
+// connect to only one telephone or to a bunch of telephones at the same time.
 type Connector struct {
 	Client   *http.Client
 	UserName string
@@ -44,12 +49,44 @@ func (c *Connector) SingleConnect(address string) (*Phone, error) {
 	}, nil
 }
 
+// Creates number addresses to connect to phones. This first address is given by startIp, which
+// is always inclusive. If the startIp is not a valid IP, then an empty slice is returned.
+// The resulting slice can be used in the MultipleConnect function of the Connector.
+//
+// Attention: This method does not contain any IP sub net logic, it just increments the ip addresses
+// "stupidly": IP addresses like 10.20.30.255 or 10.20.255.0 may occur, and depending on the subnet
+// these are valid host IP addresses or not. The method never returns syntactically wrong IP addresses.
+func CreateAddresses(protocol, startIp string, port, number int) []string {
+	incrementIp := func(ip net.IP) {
+		for j := len(ip) - 1; j >= 0; j-- {
+			ip[j]++
+			if ip[j] > 0 {
+				break
+			}
+		}
+	}
+	currentIp := net.ParseIP(startIp)
+	if currentIp == nil {
+		return []string{}
+	}
+	result := make([]string, 0, number)
+	for i := 0; i < number; i++ {
+		address := fmt.Sprintf("%s://%s:%d", protocol, currentIp.String(), port)
+		result = append(result, address)
+		incrementIp(currentIp)
+	}
+	return result
+}
+
 // Result type for a multiple connect request. It carries either a phone or an error.
 // The intention behind this struct is to simulate a channel having two types.
 type ConnectResult struct {
-	Phone *Phone
-	Error error
+	Address string
+	Phone   *Phone
+	Error   error
 }
+
+type ConnectResults chan ConnectResult
 
 // Connects to all phones given by the addresses parameter parallely and
 // returns the results in the channel. Depending on how fast the real telephones answer
@@ -58,29 +95,29 @@ type ConnectResult struct {
 //
 // This method returns immediately; the results channel is closed once all telephones
 // have been contacted.
-func (c *Connector) MultipleConnect(results chan<- ConnectResult, addresses ...string) {
-	done := make(chan bool)
+func (c *Connector) MultipleConnect(addresses ...string) ConnectResults {
+	var wg sync.WaitGroup
+	results := make(chan ConnectResult)
 	for index, address := range addresses {
+		wg.Add(1)
 		go func(index int, address string) {
+			defer wg.Done()
 			phone, err := c.SingleConnect(address)
 			if err != nil {
 				err = fmt.Errorf("could not connect to address %d \"%s\": %v", index, address, err)
 			}
 			results <- ConnectResult{
-				Phone: phone,
-				Error: err,
+				Address: address,
+				Phone:   phone,
+				Error:   err,
 			}
-			done <- true
 		}(index, address)
 	}
 	go func() {
-		finished := 0
-		for finished < len(addresses) {
-			<-done
-			finished = finished + 1
-		}
+		wg.Wait()
 		close(results)
 	}()
+	return results
 }
 
 // A phone represents a http Client that talks to exactly on
