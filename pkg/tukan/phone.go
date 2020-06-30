@@ -80,13 +80,13 @@ func CreateAddresses(protocol, startIp string, port, number int) []string {
 
 // Result type for a multiple connect request. It carries either a phone or an error.
 // The intention behind this struct is to simulate a channel having two types.
-type ConnectResult struct {
+type Connection struct {
 	Address string
 	Phone   *Phone
 	Error   error
 }
 
-type ConnectResults chan ConnectResult
+type Connections chan Connection
 
 // Connects to all phones given by the addresses parameter parallely and
 // returns the results in the channel. Depending on how fast the real telephones answer
@@ -95,9 +95,9 @@ type ConnectResults chan ConnectResult
 //
 // This method returns immediately; the results channel is closed once all telephones
 // have been contacted.
-func (c *Connector) MultipleConnect(addresses ...string) ConnectResults {
+func (c *Connector) MultipleConnect(addresses ...string) Connections {
 	var wg sync.WaitGroup
-	results := make(chan ConnectResult)
+	results := make(chan Connection)
 	for index, address := range addresses {
 		wg.Add(1)
 		go func(index int, address string) {
@@ -106,7 +106,7 @@ func (c *Connector) MultipleConnect(addresses ...string) ConnectResults {
 			if err != nil {
 				err = fmt.Errorf("could not connect to address %d \"%s\": %v", index, address, err)
 			}
-			results <- ConnectResult{
+			results <- Connection{
 				Address: address,
 				Phone:   phone,
 				Error:   err,
@@ -152,4 +152,63 @@ func (p *Phone) Logout() error {
 		p.token = ""
 	}
 	return err
+}
+
+// SimpleResult represents the result of connecting to a telephone. In
+// this simple case, the result just has the address, a boolean indicator whether
+// the request was successful, and a comment.
+type SimpleResult struct {
+	Address string
+	Success bool
+	Comment string
+}
+
+// Returns textual representation of the result. Suitable for printing on command line.
+func (s *SimpleResult) String() string {
+	return fmt.Sprintf("%s: %t (%s)", s.Address, s.Success, s.Comment)
+}
+
+// Examines all connections coming in to the Connections type. This method returns immediately and reports
+// its results via the returned channel.
+//
+// For established connections,a logout is attempted. If the logout is successful, a successful
+// result is emitted over the returned channel,
+// otherwise an unsuccessful result is emitted with a comment to the cause of the failure.
+func (p Connections) Scan() chan SimpleResult {
+	result := make(chan SimpleResult)
+	singleAction := func(connection Connection) {
+		scanResult := SimpleResult{Address: connection.Address}
+		if connection.Phone != nil && connection.Error == nil {
+			err := connection.Phone.Logout()
+			if err == nil {
+				scanResult.Success = true
+				scanResult.Comment = "connection established and login successful"
+			} else {
+				scanResult.Comment = fmt.Sprintf("connection established and login successful, but logout not: %v", err)
+			}
+		} else {
+			scanResult.Comment = fmt.Sprintf("could not connect: %v", connection.Error)
+		}
+		result <- scanResult
+	}
+	end := func() {
+		close(result)
+	}
+	go p.loop(singleAction, end)
+	return result
+}
+
+func (p Connections) loop(singleAction func(connection Connection), end func()) {
+	var wg sync.WaitGroup
+	for connection := range p {
+		wg.Add(1)
+		go func(connection Connection) {
+			defer wg.Done()
+			singleAction(connection)
+		}(connection)
+	}
+	go func() {
+		wg.Wait()
+		end()
+	}()
 }

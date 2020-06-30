@@ -1,55 +1,11 @@
 package http
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"log"
 	"net/http"
-	"os"
 	"testing"
 )
-
-func prepareLogger() *bytes.Buffer {
-	logger := &bytes.Buffer{}
-	log.SetOutput(logger)
-	log.SetFlags(0)
-	return logger
-}
-
-func resetLogger() {
-	log.SetFlags(log.LstdFlags)
-	log.SetOutput(os.Stdout)
-}
-
-func TestPhoneClient_Scan(t *testing.T) {
-	t.SkipNow()
-	pc := BuildPhoneClient(8080, "username", "password", 5)
-	logWriter := &bytes.Buffer{}
-	logger := log.New(logWriter, "LOGGING ", 0)
-	pc.Logger = logger
-	result := pc.Scan("10.10.40.1", 4)
-	require.Equal(t, 4, len(result), "number of results not correct")
-	require.Equal(t, "phone is reachable, login worked", result["10.10.40.1"], "result of 10.10.40.1 incorrect")
-	require.Equal(t, "login failed", result["10.10.40.2"], "result of 10.10.40.2 incorrect")
-	require.Equal(t, "phone is reachable, login worked", result["10.10.40.3"], "result of 10.10.40.3 incorrect")
-	require.Equal(t, "logout failed", result["10.10.40.4"], "result of 10.10.40.4 incorrect")
-	want := `LOGGING fetching token for 10.10.40.1…
-LOGGING 10.10.40.1 is reachable and login is possible
-LOGGING logging out of 10.10.40.1…
-LOGGING fetching token for 10.10.40.2…
-LOGGING fetching token for 10.10.40.2 failed: authentication failed
-LOGGING fetching token for 10.10.40.3…
-LOGGING 10.10.40.3 is reachable and login is possible
-LOGGING logging out of 10.10.40.3…
-LOGGING fetching token for 10.10.40.4…
-LOGGING 10.10.40.4 is reachable and login is possible
-LOGGING logging out of 10.10.40.4…
-LOGGING could not logout from 10.10.40.4
-`
-	require.Equal(t, want, logWriter.String(), "logger output wrong")
-}
 
 func TestCheckResponse(t *testing.T) {
 	tests := []struct {

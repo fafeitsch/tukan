@@ -29,15 +29,6 @@ func BuildPhoneClient(port int, login string, password string, timeoutSeconds in
 	return PhoneClient{port: port, client: client, login: login, password: password, Logger: logger}
 }
 
-func (p *PhoneClient) Scan(ip string, number int) domain.TukanResult {
-	forEach := func(phone tukan.Phone) string {
-		p.log("%v is reachable and login is possible", phone)
-		return "phone is reachable, login worked"
-	}
-	result := p.forEachPhoneIn(ip, number, forEach)
-	return result
-}
-
 func (p *PhoneClient) UploadPhoneBook(ip string, number int, payload string) domain.TukanResult {
 	todo := func(phone tukan.Phone) string {
 		err := phone.UploadPhoneBook(payload)

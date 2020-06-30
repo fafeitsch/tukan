@@ -118,3 +118,54 @@ func TestPhone_Logout(t *testing.T) {
 		assert.EqualError(t, err, "authentication error, status code: 401 with message \"401 Unauthorized\"", "no error expected")
 	})
 }
+
+func TestConnectResults_Scan(t *testing.T) {
+	handler1, _ := mock.CreatePhone(username, password)
+	handler2, _ := mock.CreatePhone(username, password)
+	handler3, _ := mock.CreatePhone("abc", "123")
+	server1 := httptest.NewServer(handler1)
+	defer server1.Close()
+	server2 := httptest.NewServer(handler2)
+	defer server2.Close()
+	server3 := httptest.NewServer(handler3)
+	defer server3.Close()
+
+	connector := Connector{UserName: username, Password: password, Client: http.DefaultClient}
+	channel := connector.MultipleConnect(server1.URL, server2.URL, server3.URL)
+	transformed := make(Connections)
+	got := transformed.Scan()
+	for connectionResult := range channel {
+		if connectionResult.Address == server2.URL {
+			connectionResult.Phone.token = "faked"
+		}
+		transformed <- connectionResult
+	}
+	close(transformed)
+	var phone1, phone2, phone3 bool
+	counter := 0
+	for result := range got {
+		switch result.Address {
+		case server1.URL:
+			assert.True(t, result.Success, "the first telephone should be scanned successfully")
+			assert.Equal(t, "connection established and login successful", result.Comment, "comment of first telephone is wrong")
+			phone1 = true
+			break
+		case server2.URL:
+			assert.False(t, result.Success, "the second telephone should not be scanned successfully")
+			assert.Equal(t, "connection established and login successful, but logout not: authentication error, status code: 401 with message \"401 Unauthorized\"", result.Comment, "comment of the second telephone is wrong")
+			phone2 = true
+			break
+		case server3.URL:
+			assert.False(t, result.Success, "the third telephone should not be scanned successfully")
+			expected := fmt.Sprintf("could not connect: could not connect to address 2 \"%s\": authentication error, status code: 403 with message \"403 Forbidden\"", server3.URL)
+			assert.Equal(t, expected, result.Comment, "comment of the third telephone is wrong")
+			phone3 = true
+			break
+		}
+		counter = counter + 1
+	}
+	assert.True(t, phone1, "first phone should be detected")
+	assert.True(t, phone2, "second phone should be detected")
+	assert.True(t, phone3, "third phone should be detected")
+	assert.Equal(t, 3, counter, "there should be exactly three scan results")
+}

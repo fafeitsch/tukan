@@ -9,6 +9,14 @@ import (
 	"os"
 )
 
+const loginFlagName = "login"
+const passwordFlagName = "password"
+const ipFlagName = "ip"
+const numberFlagName = "number"
+const portFlagName = "port"
+const timeoutFlagName = "timeout"
+const verboseFlagName = "verbose"
+
 func main() {
 	app := cli.NewApp()
 	app.Version = "1.0.0"
@@ -19,30 +27,23 @@ func main() {
 	var login, password, original, replace string
 	var port, timeout int
 	var noLogging bool
-	loginFlag := cli.StringFlag{Name: "login", Value: "Admin", Usage: "The login to be used", Destination: &login}
-	passwordFlag := cli.StringFlag{Name: "password", Value: "admin", Usage: "The password to be used", Destination: &password}
-	portFlag := cli.IntFlag{Name: "port", Value: 80, Usage: "The port to be used to connect to the telephones", Destination: &port}
-	ipFlag := cli.StringFlag{Name: "ip", Required: true, Usage: "The IP of the first phone to interact with"}
-	numberFlag := cli.IntFlag{Name: "number", Value: 1, Usage: "The number of phones to contact, including IP"}
-	noLogFlag := cli.BoolFlag{Name: "nolog", Usage: "Disables the logging and only prints the final results", Destination: &noLogging}
-	timeoutFlag := cli.IntFlag{Name: "timeout", Value: 20, Usage: "Number of seconds to wait for remote connection", Destination: &timeout}
+
+	loginFlag := cli.StringFlag{Name: loginFlagName, Value: "Admin", Usage: "The login to be used", Destination: &login}
+	passwordFlag := cli.StringFlag{Name: passwordFlagName, Value: "admin", Usage: "The password to be used", Destination: &password}
+	portFlag := cli.IntFlag{Name: portFlagName, Value: 80, Usage: "The port to be used to connect to the telephones", Destination: &port}
+	ipFlag := cli.StringFlag{Name: ipFlagName, Required: true, Usage: "The IP of the first phone to interact with"}
+	numberFlag := cli.IntFlag{Name: numberFlagName, Value: 1, Usage: "The number of phones to contact, including IP"}
+	noLogFlag := cli.BoolFlag{Name: verboseFlagName, Usage: "Disables the logging and only prints the final results", Destination: &noLogging}
+	timeoutFlag := cli.IntFlag{Name: timeoutFlagName, Value: 20, Usage: "Number of seconds to wait for remote connection", Destination: &timeout}
 	originalFlag := cli.StringFlag{Name: "original", Value: "", Usage: "The display name to be replaced", Destination: &original, Required: true}
 	replaceFlag := cli.StringFlag{Name: "replace", Value: "", Usage: "The new display name", Destination: &replace, Required: true}
 
 	var phoneClient http2.PhoneClient
 
 	scanCommand := cli.Command{
-		Name:  "scan",
-		Usage: "Scans an IP range for elmeg ip620/630 and tries to log into them",
-		Flags: []cli.Flag{
-			numberFlag,
-			ipFlag,
-		},
-		Action: func(c *cli.Context) error {
-			result := phoneClient.Scan(c.String("ip"), c.Int(numberFlag.Name))
-			fmt.Printf("%v", result)
-			return nil
-		},
+		Name:   "scan",
+		Usage:  "Scans an IP range for elmeg ip620/630 and tries to log into them",
+		Action: scan,
 	}
 
 	phonebookUploadCommand := cli.Command{
@@ -110,7 +111,7 @@ func main() {
 
 	app.Commands = []cli.Command{scanCommand, phonebookUploadCommand, phonebookDownloadCommand, functionKeysDownloadCommand, functionKeysReplaceCommand}
 
-	app.Flags = []cli.Flag{loginFlag, passwordFlag, portFlag, timeoutFlag, noLogFlag}
+	app.Flags = []cli.Flag{loginFlag, passwordFlag, portFlag, timeoutFlag, noLogFlag, ipFlag, numberFlag}
 
 	app.Before = func(context *cli.Context) error {
 		phoneClient = http2.BuildPhoneClient(port, login, password, timeout)
