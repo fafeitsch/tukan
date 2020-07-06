@@ -157,7 +157,7 @@ func TestConnectResults_Scan(t *testing.T) {
 			break
 		case server3.URL:
 			assert.False(t, result.Success, "the third telephone should not be scanned successfully")
-			expected := fmt.Sprintf("could not connect: could not connect to address 2 \"%s\": authentication error, status code: 403 with message \"403 Forbidden\"", server3.URL)
+			expected := fmt.Sprintf("could not connect to address 2 \"%s\": authentication error, status code: 403 with message \"403 Forbidden\"", server3.URL)
 			assert.Equal(t, expected, result.Comment, "comment of the third telephone is wrong")
 			phone3 = true
 			break
@@ -168,4 +168,19 @@ func TestConnectResults_Scan(t *testing.T) {
 	assert.True(t, phone2, "second phone should be detected")
 	assert.True(t, phone3, "third phone should be detected")
 	assert.Equal(t, 3, counter, "there should be exactly three scan results")
+}
+
+func ExampleExpandAddresses() {
+	addresses := ExpandAddresses("http", "127.0.0.1", "not an ip", "10.20.30.40+2", "20.20.20.20:8080+1", "30.30.30.30:1234")
+	for _, address := range addresses {
+		fmt.Printf("%s\n", address)
+	}
+	// Output: http://127.0.0.1:80
+	// not an ip
+	// http://10.20.30.40:80
+	// http://10.20.30.41:80
+	// http://10.20.30.42:80
+	// http://20.20.20.20:8080
+	// http://20.20.20.21:8080
+	// http://30.30.30.30:1234
 }

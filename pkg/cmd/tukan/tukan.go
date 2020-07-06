@@ -31,7 +31,7 @@ func main() {
 	loginFlag := cli.StringFlag{Name: loginFlagName, Value: "Admin", Usage: "The login to be used", Destination: &login}
 	passwordFlag := cli.StringFlag{Name: passwordFlagName, Value: "admin", Usage: "The password to be used", Destination: &password}
 	portFlag := cli.IntFlag{Name: portFlagName, Value: 80, Usage: "The port to be used to connect to the telephones", Destination: &port}
-	ipFlag := cli.StringFlag{Name: ipFlagName, Required: true, Usage: "The IP of the first phone to interact with"}
+	ipFlag := cli.StringFlag{Name: ipFlagName, Required: false, Usage: "The IP of the first phone to interact with"}
 	numberFlag := cli.IntFlag{Name: numberFlagName, Value: 1, Usage: "The number of phones to contact, including IP"}
 	noLogFlag := cli.BoolFlag{Name: verboseFlagName, Usage: "Disables the logging and only prints the final results", Destination: &noLogging}
 	timeoutFlag := cli.IntFlag{Name: timeoutFlagName, Value: 20, Usage: "Number of seconds to wait for remote connection", Destination: &timeout}

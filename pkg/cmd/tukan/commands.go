@@ -11,14 +11,11 @@ import (
 )
 
 func connectToPhones(context *cli.Context) tukan.Connections {
-	firstIp := context.GlobalString(ipFlagName)
-	number := context.GlobalInt(numberFlagName)
 	login := context.GlobalString(loginFlagName)
 	password := context.GlobalString(passwordFlagName)
-	port := context.GlobalInt(portFlagName)
 	timeout := context.GlobalInt(timeoutFlagName)
 	connector := tukan.Connector{Client: &http.Client{Timeout: time.Duration(timeout) * time.Second}, UserName: login, Password: password}
-	addresses := tukan.CreateAddresses("http", firstIp, port, number)
+	addresses := tukan.ExpandAddresses("http", context.Args()...)
 	return connector.MultipleConnect(addresses...)
 }
 
@@ -30,7 +27,7 @@ func scan(context *cli.Context) {
 	results := make([]tukan.SimpleResult, 0, number)
 	for result := range channel {
 		if verbose {
-			fmt.Printf("%s\n", result.String())
+			_, _ = fmt.Fprintf(context.App.Writer, "%s\n", result.String())
 		}
 		results = append(results, result)
 	}
@@ -38,9 +35,9 @@ func scan(context *cli.Context) {
 		return strings.Compare(results[i].Address, results[j].Address) <= 0
 	})
 	if verbose {
-		fmt.Printf("\n")
+		_, _ = fmt.Fprint(context.App.Writer, "\n")
 	}
 	for _, result := range results {
-		fmt.Printf("%s\n", result.String())
+		_, _ = fmt.Fprintf(context.App.Writer, "%s\n", result.String())
 	}
 }

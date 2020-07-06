@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/fafeitsch/Tukan/pkg/tukan/up"
+	"math"
 	"net"
 	"net/http"
+	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -47,6 +50,41 @@ func (c *Connector) SingleConnect(address string) (*Phone, error) {
 		token:   tokenResp.Token,
 		address: address,
 	}, nil
+}
+
+// Expands IP Addresses. If an passed address cannot be parsed, then it is returned as is.
+func ExpandAddresses(protocol string, addresses ...string) []string {
+	result := make([]string, 0, len(addresses))
+	for _, originalAddress := range addresses {
+		address, port, number := splitAddress(originalAddress)
+		created := CreateAddresses(protocol, address, port, number+1)
+		for _, expanded := range created {
+			result = append(result, expanded)
+		}
+		if len(created) == 0 {
+			result = append(result, originalAddress)
+		}
+	}
+	return result
+}
+
+func splitAddress(address string) (string, int, int) {
+	modifier := strings.Index(address, "+")
+	number := 0
+	if modifier != -1 {
+		number, _ = strconv.Atoi(address[modifier+1:])
+		number = int(math.Max(float64(number), 0))
+	} else {
+		modifier = len(address)
+	}
+	colon := strings.Index(address, ":")
+	port := 80
+	if colon != -1 {
+		port, _ = strconv.Atoi(address[colon+1 : modifier])
+	} else {
+		colon = modifier
+	}
+	return address[0:colon], port, number
 }
 
 // Creates number addresses to connect to phones. This first address is given by startIp, which
@@ -187,7 +225,7 @@ func (p Connections) Scan() chan SimpleResult {
 				scanResult.Comment = fmt.Sprintf("connection established and login successful, but logout not: %v", err)
 			}
 		} else {
-			scanResult.Comment = fmt.Sprintf("could not connect: %v", connection.Error)
+			scanResult.Comment = connection.Error.Error()
 		}
 		result <- scanResult
 	}
