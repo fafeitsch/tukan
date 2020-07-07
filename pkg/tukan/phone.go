@@ -117,7 +117,7 @@ func CreateAddresses(protocol, startIp string, port, number int) []string {
 }
 
 // Result type for a multiple connect request. It carries either a phone or an error.
-// The intention behind this struct is to simulate a channel having two types.
+// The intention behind this struct is to simulate a channel having several types.
 type Connection struct {
 	Address string
 	Phone   *Phone

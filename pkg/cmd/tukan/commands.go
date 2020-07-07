@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/fafeitsch/Tukan/pkg/tukan"
 	"github.com/urfave/cli"
+	"io/ioutil"
 	"net/http"
 	"sort"
 	"strings"
@@ -20,11 +21,13 @@ func connectToPhones(context *cli.Context) tukan.Connections {
 }
 
 func scan(context *cli.Context) {
-	verbose := context.GlobalBool(verboseFlagName)
-	number := context.GlobalInt(numberFlagName)
-
 	channel := connectToPhones(context).Scan()
-	results := make([]tukan.SimpleResult, 0, number)
+	handleSimpleResults(channel, context)
+}
+
+func handleSimpleResults(channel chan tukan.SimpleResult, context *cli.Context) {
+	verbose := context.GlobalBool(verboseFlagName)
+	results := make([]tukan.SimpleResult, 0, 0)
 	for result := range channel {
 		if verbose {
 			_, _ = fmt.Fprintf(context.App.Writer, "%s\n", result.String())
@@ -40,4 +43,17 @@ func scan(context *cli.Context) {
 	for _, result := range results {
 		_, _ = fmt.Fprintf(context.App.Writer, "%s\n", result.String())
 	}
+}
+
+func uploadPhoneBook(context *cli.Context) {
+	file := context.String(fileFlagName)
+
+	content, err := ioutil.ReadFile(file)
+	if err != nil {
+		_, _ = fmt.Fprintf(context.App.Writer, "could not load phone book file: %v", err)
+		return
+	}
+
+	channel := connectToPhones(context).UploadPhoneBook(string(content))
+	handleSimpleResults(channel, context)
 }

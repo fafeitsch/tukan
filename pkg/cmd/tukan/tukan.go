@@ -16,6 +16,7 @@ const numberFlagName = "number"
 const portFlagName = "port"
 const timeoutFlagName = "timeout"
 const verboseFlagName = "verbose"
+const fileFlagName = "file"
 
 func main() {
 	app := cli.NewApp()
@@ -33,7 +34,7 @@ func main() {
 	portFlag := cli.IntFlag{Name: portFlagName, Value: 80, Usage: "The port to be used to connect to the telephones", Destination: &port}
 	ipFlag := cli.StringFlag{Name: ipFlagName, Required: false, Usage: "The IP of the first phone to interact with"}
 	numberFlag := cli.IntFlag{Name: numberFlagName, Value: 1, Usage: "The number of phones to contact, including IP"}
-	noLogFlag := cli.BoolFlag{Name: verboseFlagName, Usage: "Disables the logging and only prints the final results", Destination: &noLogging}
+	verboseFlag := cli.BoolFlag{Name: verboseFlagName, Usage: "Disables the logging and only prints the final results", Destination: &noLogging}
 	timeoutFlag := cli.IntFlag{Name: timeoutFlagName, Value: 20, Usage: "Number of seconds to wait for remote connection", Destination: &timeout}
 	originalFlag := cli.StringFlag{Name: "original", Value: "", Usage: "The display name to be replaced", Destination: &original, Required: true}
 	replaceFlag := cli.StringFlag{Name: "replace", Value: "", Usage: "The new display name", Destination: &replace, Required: true}
@@ -46,24 +47,13 @@ func main() {
 		Action: scan,
 	}
 
-	phonebookUploadCommand := cli.Command{
+	phoneBookUploadCommand := cli.Command{
 		Name:  "pb-up",
 		Usage: "Uploads a phone book to a set of elmeg ip 620/630 phones",
 		Flags: []cli.Flag{
-			cli.StringFlag{Name: "file", Required: true, Usage: "The phone book file to up", TakesFile: true},
-			ipFlag,
-			numberFlag,
+			cli.StringFlag{Name: fileFlagName, Required: true, Usage: "The phone book file to up", TakesFile: true},
 		},
-		Action: func(c *cli.Context) error {
-			content, err := ioutil.ReadFile(c.String("file"))
-			if err != nil {
-				return fmt.Errorf("could not read phone book file %s: %v", c.String("file"), err)
-			}
-			phonebook := string(content)
-			result := phoneClient.UploadPhoneBook(c.String("ip"), c.Int("number"), phonebook)
-			fmt.Printf("%v", result)
-			return nil
-		},
+		Action: uploadPhoneBook,
 	}
 
 	phonebookDownloadCommand := cli.Command{
@@ -109,9 +99,9 @@ func main() {
 		},
 	}
 
-	app.Commands = []cli.Command{scanCommand, phonebookUploadCommand, phonebookDownloadCommand, functionKeysDownloadCommand, functionKeysReplaceCommand}
+	app.Commands = []cli.Command{scanCommand, phoneBookUploadCommand, phonebookDownloadCommand, functionKeysDownloadCommand, functionKeysReplaceCommand}
 
-	app.Flags = []cli.Flag{loginFlag, passwordFlag, portFlag, timeoutFlag, noLogFlag, ipFlag, numberFlag}
+	app.Flags = []cli.Flag{loginFlag, passwordFlag, portFlag, timeoutFlag, verboseFlag, ipFlag, numberFlag}
 
 	app.Before = func(context *cli.Context) error {
 		phoneClient = http2.BuildPhoneClient(port, login, password, timeout)

@@ -141,33 +141,26 @@ func TestConnectResults_Scan(t *testing.T) {
 		transformed <- connectionResult
 	}
 	close(transformed)
-	var phone1, phone2, phone3 bool
+	want1 := SimpleResult{Address: server1.URL, Success: true, Comment: "connection established and login successful"}
+	want2 := SimpleResult{Address: server2.URL, Success: false, Comment: "connection established and login successful, but logout not: authentication error, status code: 401 with message \"401 Unauthorized\""}
+	want3 := SimpleResult{Address: server3.URL, Success: false, Comment: fmt.Sprintf("could not connect to address 2 \"%s\": authentication error, status code: 403 with message \"403 Forbidden\"", server3.URL)}
+	checkSimpleResults(t, got, want1, want2, want3)
+}
+
+func checkSimpleResults(t *testing.T, got chan SimpleResult, results ...SimpleResult) {
+	urlMap := make(map[string]SimpleResult)
+	for _, result := range results {
+		urlMap[result.Address] = result
+	}
 	counter := 0
 	for result := range got {
-		switch result.Address {
-		case server1.URL:
-			assert.True(t, result.Success, "the first telephone should be scanned successfully")
-			assert.Equal(t, "connection established and login successful", result.Comment, "comment of first telephone is wrong")
-			phone1 = true
-			break
-		case server2.URL:
-			assert.False(t, result.Success, "the second telephone should not be scanned successfully")
-			assert.Equal(t, "connection established and login successful, but logout not: authentication error, status code: 401 with message \"401 Unauthorized\"", result.Comment, "comment of the second telephone is wrong")
-			phone2 = true
-			break
-		case server3.URL:
-			assert.False(t, result.Success, "the third telephone should not be scanned successfully")
-			expected := fmt.Sprintf("could not connect to address 2 \"%s\": authentication error, status code: 403 with message \"403 Forbidden\"", server3.URL)
-			assert.Equal(t, expected, result.Comment, "comment of the third telephone is wrong")
-			phone3 = true
-			break
-		}
+		want, ok := urlMap[result.Address]
+		assert.True(t, ok, "only known addresses should occur in channel, but got this one: %s", result.Address)
+		assert.Equal(t, want.Success, result.Success, "success of address %s differs", result.Address)
+		assert.Equal(t, want.Comment, result.Comment, "comment of address %s differs", result.Address)
 		counter = counter + 1
 	}
-	assert.True(t, phone1, "first phone should be detected")
-	assert.True(t, phone2, "second phone should be detected")
-	assert.True(t, phone3, "third phone should be detected")
-	assert.Equal(t, 3, counter, "there should be exactly three scan results")
+	assert.Equal(t, len(results), counter, "number of got results is wrong")
 }
 
 func ExampleExpandAddresses() {

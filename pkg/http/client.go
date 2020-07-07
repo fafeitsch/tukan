@@ -29,19 +29,6 @@ func BuildPhoneClient(port int, login string, password string, timeoutSeconds in
 	return PhoneClient{port: port, client: client, login: login, password: password, Logger: logger}
 }
 
-func (p *PhoneClient) UploadPhoneBook(ip string, number int, payload string) domain.TukanResult {
-	todo := func(phone tukan.Phone) string {
-		err := phone.UploadPhoneBook(payload)
-		if err != nil {
-			p.log("could not up phone book to %s: %s", ip, err)
-			return "uploading phone book failed"
-		}
-		p.log("uploaded phone book successfully to %s", ip)
-		return "uploading phone book successful"
-	}
-	return p.forEachPhoneIn(ip, number, todo)
-}
-
 func (p *PhoneClient) log(msg string, args ...interface{}) {
 	if p.Logger != nil {
 		p.Logger.Printf(msg, args...)

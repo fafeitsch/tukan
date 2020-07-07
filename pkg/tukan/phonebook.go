@@ -42,6 +42,8 @@ func (p *Phone) UploadPhoneBook(payload string) error {
 	return err
 }
 
+// Downloads the phone book from the telephone. In case of an error
+// the returned string is nil.
 func (p *Phone) DownloadPhoneBook() (*string, error) {
 	url := fmt.Sprintf("%s/SaveLocalPhonebook", p.address)
 	req, _ := http.NewRequest("GET", url, nil)
@@ -58,4 +60,40 @@ func (p *Phone) DownloadPhoneBook() (*string, error) {
 	_, _ = buf.ReadFrom(resp.Body)
 	result := buf.String()
 	return &result, nil
+}
+
+// Uploads the given payload to the phone book endpoint of every telephone that
+// comes into the connection channel. This function returns immediately and reports
+// the results of the uploads by means of the returned channel. The channel is closed
+// once the connections channel is closed.
+//
+// The function only uploads the string and does not check the string for valid XML format.
+// The behaviour of the telephone is undefined when unproper content is uploaded. This method does
+// not check the format of the payload.
+func (c Connections) UploadPhoneBook(payload string) chan SimpleResult {
+	result := make(chan SimpleResult)
+	singleAction := func(connection Connection) {
+		phoneResult := SimpleResult{Address: connection.Address}
+		if connection.Phone == nil {
+			phoneResult.Comment = connection.Error.Error()
+			result <- phoneResult
+			return
+		}
+		err := connection.Phone.UploadPhoneBook(payload)
+		logoutErr := connection.Phone.Logout()
+		if err != nil {
+			phoneResult.Comment = err.Error()
+		} else if logoutErr != nil {
+			phoneResult.Comment = "Upload worked, but logout failed: " + logoutErr.Error()
+		} else {
+			phoneResult.Success = true
+			phoneResult.Comment = "Upload successful"
+		}
+		result <- phoneResult
+	}
+	end := func() {
+		close(result)
+	}
+	go c.loop(singleAction, end)
+	return result
 }
