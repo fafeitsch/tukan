@@ -97,3 +97,40 @@ func (c Connections) UploadPhoneBook(payload string) chan SimpleResult {
 	go c.loop(singleAction, end)
 	return result
 }
+
+type PhoneBookResult struct {
+	SimpleResult
+	PhoneBook *string
+}
+
+// Uses the connection to download the phone books from the telephone. The method
+// returns immediately and its results are reported via the returned channel.
+func (c Connections) DownloadPhoneBook() chan PhoneBookResult {
+	result := make(chan PhoneBookResult)
+	singleAction := func(connection Connection) {
+		phoneResult := PhoneBookResult{SimpleResult: SimpleResult{Address: connection.Address}}
+		if connection.Phone == nil {
+			phoneResult.Comment = connection.Error.Error()
+			result <- phoneResult
+			return
+		}
+		book, err := connection.Phone.DownloadPhoneBook()
+		logoutErr := connection.Phone.Logout()
+		if err != nil {
+			phoneResult.Comment = err.Error()
+		} else if logoutErr != nil {
+			phoneResult.PhoneBook = book
+			phoneResult.Comment = "Downloaded phonebook, but logout failed: " + logoutErr.Error()
+		} else {
+			phoneResult.Success = true
+			phoneResult.PhoneBook = book
+			phoneResult.Comment = "Download successful"
+		}
+		result <- phoneResult
+	}
+	end := func() {
+		close(result)
+	}
+	go c.loop(singleAction, end)
+	return result
+}

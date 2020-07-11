@@ -3,10 +3,16 @@ package main
 import (
 	"bytes"
 	"flag"
+	"fmt"
 	"github.com/fafeitsch/Tukan/pkg/tukan/mock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli"
+	"io/ioutil"
+	"math/rand"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -83,4 +89,31 @@ func TestUploadPhoneBook(t *testing.T) {
 		uploadPhoneBook(ctx)
 		assert.Equal(t, "could not load phone book file: open ./test-resources/not-existing.txt: no such file or directory", buff.String(), "result message in case of error wrong")
 	})
+}
+
+func TestDownloadPhoneBook(t *testing.T) {
+	handler1, phone1 := mock.CreatePhone(username, password)
+	phone1.Phonebook = "phone book of telephone 1"
+	server1 := httptest.NewServer(handler1)
+	defer server1.Close()
+
+	flags := flag.NewFlagSet("", flag.PanicOnError)
+	flags.String(loginFlagName, username, "")
+	flags.String(passwordFlagName, password, "")
+	_ = flags.Parse([]string{server1.URL})
+
+	var buff bytes.Buffer
+	number := rand.Int()
+	tmpDir := filepath.Join(os.TempDir(), fmt.Sprintf("tukan-test%d", number))
+	defer func() { _ = os.RemoveAll(tmpDir) }()
+	flags.String(targetDirFlagName, tmpDir, "")
+	ctx := cli.NewContext(&cli.App{Writer: &buff}, flags, nil)
+	downloadPhoneBook(ctx)
+	got := strings.Split(buff.String(), "\n")
+
+	assert.Equal(t, 1, len(got)-1, "expected two lines of result")
+	assert.Equal(t, server1.URL+": true (Download successful)", got[0], "message of first download is wrong")
+	fileContent, err := ioutil.ReadFile(filepath.Join(tmpDir, fileName(server1.URL)))
+	require.NoError(t, err, "reading the file should not give an error")
+	assert.Equal(t, phone1.Phonebook, string(fileContent), "file content is wrong")
 }

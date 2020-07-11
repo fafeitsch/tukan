@@ -17,6 +17,7 @@ const portFlagName = "port"
 const timeoutFlagName = "timeout"
 const verboseFlagName = "verbose"
 const fileFlagName = "file"
+const targetDirFlagName = "targetDir"
 
 func main() {
 	app := cli.NewApp()
@@ -51,7 +52,7 @@ func main() {
 		Name:  "pb-up",
 		Usage: "Uploads a phone book to a set of elmeg ip 620/630 phones",
 		Flags: []cli.Flag{
-			cli.StringFlag{Name: fileFlagName, Required: true, Usage: "The phone book file to up", TakesFile: true},
+			cli.StringFlag{Name: fileFlagName, Required: true, Usage: "The phone book file to be loaded up.", TakesFile: true},
 		},
 		Action: uploadPhoneBook,
 	}
@@ -60,13 +61,9 @@ func main() {
 		Name:  "pb-down",
 		Usage: "Downloads a phone book from a elmeg ip 620/630 phone",
 		Flags: []cli.Flag{
-			cli.StringFlag{Name: "ip", Required: true, Usage: "The IP of the phone to download to phonebook from."},
+			cli.StringFlag{Name: targetDirFlagName, Required: true, Usage: "The directory where the downloaded phonebooks are saved."},
 		},
-		Action: func(c *cli.Context) error {
-			_, down := phoneClient.DownloadPhoneBook(c.String("ip"))
-			fmt.Printf(down)
-			return nil
-		},
+		Action: downloadPhoneBook,
 	}
 
 	functionKeysDownloadCommand := cli.Command{

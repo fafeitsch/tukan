@@ -74,20 +74,6 @@ func incrementIP(ip net.IP) {
 	}
 }
 
-func (p *PhoneClient) DownloadPhoneBook(ip string) (domain.TukanResult, string) {
-	var result string
-	todo := func(phone tukan.Phone) string {
-		ptr, err := phone.DownloadPhoneBook()
-		if err != nil {
-			return "could not get phonebook"
-		}
-		result = *ptr
-		return "Success"
-	}
-	resultMap := p.forEachPhoneIn(ip, 1, todo)
-	return resultMap, result
-}
-
 func (p *PhoneClient) DownloadFunctionKeys(ip string, number int) domain.TukanResult {
 	todo := func(phone tukan.Phone) string {
 		ptr, err := phone.DownloadParameters()

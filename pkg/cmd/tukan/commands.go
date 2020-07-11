@@ -6,8 +6,12 @@ import (
 	"github.com/urfave/cli"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -56,4 +60,45 @@ func uploadPhoneBook(context *cli.Context) {
 
 	channel := connectToPhones(context).UploadPhoneBook(string(content))
 	handleSimpleResults(channel, context)
+}
+
+func downloadPhoneBook(context *cli.Context) {
+	targetDirectory := context.String(targetDirFlagName)
+	err := os.MkdirAll(targetDirectory, os.ModePerm)
+	if err != nil {
+		_, _ = fmt.Fprintf(context.App.Writer, "could not create target directory: %v", err)
+		return
+	}
+	channel := connectToPhones(context).DownloadPhoneBook()
+	simpleResults := make(chan tukan.SimpleResult)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		handleSimpleResults(simpleResults, context)
+	}()
+	writeErrors := make([]string, 0, 0)
+	for phoneBookResult := range channel {
+		simpleResults <- phoneBookResult.SimpleResult
+		if phoneBookResult.PhoneBook != nil {
+			fileName := fileName(phoneBookResult.Address)
+			path := filepath.Join(targetDirectory, fileName)
+			err := ioutil.WriteFile(path, []byte(*phoneBookResult.PhoneBook), os.ModePerm)
+			if err != nil {
+				writeErrors = append(writeErrors, err.Error())
+			}
+		}
+	}
+	close(simpleResults)
+	if len(writeErrors) != 0 {
+		_, _ = fmt.Fprintf(context.App.Writer, "There were errors writing the files:\n: %s", strings.Join(writeErrors, "\n"))
+	}
+	wg.Wait()
+}
+
+func fileName(address string) string {
+	regex := regexp.MustCompile("https?://")
+	result := regex.ReplaceAllString(address, "")
+	result = strings.ReplaceAll(result, ":", "_")
+	return "phonebook_" + result + ".xml"
 }
