@@ -74,20 +74,24 @@ func TestConnector_MultipleConnect(t *testing.T) {
 	defer server2.Close()
 	connector := Connector{Client: http.DefaultClient, UserName: username, Password: password}
 
-	results := connector.MultipleConnect(server2.URL, server1.URL, "htp://invalid_url")
 	var firstFound, secondFound, thirdFound bool
-	for result := range results {
-		if result.Phone != nil && result.Phone.address == server1.URL {
-			assert.Equal(t, *telephone1.Token, result.Phone.token, "token of first telephone wrong")
-			firstFound = true
-		}
-		if result.Phone != nil && result.Phone.address == server2.URL {
-			assert.Equal(t, *telephone2.Token, result.Phone.token, "token of second telephone wrong")
-			secondFound = true
-		}
-		if result.Phone == nil {
-			assert.EqualError(t, result.Error, "could not connect to address 2 \"htp://invalid_url\": Post \"htp://invalid_url/Login\": unsupported protocol scheme \"htp\"", "error message of third telephone is wrong")
+	onError := func(result *PhoneResult) {
+		if result.Address == "htp://invalid_url" {
+			assert.EqualError(t, result.Error, "Post \"htp://invalid_url/Login\": unsupported protocol scheme \"htp\"", "error message of third telephone is wrong")
 			thirdFound = true
+		}
+	}
+
+	results := connector.MultipleConnect(onError, server2.URL, server1.URL, "htp://invalid_url")
+	for result := range results {
+		if result.address == server1.URL {
+			assert.Equal(t, *telephone1.Token, result.token, "token of first telephone wrong")
+			firstFound = true
+		} else if result.address == server2.URL {
+			assert.Equal(t, *telephone2.Token, result.token, "token of second telephone wrong")
+			secondFound = true
+		} else {
+			assert.Fail(t, "unkown address %s", result.address)
 		}
 	}
 	assert.True(t, firstFound, "first telephone must be handled")
@@ -117,50 +121,6 @@ func TestPhone_Logout(t *testing.T) {
 		err = phone.Logout()
 		assert.EqualError(t, err, "authentication error, status code: 401 with message \"401 Unauthorized\"", "no error expected")
 	})
-}
-
-func TestConnectResults_Scan(t *testing.T) {
-	handler1, _ := mock.CreatePhone(username, password)
-	handler2, _ := mock.CreatePhone(username, password)
-	handler3, _ := mock.CreatePhone("abc", "123")
-	server1 := httptest.NewServer(handler1)
-	defer server1.Close()
-	server2 := httptest.NewServer(handler2)
-	defer server2.Close()
-	server3 := httptest.NewServer(handler3)
-	defer server3.Close()
-
-	connector := Connector{UserName: username, Password: password, Client: http.DefaultClient}
-	channel := connector.MultipleConnect(server1.URL, server2.URL, server3.URL)
-	transformed := make(Connections)
-	got := transformed.Scan()
-	for connectionResult := range channel {
-		if connectionResult.Address == server2.URL {
-			connectionResult.Phone.token = "faked"
-		}
-		transformed <- connectionResult
-	}
-	close(transformed)
-	want1 := SimpleResult{Address: server1.URL, Success: true, Comment: "connection established and login successful"}
-	want2 := SimpleResult{Address: server2.URL, Success: false, Comment: "connection established and login successful, but logout not: authentication error, status code: 401 with message \"401 Unauthorized\""}
-	want3 := SimpleResult{Address: server3.URL, Success: false, Comment: fmt.Sprintf("could not connect to address 2 \"%s\": authentication error, status code: 403 with message \"403 Forbidden\"", server3.URL)}
-	checkSimpleResults(t, got, want1, want2, want3)
-}
-
-func checkSimpleResults(t *testing.T, got chan SimpleResult, results ...SimpleResult) {
-	urlMap := make(map[string]SimpleResult)
-	for _, result := range results {
-		urlMap[result.Address] = result
-	}
-	counter := 0
-	for result := range got {
-		want, ok := urlMap[result.Address]
-		assert.True(t, ok, "only known addresses should occur in channel, but got this one: %s", result.Address)
-		assert.Equal(t, want.Success, result.Success, "success of address %s differs", result.Address)
-		assert.Equal(t, want.Comment, result.Comment, "comment of address %s differs", result.Address)
-		counter = counter + 1
-	}
-	assert.Equal(t, len(results), counter, "number of got results is wrong")
 }
 
 func ExampleExpandAddresses() {

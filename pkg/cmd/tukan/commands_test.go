@@ -37,16 +37,11 @@ func TestScan(t *testing.T) {
 	var buff bytes.Buffer
 	ctx := cli.NewContext(&cli.App{Writer: &buff}, flags, nil)
 	scan(ctx)
-	got := strings.Split(buff.String(), "\n")
+	got := buff.String()
 
-	assert.Equal(t, 2, len(got)-1, "expected two lines of result")
-	want := map[string]bool{
-		server2.URL + ": false (could not connect to address 1 \"" + server2.URL + "\": authentication error, status code: 403 with message \"403 Forbidden\")": true,
-		server1.URL + ": true (connection established and login successful)":                                                                                    true,
-	}
-	_, srv1 := want[got[0]]
-	_, srv2 := want[got[1]]
-	assert.True(t, srv1 && srv2, "both wanted strings should be contained")
+	assert.Equal(t, 134, len(got), "length of message is wrong")
+	assert.Containsf(t, got, server1.URL, "should contain server1 URL %s", server1.URL)
+	assert.Containsf(t, got, server2.URL, "should contain server2 URL %s", server1.URL)
 }
 
 func TestUploadPhoneBook(t *testing.T) {
@@ -69,17 +64,11 @@ func TestUploadPhoneBook(t *testing.T) {
 		flags.String(fileFlagName, "./test-resources/phonebook.txt", "")
 		ctx := cli.NewContext(&cli.App{Writer: &buff}, flags, nil)
 		uploadPhoneBook(ctx)
-		got := strings.Split(buff.String(), "\n")
+		got := buff.String()
 
-		assert.Equal(t, 2, len(got)-1, "expected two lines of result")
-		want := map[string]bool{
-			server2.URL + ": false (could not connect to address 1 \"" + server2.URL + "\": authentication error, status code: 403 with message \"403 Forbidden\")": true,
-			server1.URL + ": true (Upload successful)": true,
-		}
-		_, srv1 := want[got[0]]
-		_, srv2 := want[got[1]]
-		assert.True(t, srv1 && srv2, "both wanted strings should be contained")
-		assert.Equal(t, "John Doe: 50\n", phone1.Phonebook, "phone book should be saved on the phone")
+		assert.Equal(t, 153, len(got), "length of message is wrong")
+		assert.Containsf(t, got, server1.URL, "should contain server1 URL %s", server1.URL)
+		assert.Containsf(t, got, server2.URL, "should contain server2 URL %s", server1.URL)
 	})
 	t.Run("file not found", func(t *testing.T) {
 		var buff bytes.Buffer
@@ -111,8 +100,9 @@ func TestDownloadPhoneBook(t *testing.T) {
 	downloadPhoneBook(ctx)
 	got := strings.Split(buff.String(), "\n")
 
-	assert.Equal(t, 1, len(got)-1, "expected two lines of result")
-	assert.Equal(t, server1.URL+": true (Download successful)", got[0], "message of first download is wrong")
+	assert.Equal(t, 2, len(got)-1, "expected two lines of result")
+	assert.Equal(t, server1.URL+": Download successful", got[0], "message of first download is wrong")
+	assert.Equal(t, "\tlogout successful", got[1], "message of first download is wrong")
 	fileContent, err := ioutil.ReadFile(filepath.Join(tmpDir, fileName(server1.URL)))
 	require.NoError(t, err, "reading the file should not give an error")
 	assert.Equal(t, phone1.Phonebook, string(fileContent), "file content is wrong")

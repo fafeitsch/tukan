@@ -124,7 +124,19 @@ type Connection struct {
 	Error   error
 }
 
-type Connections chan Connection
+type Connections chan *Phone
+
+type PhoneResult struct {
+	Comment string
+	Address string
+	Error   error
+}
+
+func (p *PhoneResult) String() string {
+	return fmt.Sprintf("%s: %t (%s)", p.Address, p.Error == nil, p.Comment)
+}
+
+type ResultCallback func(p *PhoneResult)
 
 // Connects to all phones given by the addresses parameter parallely and
 // returns the results in the channel. Depending on how fast the real telephones answer
@@ -132,23 +144,20 @@ type Connections chan Connection
 // from the order defined in the addresses parameter.
 //
 // This method returns immediately; the results channel is closed once all telephones
-// have been contacted.
-func (c *Connector) MultipleConnect(addresses ...string) Connections {
+// have been contacted. Erroneous connections are reported asynchronously via the onError callback.
+func (c *Connector) MultipleConnect(onError ResultCallback, addresses ...string) Connections {
 	var wg sync.WaitGroup
-	results := make(chan Connection)
+	results := make(chan *Phone)
 	for index, address := range addresses {
 		wg.Add(1)
 		go func(index int, address string) {
 			defer wg.Done()
 			phone, err := c.SingleConnect(address)
 			if err != nil {
-				err = fmt.Errorf("could not connect to address %d \"%s\": %v", index, address, err)
+				onError(&PhoneResult{Comment: err.Error(), Error: err, Address: address})
+				return
 			}
-			results <- Connection{
-				Address: address,
-				Phone:   phone,
-				Error:   err,
-			}
+			results <- phone
 		}(index, address)
 	}
 	go func() {
@@ -166,6 +175,7 @@ type Phone struct {
 	client  *http.Client
 	token   string
 	address string
+	invalid bool
 }
 
 func (p *Phone) Host() string {
@@ -192,57 +202,32 @@ func (p *Phone) Logout() error {
 	return err
 }
 
-// SimpleResult represents the result of connecting to a telephone. In
-// this simple case, the result just has the address, a boolean indicator whether
-// the request was successful, and a comment.
-type SimpleResult struct {
-	Address string
-	Success bool
-	Comment string
-}
-
-// Returns textual representation of the result. Suitable for printing on command line.
-func (s *SimpleResult) String() string {
-	return fmt.Sprintf("%s: %t (%s)", s.Address, s.Success, s.Comment)
-}
-
-// Examines all connections coming in to the Connections type. This method returns immediately and reports
-// its results via the returned channel.
-//
-// For established connections,a logout is attempted. If the logout is successful, a successful
-// result is emitted over the returned channel,
-// otherwise an unsuccessful result is emitted with a comment to the cause of the failure.
-func (p Connections) Scan() chan SimpleResult {
-	result := make(chan SimpleResult)
-	singleAction := func(connection Connection) {
-		scanResult := SimpleResult{Address: connection.Address}
-		if connection.Phone != nil && connection.Error == nil {
-			err := connection.Phone.Logout()
-			if err == nil {
-				scanResult.Success = true
-				scanResult.Comment = "connection established and login successful"
+// Logouts from all phones in the channel and blocks until the channel is closed.
+// Results (successful and erroneous) are reported asynchronously via the callback.
+func (p Connections) Logout(onFinish ResultCallback) {
+	var wg sync.WaitGroup
+	for phone := range p {
+		wg.Add(1)
+		go func(phone *Phone) {
+			defer wg.Done()
+			err := phone.Logout()
+			if err != nil {
+				onFinish(&PhoneResult{Comment: err.Error(), Address: phone.address, Error: err})
 			} else {
-				scanResult.Comment = fmt.Sprintf("connection established and login successful, but logout not: %v", err)
+				onFinish(&PhoneResult{Comment: "logout successful", Address: phone.address})
 			}
-		} else {
-			scanResult.Comment = connection.Error.Error()
-		}
-		result <- scanResult
+		}(phone)
 	}
-	end := func() {
-		close(result)
-	}
-	go p.loop(singleAction, end)
-	return result
+	wg.Wait()
 }
 
-func (p Connections) loop(singleAction func(connection Connection), end func()) {
+func (p Connections) loop(singleAction func(phone *Phone), end func()) {
 	var wg sync.WaitGroup
 	for connection := range p {
 		wg.Add(1)
-		go func(connection Connection) {
+		go func(phone *Phone) {
 			defer wg.Done()
-			singleAction(connection)
+			singleAction(phone)
 		}(connection)
 	}
 	go func() {

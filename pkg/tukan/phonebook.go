@@ -64,32 +64,22 @@ func (p *Phone) DownloadPhoneBook() (*string, error) {
 
 // Uploads the given payload to the phone book endpoint of every telephone that
 // comes into the connection channel. This function returns immediately and reports
-// the results of the uploads by means of the returned channel. The channel is closed
-// once the connections channel is closed.
+// the results of the uploads by means of the onProcess callback.
 //
 // The function only uploads the string and does not check the string for valid XML format.
 // The behaviour of the telephone is undefined when unproper content is uploaded. This method does
 // not check the format of the payload.
-func (c Connections) UploadPhoneBook(payload string) chan SimpleResult {
-	result := make(chan SimpleResult)
-	singleAction := func(connection Connection) {
-		phoneResult := SimpleResult{Address: connection.Address}
-		if connection.Phone == nil {
-			phoneResult.Comment = connection.Error.Error()
-			result <- phoneResult
-			return
-		}
-		err := connection.Phone.UploadPhoneBook(payload)
-		logoutErr := connection.Phone.Logout()
+func (c Connections) UploadPhoneBook(onProcess ResultCallback, payload string) Connections {
+	result := make(Connections)
+	singleAction := func(phone *Phone) {
+		err := phone.UploadPhoneBook(payload)
 		if err != nil {
-			phoneResult.Comment = err.Error()
-		} else if logoutErr != nil {
-			phoneResult.Comment = "Upload worked, but logout failed: " + logoutErr.Error()
+			phoneResult := PhoneResult{Address: phone.address, Comment: err.Error()}
+			onProcess(&phoneResult)
 		} else {
-			phoneResult.Success = true
-			phoneResult.Comment = "Upload successful"
+			onProcess(&PhoneResult{Address: phone.address, Comment: "Upload successful"})
 		}
-		result <- phoneResult
+		result <- phone
 	}
 	end := func() {
 		close(result)
@@ -99,34 +89,26 @@ func (c Connections) UploadPhoneBook(payload string) chan SimpleResult {
 }
 
 type PhoneBookResult struct {
-	SimpleResult
-	PhoneBook *string
+	Address   string
+	PhoneBook string
 }
 
 // Uses the connection to download the phone books from the telephone. The method
-// returns immediately and its results are reported via the returned channel.
-func (c Connections) DownloadPhoneBook() chan PhoneBookResult {
-	result := make(chan PhoneBookResult)
-	singleAction := func(connection Connection) {
-		phoneResult := PhoneBookResult{SimpleResult: SimpleResult{Address: connection.Address}}
-		if connection.Phone == nil {
-			phoneResult.Comment = connection.Error.Error()
-			result <- phoneResult
-			return
-		}
-		book, err := connection.Phone.DownloadPhoneBook()
-		logoutErr := connection.Phone.Logout()
+// returns immediately. The onProcess callback is called for every tried phone, independently of
+// the download success. The onSuccess callback is called for those phones of which the phone book
+// could be downloaded successfully.
+func (c Connections) DownloadPhoneBook(onProcess ResultCallback, onSuccess func(result *PhoneBookResult)) Connections {
+	result := make(Connections)
+	singleAction := func(phone *Phone) {
+		book, err := phone.DownloadPhoneBook()
 		if err != nil {
-			phoneResult.Comment = err.Error()
-		} else if logoutErr != nil {
-			phoneResult.PhoneBook = book
-			phoneResult.Comment = "Downloaded phonebook, but logout failed: " + logoutErr.Error()
+			phoneResult := PhoneResult{Address: phone.address, Comment: err.Error(), Error: err}
+			onProcess(&phoneResult)
 		} else {
-			phoneResult.Success = true
-			phoneResult.PhoneBook = book
-			phoneResult.Comment = "Download successful"
+			onProcess(&PhoneResult{Address: phone.address, Comment: "Download successful"})
+			onSuccess(&PhoneBookResult{Address: phone.address, PhoneBook: *book})
 		}
-		result <- phoneResult
+		result <- phone
 	}
 	end := func() {
 		close(result)
