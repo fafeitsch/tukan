@@ -61,3 +61,22 @@ func (p *Phone) UploadParameters(params up.Parameters) error {
 	}
 	return checkResponse(resp, err)
 }
+
+func (c Connections) UploadParameters(onProcess ResultCallback, params up.Parameters) Connections {
+	result := make(Connections)
+	singleAction := func(phone *Phone) {
+		err := phone.UploadParameters(params)
+		if err != nil {
+			result := PhoneResult{Address: phone.address, Comment: err.Error(), Error: err}
+			onProcess(&result)
+		} else {
+			onProcess(&PhoneResult{Address: phone.address, Comment: "Function keys uploaded"})
+		}
+		result <- phone
+	}
+	onEnd := func() {
+		close(result)
+	}
+	c.loop(singleAction, onEnd)
+	return result
+}
