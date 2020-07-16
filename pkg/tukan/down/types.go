@@ -2,11 +2,26 @@ package down
 
 import (
 	"fmt"
+	"github.com/fafeitsch/Tukan/pkg/tukan/up"
 	"strings"
 )
 
 type Parameters struct {
 	FunctionKeys FunctionKeys `json:"FunctionKeys"`
+}
+
+func (p *Parameters) TransformFunctionKeyNames(original, replace string) (up.Parameters, []int) {
+	keys := make([]up.FunctionKey, 0, len(p.FunctionKeys))
+	changed := make([]int, 0, 0)
+	for index, fnKey := range p.FunctionKeys {
+		var key = up.FunctionKey{}
+		if fnKey.DisplayName.Value == original {
+			key = up.FunctionKey{DisplayName: replace}
+			changed = append(changed, index)
+		}
+		keys = append(keys, key)
+	}
+	return up.Parameters{FunctionKeys: keys}, changed
 }
 
 type FunctionKeys []FunctionKey

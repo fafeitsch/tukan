@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"github.com/fafeitsch/Tukan/pkg/domain"
 	"github.com/fafeitsch/Tukan/pkg/tukan"
-	"github.com/fafeitsch/Tukan/pkg/tukan/down"
-	"github.com/fafeitsch/Tukan/pkg/tukan/up"
 	"log"
 	"net"
 	"net/http"
@@ -81,7 +79,8 @@ func (p *PhoneClient) ReplaceFunctionKeyName(ip string, number int, original str
 			p.log("could not get function keys from %s: %v", phone.Host(), err)
 			return "could not get function keys"
 		}
-		newKeys := p.buildNewFunctionKeys(*parameters, original, replace)
+		newKeys, changed := parameters.TransformFunctionKeyNames(original, replace)
+		p.log("the following indices have changed: %v", changed)
 		err = phone.UploadParameters(newKeys)
 		if err != nil {
 			p.log("could not upload function keys to %s: %v", ip, err)
@@ -90,19 +89,6 @@ func (p *PhoneClient) ReplaceFunctionKeyName(ip string, number int, original str
 		return "function keys replaced successfully"
 	}
 	return p.forEachPhoneIn(ip, number, todo)
-}
-
-func (p *PhoneClient) buildNewFunctionKeys(params down.Parameters, original string, replace string) up.Parameters {
-	keys := make([]up.FunctionKey, 0, len(params.FunctionKeys))
-	for index, fnKey := range params.FunctionKeys {
-		var key = up.FunctionKey{}
-		if fnKey.DisplayName.Value == original {
-			key = up.FunctionKey{DisplayName: replace}
-			p.log("replacing display name \"%s\" of %dth function key with display name \"%s\"", fnKey.DisplayName.Value, index, replace)
-		}
-		keys = append(keys, key)
-	}
-	return up.Parameters{FunctionKeys: keys}
 }
 
 func checkResponse(resp *http.Response, err error) error {
