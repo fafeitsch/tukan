@@ -103,7 +103,36 @@ func TestDownloadPhoneBook(t *testing.T) {
 	assert.Equal(t, 2, len(got)-1, "expected two lines of result")
 	assert.Equal(t, server1.URL+": Download successful", got[0], "message of first download is wrong")
 	assert.Equal(t, "\tlogout successful", got[1], "message of first download is wrong")
-	fileContent, err := ioutil.ReadFile(filepath.Join(tmpDir, fileName(server1.URL)))
+	fileContent, err := ioutil.ReadFile(filepath.Join(tmpDir, phoneBookFileName(server1.URL)))
 	require.NoError(t, err, "reading the file should not give an error")
 	assert.Equal(t, phone1.Phonebook, string(fileContent), "file content is wrong")
+}
+
+func TestDownloadParameters(t *testing.T) {
+	handler1, phone1 := mock.CreatePhone(username, password)
+	phone1.Parameters = mock.RawParameters{FunctionKeys: []map[string]string{{"DisplayName": "Linda", "PhoneNumber": "89-IN", "CallPickupCode": "#0"}, {}}}
+
+	server1 := httptest.NewServer(handler1)
+	defer server1.Close()
+
+	flags := flag.NewFlagSet("", flag.PanicOnError)
+	flags.String(loginFlagName, username, "")
+	flags.String(passwordFlagName, password, "")
+	_ = flags.Parse([]string{server1.URL})
+
+	var buff bytes.Buffer
+	number := rand.Int()
+	tmpDir := filepath.Join(os.TempDir(), fmt.Sprintf("tukan-test%d", number))
+	defer func() { _ = os.RemoveAll(tmpDir) }()
+	flags.String(targetDirFlagName, tmpDir, "")
+	ctx := cli.NewContext(&cli.App{Writer: &buff}, flags, nil)
+	downloadParameters(ctx)
+	got := strings.Split(buff.String(), "\n")
+
+	assert.Equal(t, 2, len(got)-1, "expected two lines of result")
+	assert.Equal(t, server1.URL+": Parameters downloaded", got[0], "message of first download is wrong")
+	assert.Equal(t, "\tlogout successful", got[1], "message of first download is wrong")
+	fileContent, err := ioutil.ReadFile(filepath.Join(tmpDir, parametersFileName(server1.URL)))
+	require.NoError(t, err, "reading the file should not give an error")
+	assert.Equal(t, "[\"Linda\": 89-IN (#0) (BLF)]", string(fileContent), "file content is wrong")
 }

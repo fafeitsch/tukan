@@ -41,7 +41,7 @@ func TestPhone_DownloadParameters(t *testing.T) {
 	t.Run("error", func(t *testing.T) {
 		phone.token = "wrong"
 		got, err := phone.DownloadParameters()
-		require.EqualError(t, err, "response error: authentication error, status code: 401 with message \"401 Unauthorized\"", "error message wrong")
+		require.EqualError(t, err, "authentication error, status code: 401 with message \"401 Unauthorized\"", "error message wrong")
 		require.Nil(t, got, "result should be nil in case of an error")
 	})
 }
@@ -75,42 +75,30 @@ func TestPhone_UploadParameters(t *testing.T) {
 }
 
 func TestConnections_UploadParameters(t *testing.T) {
-	handler1, telephone1 := mock.CreatePhone(username, password)
-	telephone1.Parameters = mock.RawParameters{FunctionKeys: []map[string]string{{"DisplayName": "Linda"}, {}}}
-	server1 := httptest.NewServer(handler1)
-	defer server1.Close()
-	handler2, telephone2 := mock.CreatePhone(username, password)
-	telephone2.Parameters = mock.RawParameters{FunctionKeys: []map[string]string{{}, {}}}
-	server2 := httptest.NewServer(handler2)
-	defer server2.Close()
-	failOnError := func(callback *PhoneResult) {
-		assert.Fail(t, "no error expected")
+	phoneSetup := func(phone *mock.Telephone) {
+		phone.Parameters = mock.RawParameters{FunctionKeys: []map[string]string{{"DisplayName": "Linda"}, {}}}
 	}
-	connector := Connector{UserName: username, Password: password, Client: http.DefaultClient}
-	channel := connector.MultipleConnect(failOnError, server1.URL, server2.URL)
-	transformed := make(Connections)
-	go func() {
-		for phone := range channel {
-			if phone.address == server2.URL {
-				phone.token = "faked"
-			}
-			transformed <- phone
-		}
-		close(transformed)
-	}()
-	counter := int32(0)
-	onProcess := func(result *PhoneResult) {
-		atomic.AddInt32(&counter, 1)
-		if result.Address == server2.URL {
-			assert.Equal(t, "authentication error, status code: 401 with message \"401 Unauthorized\"", result.Comment)
-		} else if result.Address == server1.URL {
-			assert.Equal(t, "Function keys uploaded", result.Comment)
-		} else {
-			assert.Fail(t, "unexpected result server URL: %v", result)
-		}
+	underTest := func(connections Connections, callback ResultCallback) Connections {
+		parameters := up.Parameters{FunctionKeys: []up.FunctionKey{{}, {DisplayName: "John Doe", PhoneNumber: "555-Nose"}}}
+		return connections.UploadParameters(callback, parameters)
 	}
-	parameters := up.Parameters{FunctionKeys: []up.FunctionKey{{}, {DisplayName: "John Doe", PhoneNumber: "555-Nose"}}}
-	transformed.UploadParameters(onProcess, parameters).Logout(func(result *PhoneResult) {})
-	assert.Equal(t, []map[string]string{{"DisplayName": "Linda"}, {"DisplayName": "John Doe", "PhoneNumber": "555-Nose"}}, telephone1.Parameters.FunctionKeys, "uploaded function keys are wrong")
-	assert.Equal(t, 2, int(counter), "should process two phones")
+	phone := phonesTestSuite(t, "Parameters uploaded", underTest, phoneSetup)
+	assert.Equal(t, []map[string]string{{"DisplayName": "Linda"}, {"DisplayName": "John Doe", "PhoneNumber": "555-Nose"}}, phone.Parameters.FunctionKeys, "uploaded function keys are wrong")
+}
+
+func TestConnections_DownloadParameters(t *testing.T) {
+	phoneSetup := func(phone *mock.Telephone) {
+		phone.Parameters = mock.RawParameters{FunctionKeys: []map[string]string{{"DisplayName": "Linda", "PhoneNumber": "10-XYZ"}, {}}}
+	}
+	successCounter := int32(0)
+	onSuccess := func(result *ParametersResult) {
+		atomic.AddInt32(&successCounter, 1)
+		assert.Equal(t, "Linda", result.Parameters.FunctionKeys[0].DisplayName.Value, "gotten parameters wrong")
+		assert.Equal(t, "10-XYZ", result.Parameters.FunctionKeys[0].PhoneNumber.Value, "gotten parameters wrong")
+	}
+	underTest := func(connections Connections, callback ResultCallback) Connections {
+		return connections.DownloadParameters(callback, onSuccess)
+	}
+	_ = phonesTestSuite(t, "Parameters downloaded", underTest, phoneSetup)
+	assert.Equal(t, 1, int(successCounter), "there should be one success")
 }

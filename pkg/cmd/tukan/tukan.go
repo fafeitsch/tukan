@@ -70,14 +70,9 @@ func main() {
 		Name:  "fnKeys-down",
 		Usage: "Downloads the function keys from an elmeg ip 620/630 phone",
 		Flags: []cli.Flag{
-			ipFlag,
-			numberFlag,
+			cli.StringFlag{Name: targetDirFlagName, Required: true, Usage: "The directory where the downloaded phonebooks are saved."},
 		},
-		Action: func(c *cli.Context) error {
-			result := phoneClient.DownloadFunctionKeys(c.String("ip"), c.Int("number"))
-			fmt.Printf("%v", result)
-			return nil
-		},
+		Action: downloadParameters,
 	}
 
 	functionKeysReplaceCommand := cli.Command{

@@ -118,7 +118,7 @@ func downloadPhoneBook(context *cli.Context) {
 		defer wg.Done()
 		writeErrors := make([]string, 0, 0)
 		for phoneBookResult := range bookChannel {
-			fileName := fileName(phoneBookResult.Address)
+			fileName := phoneBookFileName(phoneBookResult.Address)
 			path := filepath.Join(targetDirectory, fileName)
 			err := ioutil.WriteFile(path, []byte(phoneBookResult.PhoneBook), os.ModePerm)
 			if err != nil {
@@ -137,9 +137,61 @@ func downloadPhoneBook(context *cli.Context) {
 	wg.Wait()
 }
 
-func fileName(address string) string {
+func phoneBookFileName(address string) string {
 	regex := regexp.MustCompile("https?://")
 	result := regex.ReplaceAllString(address, "")
 	result = strings.ReplaceAll(result, ":", "_")
 	return "phonebook_" + result + ".xml"
+}
+
+func downloadParameters(context *cli.Context) {
+	targetDirectory := context.String(targetDirFlagName)
+	err := os.MkdirAll(targetDirectory, os.ModePerm)
+	if err != nil {
+		_, _ = fmt.Fprintf(context.App.Writer, "could not create target directory: %v", err)
+		return
+	}
+	channel := make(chan *tukan.PhoneResult)
+	collectResults := func(result *tukan.PhoneResult) {
+		channel <- result
+	}
+
+	parametersChannel := make(chan *tukan.ParametersResult)
+	collectParameters := func(result *tukan.ParametersResult) {
+		parametersChannel <- result
+	}
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		handleSimpleResults(channel, context)
+	}()
+	go func() {
+		defer wg.Done()
+		writeErrors := make([]string, 0, 0)
+		for parametersResult := range parametersChannel {
+			fileName := parametersFileName(parametersResult.Address)
+			path := filepath.Join(targetDirectory, fileName)
+			err := ioutil.WriteFile(path, []byte(parametersResult.Parameters.FunctionKeys.String()), os.ModePerm)
+			if err != nil {
+				writeErrors = append(writeErrors, err.Error())
+			}
+		}
+		if len(writeErrors) != 0 {
+			_, _ = fmt.Fprintf(context.App.Writer, "There were errors writing the files:\n: %s", strings.Join(writeErrors, "\n"))
+		}
+	}()
+	connectToPhones(context, collectResults).
+		DownloadParameters(collectResults, collectParameters).
+		Logout(collectResults)
+	close(channel)
+	close(parametersChannel)
+	wg.Wait()
+}
+
+func parametersFileName(address string) string {
+	regex := regexp.MustCompile("https?://")
+	result := regex.ReplaceAllString(address, "")
+	result = strings.ReplaceAll(result, ":", "_")
+	return "parameters_" + result + ".txt"
 }

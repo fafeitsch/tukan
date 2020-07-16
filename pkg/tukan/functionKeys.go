@@ -21,7 +21,7 @@ func (p *Phone) DownloadParameters() (*down.Parameters, error) {
 	}
 	err = checkResponse(resp, err)
 	if err != nil {
-		return nil, fmt.Errorf("response error: %v", err)
+		return nil, err
 	}
 	params := down.Parameters{}
 	err = json.NewDecoder(resp.Body).Decode(&params)
@@ -62,6 +62,31 @@ func (p *Phone) UploadParameters(params up.Parameters) error {
 	return checkResponse(resp, err)
 }
 
+type ParametersResult struct {
+	Address    string
+	Parameters down.Parameters
+}
+
+func (c Connections) DownloadParameters(onProcess ResultCallback, onSuccess func(*ParametersResult)) Connections {
+	result := make(Connections)
+	singleAction := func(phone *Phone) {
+		params, err := phone.DownloadParameters()
+		if err != nil {
+			result := PhoneResult{Address: phone.address, Comment: err.Error(), Error: err}
+			onProcess(&result)
+		} else {
+			onProcess(&PhoneResult{Address: phone.address, Comment: "Parameters downloaded"})
+			onSuccess(&ParametersResult{Address: phone.address, Parameters: *params})
+		}
+		result <- phone
+	}
+	onEnd := func() {
+		close(result)
+	}
+	c.loop(singleAction, onEnd)
+	return result
+}
+
 func (c Connections) UploadParameters(onProcess ResultCallback, params up.Parameters) Connections {
 	result := make(Connections)
 	singleAction := func(phone *Phone) {
@@ -70,7 +95,7 @@ func (c Connections) UploadParameters(onProcess ResultCallback, params up.Parame
 			result := PhoneResult{Address: phone.address, Comment: err.Error(), Error: err}
 			onProcess(&result)
 		} else {
-			onProcess(&PhoneResult{Address: phone.address, Comment: "Function keys uploaded"})
+			onProcess(&PhoneResult{Address: phone.address, Comment: "Parameters uploaded"})
 		}
 		result <- phone
 	}

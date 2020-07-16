@@ -74,17 +74,6 @@ func incrementIP(ip net.IP) {
 	}
 }
 
-func (p *PhoneClient) DownloadFunctionKeys(ip string, number int) domain.TukanResult {
-	todo := func(phone tukan.Phone) string {
-		ptr, err := phone.DownloadParameters()
-		if err != nil {
-			return "could not download function keys"
-		}
-		return ptr.FunctionKeys.String()
-	}
-	return p.forEachPhoneIn(ip, number, todo)
-}
-
 func (p *PhoneClient) ReplaceFunctionKeyName(ip string, number int, original string, replace string) domain.TukanResult {
 	todo := func(phone tukan.Phone) string {
 		parameters, err := phone.DownloadParameters()

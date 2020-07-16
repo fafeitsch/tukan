@@ -49,88 +49,28 @@ func TestPhone_DownloadPhoneBook(t *testing.T) {
 }
 
 func TestConnections_UploadPhoneBook(t *testing.T) {
-	handler1, telephone1 := mock.CreatePhone(username, password)
-	telephone1.Phonebook = ""
-	handler2, _ := mock.CreatePhone(username, password)
-	server1 := httptest.NewServer(handler1)
-	defer server1.Close()
-	server2 := httptest.NewServer(handler2)
-	defer server2.Close()
-
-	fail := func(result *PhoneResult) {
-		assert.Fail(t, "connecting should not fail: %v", result)
+	phoneSetup := func(phone *mock.Telephone) {
+		phone.Phonebook = ""
 	}
-	connector := Connector{UserName: username, Password: password, Client: http.DefaultClient}
-	channel := connector.MultipleConnect(fail, server1.URL, server2.URL)
-	transformed := make(Connections)
-	go func() {
-		for phone := range channel {
-			if phone.address == server2.URL {
-				phone.token = "faked"
-			}
-			transformed <- phone
-		}
-		close(transformed)
-	}()
-	counter := int32(0)
-	onProcess := func(result *PhoneResult) {
-		atomic.AddInt32(&counter, 1)
-		if result.Address == server2.URL {
-			assert.Equal(t, "authentication error, status code: 401 with message \"401 Unauthorized\"", result.Comment)
-		} else if result.Address == server1.URL {
-			assert.Equal(t, "Upload successful", result.Comment)
-		} else {
-			assert.Fail(t, "unexpected result server URL: %v", result)
-		}
+	underTest := func(connections Connections, callback ResultCallback) Connections {
+		return connections.UploadPhoneBook(callback, "this is my phone book")
 	}
-	transformed.UploadPhoneBook(onProcess, "this is my phone book").
-		Logout(func(p *PhoneResult) {})
-	assert.Equal(t, 2, int(counter), "two results should be reported to onProcess")
-	assert.Equal(t, "this is my phone book\n", telephone1.Phonebook, "phone book of first telephone should be changed")
+	phone := phonesTestSuite(t, "Upload successful", underTest, phoneSetup)
+	assert.Equal(t, "this is my phone book\n", phone.Phonebook, "phone book of first telephone should be changed")
 }
 
 func TestConnections_DownloadPhoneBook(t *testing.T) {
-	handler1, telephone1 := mock.CreatePhone(username, password)
-	telephone1.Phonebook = "book of telephone 1"
-	handler2, _ := mock.CreatePhone(username, password)
-	server1 := httptest.NewServer(handler1)
-	defer server1.Close()
-	server2 := httptest.NewServer(handler2)
-	defer server2.Close()
-
-	connector := Connector{UserName: username, Password: password, Client: http.DefaultClient}
-	fail := func(result *PhoneResult) {
-		assert.Fail(t, "connecting should not fail: %v", result)
-	}
-	channel := connector.MultipleConnect(fail, server1.URL, server2.URL)
-	transformed := make(Connections)
-	go func() {
-		for phone := range channel {
-			if phone.address == server2.URL {
-				phone.token = "faked"
-			}
-			transformed <- phone
-		}
-		close(transformed)
-	}()
-	counter := int32(0)
-	onProcess := func(result *PhoneResult) {
-		atomic.AddInt32(&counter, 1)
-		if result.Address == server2.URL {
-			assert.Equal(t, "authentication error, status code: 401 with message \"401 Unauthorized\"", result.Comment)
-		} else if result.Address == server1.URL {
-			assert.Equal(t, "Download successful", result.Comment)
-		} else {
-			assert.Fail(t, "unexpected result server URL: %v", result)
-		}
+	phoneSetup := func(phone *mock.Telephone) {
+		phone.Phonebook = "book of telephone 1"
 	}
 	successCounter := int32(0)
 	onSuccess := func(result *PhoneBookResult) {
 		atomic.AddInt32(&successCounter, 1)
-		assert.Equal(t, telephone1.Phonebook, result.PhoneBook, "expected phone book wrong")
+		assert.Equal(t, "book of telephone 1", result.PhoneBook, "expected phone book wrong")
 	}
-	transformed.DownloadPhoneBook(onProcess, onSuccess).
-		Logout(func(p *PhoneResult) {})
-	assert.Equal(t, 2, int(counter), "expected two results to be reported")
+	underTest := func(connections Connections, callback ResultCallback) Connections {
+		return connections.DownloadPhoneBook(callback, onSuccess)
+	}
+	_ = phonesTestSuite(t, "Download successful", underTest, phoneSetup)
 	assert.Equal(t, 1, int(successCounter), "there should be one success")
 }
