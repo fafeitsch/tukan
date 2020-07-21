@@ -66,7 +66,7 @@ func TestUploadPhoneBook(t *testing.T) {
 		uploadPhoneBook(ctx)
 		got := buff.String()
 
-		assert.Equal(t, 153, len(got), "length of message is wrong")
+		assert.Equal(t, 54, len(got), "length of message is wrong")
 		assert.Containsf(t, got, server1.URL, "should contain server1 URL %s", server1.URL)
 		assert.Containsf(t, got, server2.URL, "should contain server2 URL %s", server1.URL)
 	})
@@ -101,8 +101,8 @@ func TestDownloadPhoneBook(t *testing.T) {
 	got := strings.Split(buff.String(), "\n")
 
 	assert.Equal(t, 2, len(got)-1, "expected two lines of result")
-	assert.Equal(t, server1.URL+": Download successful", got[0], "message of first download is wrong")
-	assert.Equal(t, "\tlogout successful", got[1], "message of first download is wrong")
+	assert.Equal(t, server1.URL+": ", got[0], "message of first download is wrong")
+	assert.Equal(t, "\t", got[1], "message of first download is wrong")
 	fileContent, err := ioutil.ReadFile(filepath.Join(tmpDir, phoneBookFileName(server1.URL)))
 	require.NoError(t, err, "reading the file should not give an error")
 	assert.Equal(t, phone1.Phonebook, string(fileContent), "file content is wrong")

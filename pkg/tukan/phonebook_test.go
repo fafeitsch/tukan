@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
-	"sync/atomic"
 	"testing"
 )
 
@@ -48,29 +47,48 @@ func TestPhone_DownloadPhoneBook(t *testing.T) {
 	})
 }
 
-func TestConnections_UploadPhoneBook(t *testing.T) {
-	phoneSetup := func(phone *mock.Telephone) {
-		phone.Phonebook = ""
-	}
-	underTest := func(connections Connections, callback ResultCallback) Connections {
-		return connections.UploadPhoneBook(callback, "this is my phone book")
-	}
-	phone := phonesTestSuite(t, "Upload successful", underTest, phoneSetup)
-	assert.Equal(t, "this is my phone book\n", phone.Phonebook, "phone book of first telephone should be changed")
+func TestPrepareUploadPhoneBook(t *testing.T) {
+	handler, telephone := mock.CreatePhone(username, password)
+	telephone.Phonebook = ""
+	server := httptest.NewServer(handler)
+	defer server.Close()
+	var result *PhoneResult
+	operation := PrepareUploadPhoneBook("this is my phone book", func(phoneResult *PhoneResult) { result = phoneResult })
+	connector := &Connector{Client: http.DefaultClient, UserName: username, Password: password}
+	phone, err := connector.SingleConnect(server.URL)
+	require.NoError(t, err, "no error expected")
+	t.Run("success", func(t *testing.T) {
+		operation(phone)
+		assert.Equal(t, server.URL, result.Address, "result callback not called properly")
+		assert.NoError(t, result.Error, "no error expected")
+		assert.Equal(t, "this is my phone book\n", telephone.Phonebook)
+	})
+	t.Run("failure", func(t *testing.T) {
+		phone.token = "invalid"
+		operation(phone)
+		assert.EqualError(t, result.Error, "authentication error, status code: 401 with message \"401 Unauthorized\"", "error not set correctly in callback result")
+	})
 }
 
-func TestConnections_DownloadPhoneBook(t *testing.T) {
-	phoneSetup := func(phone *mock.Telephone) {
-		phone.Phonebook = "book of telephone 1"
-	}
-	successCounter := int32(0)
-	onSuccess := func(result *PhoneBookResult) {
-		atomic.AddInt32(&successCounter, 1)
-		assert.Equal(t, "book of telephone 1", result.PhoneBook, "expected phone book wrong")
-	}
-	underTest := func(connections Connections, callback ResultCallback) Connections {
-		return connections.DownloadPhoneBook(callback, onSuccess)
-	}
-	_ = phonesTestSuite(t, "Download successful", underTest, phoneSetup)
-	assert.Equal(t, 1, int(successCounter), "there should be one success")
+func TestPrepareDownloadPhoneBook(t *testing.T) {
+	handler, telephone := mock.CreatePhone(username, password)
+	telephone.Phonebook = "This is a cool book."
+	server := httptest.NewServer(handler)
+	defer server.Close()
+	var result *PhoneBookResult
+	operation := PrepareDownloadPhoneBook(func(phoneResult *PhoneBookResult) { result = phoneResult })
+	connector := &Connector{Client: http.DefaultClient, UserName: username, Password: password}
+	phone, err := connector.SingleConnect(server.URL)
+	require.NoError(t, err, "no error expected")
+	t.Run("success", func(t *testing.T) {
+		operation(phone)
+		assert.Equal(t, server.URL, result.PhoneResult.Address, "result callback not called properly")
+		assert.NoError(t, result.Error, "no error expected")
+		assert.Equal(t, "This is a cool book.", *result.PhoneBook)
+	})
+	t.Run("failure", func(t *testing.T) {
+		phone.token = "invalid"
+		operation(phone)
+		assert.EqualError(t, result.Error, "authentication error, status code: 401 with message \"401 Unauthorized\"", "error not set correctly in callback result")
+	})
 }

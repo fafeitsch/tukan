@@ -17,9 +17,10 @@ import (
 // perform REST actions on the telephone. The connector can be used to either
 // connect to only one telephone or to a bunch of telephones at the same time.
 type Connector struct {
-	Client   *http.Client
-	UserName string
-	Password string
+	Client    *http.Client
+	UserName  string
+	Password  string
+	Addresses []string
 }
 
 // Tries to log in to a specific telephone identified by its address.
@@ -165,6 +166,29 @@ func (c *Connector) MultipleConnect(onError ResultCallback, addresses ...string)
 		close(results)
 	}()
 	return results
+}
+
+func (c *Connector) Run(loginCallback ResultCallback, logoutCallback ResultCallback, operations ...func(p *Phone)) {
+	var wg sync.WaitGroup
+	for index, address := range c.Addresses {
+		wg.Add(1)
+		go func(index int, address string) {
+			defer wg.Done()
+			phone, err := c.SingleConnect(address)
+			loginCallback(&PhoneResult{Address: address, Error: err})
+			if err != nil || phone == nil {
+				return
+			}
+			defer func() {
+				err = phone.Logout()
+				logoutCallback(&PhoneResult{Address: address, Error: err})
+			}()
+			for _, operation := range operations {
+				operation(phone)
+			}
+		}(index, address)
+	}
+	wg.Wait()
 }
 
 // A phone represents a http Client that talks to exactly on

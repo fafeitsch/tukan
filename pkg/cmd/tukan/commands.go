@@ -24,6 +24,16 @@ func connectToPhones(context *cli.Context, onError tukan.ResultCallback) tukan.C
 	return connector.MultipleConnect(onError, addresses...)
 }
 
+func createConnector(context *cli.Context) *tukan.Connector {
+	login := context.GlobalString(loginFlagName)
+	password := context.GlobalString(passwordFlagName)
+	timeout := context.GlobalInt(timeoutFlagName)
+	connector := tukan.Connector{Client: &http.Client{Timeout: time.Duration(timeout) * time.Second}, UserName: login, Password: password}
+	addresses := tukan.ExpandAddresses("http", context.Args()...)
+	connector.Addresses = addresses
+	return &connector
+}
+
 func scan(context *cli.Context) {
 	channel := make(chan *tukan.PhoneResult)
 	collectResults := func(result *tukan.PhoneResult) {
@@ -76,6 +86,7 @@ func uploadPhoneBook(context *cli.Context) {
 
 	channel := make(chan *tukan.PhoneResult)
 	collectResults := func(result *tukan.PhoneResult) {
+		// TODO: different result collectors for the different actions with different messages
 		channel <- result
 	}
 
@@ -85,9 +96,9 @@ func uploadPhoneBook(context *cli.Context) {
 		defer wg.Done()
 		handleSimpleResults(channel, context)
 	}()
-	connectToPhones(context, collectResults).
-		UploadPhoneBook(collectResults, string(content)).
-		Logout(collectResults)
+	createConnector(context).Run(collectResults,
+		collectResults,
+		tukan.PrepareUploadPhoneBook(string(content), collectResults))
 	close(channel)
 	wg.Wait()
 }
@@ -120,7 +131,7 @@ func downloadPhoneBook(context *cli.Context) {
 		for phoneBookResult := range bookChannel {
 			fileName := phoneBookFileName(phoneBookResult.Address)
 			path := filepath.Join(targetDirectory, fileName)
-			err := ioutil.WriteFile(path, []byte(phoneBookResult.PhoneBook), os.ModePerm)
+			err := ioutil.WriteFile(path, []byte(*phoneBookResult.PhoneBook), os.ModePerm)
 			if err != nil {
 				writeErrors = append(writeErrors, err.Error())
 			}
@@ -129,9 +140,8 @@ func downloadPhoneBook(context *cli.Context) {
 			_, _ = fmt.Fprintf(context.App.Writer, "There were errors writing the files:\n: %s", strings.Join(writeErrors, "\n"))
 		}
 	}()
-	connectToPhones(context, collectResults).
-		DownloadPhoneBook(collectResults, collectBooks).
-		Logout(collectResults)
+	createConnector(context).Run(collectResults, collectResults,
+		tukan.PrepareDownloadPhoneBook(collectBooks))
 	close(channel)
 	close(bookChannel)
 	wg.Wait()

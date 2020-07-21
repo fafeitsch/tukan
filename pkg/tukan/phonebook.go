@@ -42,6 +42,13 @@ func (p *Phone) UploadPhoneBook(payload string) error {
 	return err
 }
 
+func PrepareUploadPhoneBook(payload string, callback ResultCallback) func(p *Phone) {
+	return func(p *Phone) {
+		err := p.UploadPhoneBook(payload)
+		callback(&PhoneResult{Address: p.address, Error: err})
+	}
+}
+
 // Downloads the phone book from the telephone. In case of an error
 // the returned string is nil.
 func (p *Phone) DownloadPhoneBook() (*string, error) {
@@ -62,57 +69,14 @@ func (p *Phone) DownloadPhoneBook() (*string, error) {
 	return &result, nil
 }
 
-// Uploads the given payload to the phone book endpoint of every telephone that
-// comes into the connection channel. This function returns immediately and reports
-// the results of the uploads by means of the onProcess callback.
-//
-// The function only uploads the string and does not check the string for valid XML format.
-// The behaviour of the telephone is undefined when unproper content is uploaded. This method does
-// not check the format of the payload.
-func (c Connections) UploadPhoneBook(onProcess ResultCallback, payload string) Connections {
-	result := make(Connections)
-	singleAction := func(phone *Phone) {
-		err := phone.UploadPhoneBook(payload)
-		if err != nil {
-			phoneResult := PhoneResult{Address: phone.address, Comment: err.Error()}
-			onProcess(&phoneResult)
-		} else {
-			onProcess(&PhoneResult{Address: phone.address, Comment: "Upload successful"})
-		}
-		result <- phone
+func PrepareDownloadPhoneBook(callback func(result *PhoneBookResult)) func(p *Phone) {
+	return func(p *Phone) {
+		book, err := p.DownloadPhoneBook()
+		callback(&PhoneBookResult{PhoneResult: PhoneResult{Address: p.address, Error: err}, PhoneBook: book})
 	}
-	end := func() {
-		close(result)
-	}
-	go c.loop(singleAction, end)
-	return result
 }
 
 type PhoneBookResult struct {
-	Address   string
-	PhoneBook string
-}
-
-// Uses the connection to download the phone books from the telephone. The method
-// returns immediately. The onProcess callback is called for every tried phone, independently of
-// the download success. The onSuccess callback is called for those phones of which the phone book
-// could be downloaded successfully.
-func (c Connections) DownloadPhoneBook(onProcess ResultCallback, onSuccess func(result *PhoneBookResult)) Connections {
-	result := make(Connections)
-	singleAction := func(phone *Phone) {
-		book, err := phone.DownloadPhoneBook()
-		if err != nil {
-			phoneResult := PhoneResult{Address: phone.address, Comment: err.Error(), Error: err}
-			onProcess(&phoneResult)
-		} else {
-			onProcess(&PhoneResult{Address: phone.address, Comment: "Download successful"})
-			onSuccess(&PhoneBookResult{Address: phone.address, PhoneBook: *book})
-		}
-		result <- phone
-	}
-	end := func() {
-		close(result)
-	}
-	go c.loop(singleAction, end)
-	return result
+	PhoneResult
+	PhoneBook *string
 }
