@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
-	"sync/atomic"
 	"testing"
 )
 
@@ -74,31 +73,50 @@ func TestPhone_UploadParameters(t *testing.T) {
 	})
 }
 
-func TestConnections_UploadParameters(t *testing.T) {
-	phoneSetup := func(phone *mock.Telephone) {
-		phone.Parameters = mock.RawParameters{FunctionKeys: []map[string]string{{"DisplayName": "Linda"}, {}}}
-	}
-	underTest := func(connections Connections, callback ResultCallback) Connections {
-		parameters := up.Parameters{FunctionKeys: []up.FunctionKey{{}, {DisplayName: "John Doe", PhoneNumber: "555-Nose"}}}
-		return connections.UploadParameters(callback, parameters)
-	}
-	phone := phonesTestSuite(t, "Parameters uploaded", underTest, phoneSetup)
-	assert.Equal(t, []map[string]string{{"DisplayName": "Linda"}, {"DisplayName": "John Doe", "PhoneNumber": "555-Nose"}}, phone.Parameters.FunctionKeys, "uploaded function keys are wrong")
+func TestPrepareUploadParameters(t *testing.T) {
+	handler, telephone := mock.CreatePhone(username, password)
+	telephone.Parameters = mock.RawParameters{FunctionKeys: []map[string]string{{"DisplayName": "Linda"}, {}}}
+	server := httptest.NewServer(handler)
+	defer server.Close()
+	var result *PhoneResult
+	parameters := up.Parameters{FunctionKeys: []up.FunctionKey{{}, {DisplayName: "John Doe", PhoneNumber: "555-Nose"}}}
+	operation := PrepareUploadParameters(parameters, func(phoneResult *PhoneResult) { result = phoneResult })
+	connector := &Connector{Client: http.DefaultClient, UserName: username, Password: password}
+	phone, err := connector.SingleConnect(server.URL)
+	require.NoError(t, err, "no error expected")
+	t.Run("success", func(t *testing.T) {
+		operation(phone)
+		assert.Equal(t, server.URL, result.Address, "result callback not called properly")
+		assert.NoError(t, result.Error, "no error expected")
+		assert.Equal(t, []map[string]string{{"DisplayName": "Linda"}, {"DisplayName": "John Doe", "PhoneNumber": "555-Nose"}}, telephone.Parameters.FunctionKeys)
+	})
+	t.Run("failure", func(t *testing.T) {
+		phone.token = "invalid"
+		operation(phone)
+		assert.EqualError(t, result.Error, "authentication error, status code: 401 with message \"401 Unauthorized\"", "error not set correctly in callback result")
+	})
 }
 
-func TestConnections_DownloadParameters(t *testing.T) {
-	phoneSetup := func(phone *mock.Telephone) {
-		phone.Parameters = mock.RawParameters{FunctionKeys: []map[string]string{{"DisplayName": "Linda", "PhoneNumber": "10-XYZ"}, {}}}
-	}
-	successCounter := int32(0)
-	onSuccess := func(result *ParametersResult) {
-		atomic.AddInt32(&successCounter, 1)
+func TestPrepareDownloadParameters(t *testing.T) {
+	handler, telephone := mock.CreatePhone(username, password)
+	telephone.Parameters = mock.RawParameters{FunctionKeys: []map[string]string{{"DisplayName": "Linda", "PhoneNumber": "10-XYZ"}, {}}}
+	server := httptest.NewServer(handler)
+	defer server.Close()
+	var result *ParametersResult
+	operation := PrepareDownloadParameters(func(phoneResult *ParametersResult) { result = phoneResult })
+	connector := &Connector{Client: http.DefaultClient, UserName: username, Password: password}
+	phone, err := connector.SingleConnect(server.URL)
+	require.NoError(t, err, "no error expected")
+	t.Run("success", func(t *testing.T) {
+		operation(phone)
+		assert.Equal(t, server.URL, result.Address, "result callback not called properly")
+		assert.NoError(t, result.Error, "no error expected")
 		assert.Equal(t, "Linda", result.Parameters.FunctionKeys[0].DisplayName.Value, "gotten parameters wrong")
 		assert.Equal(t, "10-XYZ", result.Parameters.FunctionKeys[0].PhoneNumber.Value, "gotten parameters wrong")
-	}
-	underTest := func(connections Connections, callback ResultCallback) Connections {
-		return connections.DownloadParameters(callback, onSuccess)
-	}
-	_ = phonesTestSuite(t, "Parameters downloaded", underTest, phoneSetup)
-	assert.Equal(t, 1, int(successCounter), "there should be one success")
+	})
+	t.Run("failure", func(t *testing.T) {
+		phone.token = "invalid"
+		operation(phone)
+		assert.EqualError(t, result.Error, "authentication error, status code: 401 with message \"401 Unauthorized\"", "error not set correctly in callback result")
+	})
 }

@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
-	"sync/atomic"
 	"testing"
 )
 
@@ -66,40 +65,6 @@ func TestCreateAddresses(t *testing.T) {
 	})
 }
 
-func TestConnector_MultipleConnect(t *testing.T) {
-	handler1, telephone1 := mock.CreatePhone(username, password)
-	handler2, telephone2 := mock.CreatePhone(username, password)
-	server1 := httptest.NewServer(handler1)
-	defer server1.Close()
-	server2 := httptest.NewServer(handler2)
-	defer server2.Close()
-	connector := Connector{Client: http.DefaultClient, UserName: username, Password: password}
-
-	var firstFound, secondFound, thirdFound bool
-	onError := func(result *PhoneResult) {
-		if result.Address == "htp://invalid_url" {
-			assert.EqualError(t, result.Error, "Post \"htp://invalid_url/Login\": unsupported protocol scheme \"htp\"", "error message of third telephone is wrong")
-			thirdFound = true
-		}
-	}
-
-	results := connector.MultipleConnect(onError, server2.URL, server1.URL, "htp://invalid_url")
-	for result := range results {
-		if result.address == server1.URL {
-			assert.Equal(t, *telephone1.Token, result.token, "token of first telephone wrong")
-			firstFound = true
-		} else if result.address == server2.URL {
-			assert.Equal(t, *telephone2.Token, result.token, "token of second telephone wrong")
-			secondFound = true
-		} else {
-			assert.Fail(t, "unkown address %s", result.address)
-		}
-	}
-	assert.True(t, firstFound, "first telephone must be handled")
-	assert.True(t, secondFound, "second telephone must be handled")
-	assert.True(t, thirdFound, "third (erroneous) telephone must be handled")
-}
-
 func TestPhone_Logout(t *testing.T) {
 	handler, _ := mock.CreatePhone(username, password)
 	server := httptest.NewServer(handler)
@@ -137,44 +102,4 @@ func ExampleExpandAddresses() {
 	// http://20.20.20.20:8080
 	// http://20.20.20.21:8080
 	// http://30.30.30.30:1234
-}
-
-func phonesTestSuite(t *testing.T, successMessage string, underTest func(Connections, ResultCallback) Connections, phoneSetup func(telephone *mock.Telephone)) *mock.Telephone {
-	handler1, telephone1 := mock.CreatePhone(username, password)
-	phoneSetup(telephone1)
-	handler2, _ := mock.CreatePhone(username, password)
-	server1 := httptest.NewServer(handler1)
-	defer server1.Close()
-	server2 := httptest.NewServer(handler2)
-	defer server2.Close()
-
-	fail := func(result *PhoneResult) {
-		assert.Fail(t, "connecting should not fail: %v", result)
-	}
-	connector := Connector{UserName: username, Password: password, Client: http.DefaultClient}
-	channel := connector.MultipleConnect(fail, server1.URL, server2.URL)
-	transformed := make(Connections)
-	go func() {
-		for phone := range channel {
-			if phone.address == server2.URL {
-				phone.token = "faked"
-			}
-			transformed <- phone
-		}
-		close(transformed)
-	}()
-	counter := int32(0)
-	onProcess := func(result *PhoneResult) {
-		atomic.AddInt32(&counter, 1)
-		if result.Address == server2.URL {
-			assert.Equal(t, "authentication error, status code: 401 with message \"401 Unauthorized\"", result.Comment)
-		} else if result.Address == server1.URL {
-			assert.Equal(t, successMessage, result.Comment)
-		} else {
-			assert.Fail(t, "unexpected result server URL: %v", result)
-		}
-	}
-	underTest(transformed, onProcess).Logout(func(p *PhoneResult) {})
-	assert.Equal(t, 2, int(counter), "two results should be reported to onProcess")
-	return telephone1
 }

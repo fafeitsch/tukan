@@ -117,16 +117,6 @@ func CreateAddresses(protocol, startIp string, port, number int) []string {
 	return result
 }
 
-// Result type for a multiple connect request. It carries either a phone or an error.
-// The intention behind this struct is to simulate a channel having several types.
-type Connection struct {
-	Address string
-	Phone   *Phone
-	Error   error
-}
-
-type Connections chan *Phone
-
 type PhoneResult struct {
 	Comment string
 	Address string
@@ -138,35 +128,6 @@ func (p *PhoneResult) String() string {
 }
 
 type ResultCallback func(p *PhoneResult)
-
-// Connects to all phones given by the addresses parameter parallely and
-// returns the results in the channel. Depending on how fast the real telephones answer
-// to the login, the order in which the telephones are put in the channel differs
-// from the order defined in the addresses parameter.
-//
-// This method returns immediately; the results channel is closed once all telephones
-// have been contacted. Erroneous connections are reported asynchronously via the onError callback.
-func (c *Connector) MultipleConnect(onError ResultCallback, addresses ...string) Connections {
-	var wg sync.WaitGroup
-	results := make(chan *Phone)
-	for index, address := range addresses {
-		wg.Add(1)
-		go func(index int, address string) {
-			defer wg.Done()
-			phone, err := c.SingleConnect(address)
-			if err != nil {
-				onError(&PhoneResult{Comment: err.Error(), Error: err, Address: address})
-				return
-			}
-			results <- phone
-		}(index, address)
-	}
-	go func() {
-		wg.Wait()
-		close(results)
-	}()
-	return results
-}
 
 func (c *Connector) Run(loginCallback ResultCallback, logoutCallback ResultCallback, operations ...func(p *Phone)) {
 	var wg sync.WaitGroup
@@ -224,38 +185,4 @@ func (p *Phone) Logout() error {
 		p.token = ""
 	}
 	return err
-}
-
-// Logouts from all phones in the channel and blocks until the channel is closed.
-// Results (successful and erroneous) are reported asynchronously via the callback.
-func (p Connections) Logout(onFinish ResultCallback) {
-	var wg sync.WaitGroup
-	for phone := range p {
-		wg.Add(1)
-		go func(phone *Phone) {
-			defer wg.Done()
-			err := phone.Logout()
-			if err != nil {
-				onFinish(&PhoneResult{Comment: err.Error(), Address: phone.address, Error: err})
-			} else {
-				onFinish(&PhoneResult{Comment: "logout successful", Address: phone.address})
-			}
-		}(phone)
-	}
-	wg.Wait()
-}
-
-func (p Connections) loop(singleAction func(phone *Phone), end func()) {
-	var wg sync.WaitGroup
-	for connection := range p {
-		wg.Add(1)
-		go func(phone *Phone) {
-			defer wg.Done()
-			singleAction(phone)
-		}(connection)
-	}
-	go func() {
-		wg.Wait()
-		end()
-	}()
 }

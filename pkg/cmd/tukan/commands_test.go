@@ -39,7 +39,7 @@ func TestScan(t *testing.T) {
 	scan(ctx)
 	got := buff.String()
 
-	assert.Equal(t, 134, len(got), "length of message is wrong")
+	assert.Equal(t, 52, len(got), "length of message is wrong")
 	assert.Containsf(t, got, server1.URL, "should contain server1 URL %s", server1.URL)
 	assert.Containsf(t, got, server2.URL, "should contain server2 URL %s", server1.URL)
 }
@@ -130,8 +130,8 @@ func TestDownloadParameters(t *testing.T) {
 	got := strings.Split(buff.String(), "\n")
 
 	assert.Equal(t, 2, len(got)-1, "expected two lines of result")
-	assert.Equal(t, server1.URL+": Parameters downloaded", got[0], "message of first download is wrong")
-	assert.Equal(t, "\tlogout successful", got[1], "message of first download is wrong")
+	assert.Equal(t, server1.URL+": ", got[0], "message of first download is wrong")
+	assert.Equal(t, "\t", got[1], "message of first download is wrong")
 	fileContent, err := ioutil.ReadFile(filepath.Join(tmpDir, parametersFileName(server1.URL)))
 	require.NoError(t, err, "reading the file should not give an error")
 	assert.Equal(t, "[\"Linda\": 89-IN (#0) (BLF)]", string(fileContent), "file content is wrong")

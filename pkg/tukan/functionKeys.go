@@ -32,6 +32,13 @@ func (p *Phone) DownloadParameters() (*down.Parameters, error) {
 	return nil, err
 }
 
+func PrepareDownloadParameters(callback func(result *ParametersResult)) func(p *Phone) {
+	return func(p *Phone) {
+		params, err := p.DownloadParameters()
+		callback(&ParametersResult{Address: p.address, Parameters: params, PhoneResult: PhoneResult{Error: err}})
+	}
+}
+
 func purgeTrailingFunctionKeys(keys down.FunctionKeys) down.FunctionKeys {
 	index := len(keys) - 1
 	for index >= 0 && keys[index].IsEmpty() {
@@ -63,45 +70,14 @@ func (p *Phone) UploadParameters(params up.Parameters) error {
 }
 
 type ParametersResult struct {
+	PhoneResult
 	Address    string
-	Parameters down.Parameters
+	Parameters *down.Parameters
 }
 
-func (c Connections) DownloadParameters(onProcess ResultCallback, onSuccess func(*ParametersResult)) Connections {
-	result := make(Connections)
-	singleAction := func(phone *Phone) {
-		params, err := phone.DownloadParameters()
-		if err != nil {
-			result := PhoneResult{Address: phone.address, Comment: err.Error(), Error: err}
-			onProcess(&result)
-		} else {
-			onProcess(&PhoneResult{Address: phone.address, Comment: "Parameters downloaded"})
-			onSuccess(&ParametersResult{Address: phone.address, Parameters: *params})
-		}
-		result <- phone
+func PrepareUploadParameters(params up.Parameters, callback ResultCallback) func(p *Phone) {
+	return func(p *Phone) {
+		err := p.UploadParameters(params)
+		callback(&PhoneResult{Address: p.address, Error: err})
 	}
-	onEnd := func() {
-		close(result)
-	}
-	c.loop(singleAction, onEnd)
-	return result
-}
-
-func (c Connections) UploadParameters(onProcess ResultCallback, params up.Parameters) Connections {
-	result := make(Connections)
-	singleAction := func(phone *Phone) {
-		err := phone.UploadParameters(params)
-		if err != nil {
-			result := PhoneResult{Address: phone.address, Comment: err.Error(), Error: err}
-			onProcess(&result)
-		} else {
-			onProcess(&PhoneResult{Address: phone.address, Comment: "Parameters uploaded"})
-		}
-		result <- phone
-	}
-	onEnd := func() {
-		close(result)
-	}
-	c.loop(singleAction, onEnd)
-	return result
 }

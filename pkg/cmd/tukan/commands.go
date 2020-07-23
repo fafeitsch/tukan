@@ -15,15 +15,6 @@ import (
 	"time"
 )
 
-func connectToPhones(context *cli.Context, onError tukan.ResultCallback) tukan.Connections {
-	login := context.GlobalString(loginFlagName)
-	password := context.GlobalString(passwordFlagName)
-	timeout := context.GlobalInt(timeoutFlagName)
-	connector := tukan.Connector{Client: &http.Client{Timeout: time.Duration(timeout) * time.Second}, UserName: login, Password: password}
-	addresses := tukan.ExpandAddresses("http", context.Args()...)
-	return connector.MultipleConnect(onError, addresses...)
-}
-
 func createConnector(context *cli.Context) *tukan.Connector {
 	login := context.GlobalString(loginFlagName)
 	password := context.GlobalString(passwordFlagName)
@@ -45,7 +36,7 @@ func scan(context *cli.Context) {
 		defer wg.Done()
 		handleSimpleResults(channel, context)
 	}()
-	connectToPhones(context, collectResults).Logout(collectResults)
+	createConnector(context).Run(collectResults, collectResults)
 	close(channel)
 	wg.Wait()
 }
@@ -191,9 +182,8 @@ func downloadParameters(context *cli.Context) {
 			_, _ = fmt.Fprintf(context.App.Writer, "There were errors writing the files:\n: %s", strings.Join(writeErrors, "\n"))
 		}
 	}()
-	connectToPhones(context, collectResults).
-		DownloadParameters(collectResults, collectParameters).
-		Logout(collectResults)
+	createConnector(context).
+		Run(collectResults, collectResults, tukan.PrepareDownloadParameters(collectParameters))
 	close(channel)
 	close(parametersChannel)
 	wg.Wait()
