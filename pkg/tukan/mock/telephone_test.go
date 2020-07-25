@@ -199,5 +199,11 @@ func TestTelephone_HandleParameters_POST(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestParseFunctionKeysCsv(t *testing.T) {
+	csv, err := ParseFunctionKeysCsv("mockdata/functionkeys.csv")
+	require.NoError(t, err, "no error expected")
+	require.Equal(t, 8, len(csv), "length of function keys not correct")
+	assert.Equal(t, "Henderson Featonby,38,#0", fmt.Sprintf("%s,%s,%s", csv[0]["DisplayName"], csv[0]["PhoneNumber"], csv[0]["CallPickupCode"]))
 }

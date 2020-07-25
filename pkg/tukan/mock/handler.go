@@ -1,9 +1,11 @@
 package mock
 
 import (
+	"encoding/csv"
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -38,4 +40,24 @@ func enforceTokenHandler(telephone *Telephone, next http.HandlerFunc) http.Handl
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func ParseFunctionKeysCsv(filename string) ([]map[string]string, error) {
+	reader, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	csvReader := csv.NewReader(reader)
+	all, err := csvReader.ReadAll()
+	if err != nil {
+		return nil, fmt.Errorf("could not parse csv content: %v", err)
+	}
+	result := make([]map[string]string, 0, len(all))
+	for index, row := range all[1:] {
+		if len(row) != 3 {
+			return nil, fmt.Errorf("row %d has %d values, but exactly 3 are required", index, len(row))
+		}
+		result = append(result, map[string]string{"DisplayName": row[0], "PhoneNumber": row[1], "CallPickupCode": row[2]})
+	}
+	return result, nil
 }

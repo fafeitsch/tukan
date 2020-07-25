@@ -20,17 +20,26 @@ func main() {
 	var port int
 	var login string
 	var password string
+	var fnKeysFile string
 	flags := []cli.Flag{
 		cli.IntFlag{Name: "port", Value: 80, Usage: "The port the simulated phone will listen to", Destination: &port},
 		cli.StringFlag{Name: "login", Value: "Admin", Usage: "The login name for the simulator", Destination: &login},
 		cli.StringFlag{Name: "password", Value: "admin", Usage: "The password for the simulator", Destination: &password},
+		cli.StringFlag{Name: "functionKeys", Value: "", Usage: "CSV file of function key definitions", Destination: &fnKeysFile},
 	}
 
 	app.HideHelp = true
 	app.Flags = flags
 	app.Action = func(c *cli.Context) error {
-		phone, _ := mock.CreatePhone(login, password)
-		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), phone))
+		handler, phone := mock.CreatePhone(login, password)
+		if len(fnKeysFile) != 0 {
+			csv, err := mock.ParseFunctionKeysCsv(fnKeysFile)
+			if err != nil {
+				log.Fatal(err)
+			}
+			phone.Parameters.FunctionKeys = csv
+		}
+		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), handler))
 		return nil
 	}
 

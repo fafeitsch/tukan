@@ -60,7 +60,7 @@ func main() {
 	}
 
 	functionKeysDownloadCommand := cli.Command{
-		Name:  "fnKeys-down",
+		Name:  "fnkeys-down",
 		Usage: "Downloads the function keys from an elmeg ip 620/630 phone",
 		Flags: []cli.Flag{
 			cli.StringFlag{Name: targetDirFlagName, Required: true, Usage: "The directory where the downloaded phonebooks are saved."},
@@ -69,13 +69,13 @@ func main() {
 	}
 
 	functionKeysReplaceCommand := cli.Command{
-		Name:  "fnKeys-replace",
+		Name:  "fnkeys-replace",
 		Usage: "Replaces display names of function keys from an elmeg ip 620/630 phone",
 		Flags: []cli.Flag{
 			replaceFlag,
 			originalFlag,
 		},
-		Action: actionReplaceFunctionKeys,
+		Action: replaceFunctionKeys,
 	}
 
 	app.Commands = []cli.Command{scanCommand, phoneBookUploadCommand, phonebookDownloadCommand, functionKeysDownloadCommand, functionKeysReplaceCommand}
