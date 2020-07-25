@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -26,44 +25,13 @@ func createConnector(context *cli.Context) *tukan.Connector {
 }
 
 func scan(context *cli.Context) {
-	channel := make(chan *tukan.PhoneResult)
-	collectResults := func(result *tukan.PhoneResult) {
-		channel <- result
-	}
+	channel := make(chan commentedResult)
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		handleSimpleResults(channel, context)
-	}()
-	createConnector(context).Run(collectResults, func(p *tukan.Phone) {}, collectResults)
+	go handleResults(&wg, channel, context)
+	createConnector(context).Run(actionLogin.handler(channel), func(p *tukan.Phone) {}, actionLogout.handler(channel))
 	close(channel)
 	wg.Wait()
-}
-
-func handleSimpleResults(channel chan *tukan.PhoneResult, context *cli.Context) {
-	verbose := context.GlobalBool(verboseFlagName)
-	results := make(map[string][]string)
-	keys := make([]string, 0, 0)
-	for result := range channel {
-		if verbose {
-			_, _ = fmt.Fprintf(context.App.Writer, "%v\n", result)
-		}
-		if _, present := results[result.Address]; !present {
-			results[result.Address] = make([]string, 0, 0)
-			keys = append(keys, result.Address)
-		}
-		results[result.Address] = append(results[result.Address], "")
-	}
-	sort.Slice(keys, func(i, j int) bool {
-		return strings.Compare(keys[i], keys[j]) <= 0
-	})
-	if verbose {
-		_, _ = fmt.Fprint(context.App.Writer, "\n")
-	}
-	for _, key := range keys {
-		_, _ = fmt.Fprintf(context.App.Writer, "%s: %s\n", key, strings.Join(results[key], "\n\t"))
-	}
 }
 
 func uploadPhoneBook(context *cli.Context) {
@@ -75,21 +43,20 @@ func uploadPhoneBook(context *cli.Context) {
 		return
 	}
 
-	channel := make(chan *tukan.PhoneResult)
-	collectResults := func(result *tukan.PhoneResult) {
-		// TODO: different result collectors for the different actions with different messages
-		channel <- result
+	channel := make(chan commentedResult)
+
+	uploadHandler := actionUploadPhoneBook.handler(channel)
+	upload := func(p *tukan.Phone) {
+		err := p.UploadPhoneBook(string(content))
+		uploadHandler(&tukan.PhoneResult{Address: p.Address, Error: err})
 	}
 
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		handleSimpleResults(channel, context)
-	}()
-	createConnector(context).Run(collectResults,
-		tukan.PreparePhoneBookUpload(collectResults, string(content)),
-		collectResults)
+	go handleResults(&wg, channel, context)
+	createConnector(context).Run(actionLogin.handler(channel),
+		upload,
+		actionLogout.handler(channel))
 	close(channel)
 	wg.Wait()
 }
@@ -101,41 +68,30 @@ func downloadPhoneBook(context *cli.Context) {
 		_, _ = fmt.Fprintf(context.App.Writer, "could not create target directory: %v", err)
 		return
 	}
-	channel := make(chan *tukan.PhoneResult)
-	collectResults := func(result *tukan.PhoneResult) {
-		channel <- result
-	}
+	channel := make(chan commentedResult)
 
-	bookChannel := make(chan *tukan.PhoneBookResult)
-	collectBooks := func(result *tukan.PhoneBookResult) {
-		bookChannel <- result
-	}
-	var wg sync.WaitGroup
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		handleSimpleResults(channel, context)
-	}()
-	go func() {
-		defer wg.Done()
-		writeErrors := make([]string, 0, 0)
-		for phoneBookResult := range bookChannel {
-			fileName := phoneBookFileName(phoneBookResult.Address)
+	handler := actionDownloadPhoneBook.handler(channel)
+	download := func(p *tukan.Phone) {
+		book, err := p.DownloadPhoneBook()
+		handler(&tukan.PhoneResult{Address: p.Address, Error: err})
+		if err == nil && book != nil {
+			fileName := phoneBookFileName(p.Address)
 			path := filepath.Join(targetDirectory, fileName)
-			err := ioutil.WriteFile(path, []byte(*phoneBookResult.PhoneBook), os.ModePerm)
+			err := ioutil.WriteFile(path, []byte(*book), os.ModePerm)
 			if err != nil {
-				writeErrors = append(writeErrors, err.Error())
+				comment := fmt.Sprintf("Downloaded content could not be written to file:%v", err)
+				channel <- commentedResult{PhoneResult: &tukan.PhoneResult{Address: p.Address, Error: err}, comment: comment}
 			}
 		}
-		if len(writeErrors) != 0 {
-			_, _ = fmt.Fprintf(context.App.Writer, "There were errors writing the files:\n: %s", strings.Join(writeErrors, "\n"))
-		}
-	}()
-	createConnector(context).Run(collectResults,
-		tukan.PreparePhoneBookDownload(collectBooks),
-		collectResults)
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go handleResults(&wg, channel, context)
+	createConnector(context).Run(actionLogin.handler(channel),
+		download,
+		actionLogout.handler(channel))
 	close(channel)
-	close(bookChannel)
 	wg.Wait()
 }
 
@@ -153,42 +109,31 @@ func downloadParameters(context *cli.Context) {
 		_, _ = fmt.Fprintf(context.App.Writer, "could not create target directory: %v", err)
 		return
 	}
-	channel := make(chan *tukan.PhoneResult)
-	collectResults := func(result *tukan.PhoneResult) {
-		channel <- result
-	}
+	channel := make(chan commentedResult)
 
-	parametersChannel := make(chan *tukan.ParametersResult)
-	collectParameters := func(result *tukan.ParametersResult) {
-		parametersChannel <- result
-	}
-	var wg sync.WaitGroup
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		handleSimpleResults(channel, context)
-	}()
-	go func() {
-		defer wg.Done()
-		writeErrors := make([]string, 0, 0)
-		for parametersResult := range parametersChannel {
-			fileName := parametersFileName(parametersResult.Address)
+	handler := actionDownloadParameters.handler(channel)
+	download := func(p *tukan.Phone) {
+		params, err := p.DownloadParameters()
+		handler(&tukan.PhoneResult{Address: p.Address, Error: err})
+		if err == nil && params != nil {
+			fileName := parametersFileName(p.Address)
 			path := filepath.Join(targetDirectory, fileName)
-			err := ioutil.WriteFile(path, []byte(parametersResult.Parameters.FunctionKeys.String()), os.ModePerm)
+			err := ioutil.WriteFile(path, []byte(params.FunctionKeys.String()), os.ModePerm)
 			if err != nil {
-				writeErrors = append(writeErrors, err.Error())
+				comment := fmt.Sprintf("Downloaded content could not be written to file:%v", err)
+				channel <- commentedResult{PhoneResult: &tukan.PhoneResult{Address: p.Address, Error: err}, comment: comment}
 			}
 		}
-		if len(writeErrors) != 0 {
-			_, _ = fmt.Fprintf(context.App.Writer, "There were errors writing the files:\n: %s", strings.Join(writeErrors, "\n"))
-		}
-	}()
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go handleResults(&wg, channel, context)
 	createConnector(context).
-		Run(collectResults,
-			tukan.PrepareParameterDownload(collectParameters),
-			collectResults)
+		Run(actionLogin.handler(channel),
+			download,
+			actionLogout.handler(channel))
 	close(channel)
-	close(parametersChannel)
 	wg.Wait()
 }
 
@@ -196,33 +141,30 @@ func replaceFunctionKeys(context *cli.Context) {
 	original := context.String(originalFlagName)
 	replace := context.String(replaceFlagName)
 
-	channel := make(chan *tukan.PhoneResult)
-	collectResults := func(result *tukan.PhoneResult) {
-		channel <- result
-	}
+	channel := make(chan commentedResult)
 
+	downloadHandler := actionDownloadParameters.handler(channel)
+	uploadHandler := actionUploadParameters.handler(channel)
 	replaceOperation := func(p *tukan.Phone) {
 		params, err := p.DownloadParameters()
+		downloadHandler(&tukan.PhoneResult{Address: p.Address, Error: err})
 		if err != nil {
-			collectResults(&tukan.PhoneResult{Address: p.Address, Error: err})
 			return
 		}
-		upload, _ := params.TransformFunctionKeyNames(original, replace)
-		collectResults(&tukan.PhoneResult{Address: p.Address})
+		upload, changed := params.TransformFunctionKeyNames(original, replace)
+		comment := fmt.Sprintf("%s (changed keys): %v", actionReplaceFunctionKeys.String(), changed)
+		channel <- commentedResult{PhoneResult: &tukan.PhoneResult{Address: p.Address, Error: err}, comment: comment}
 		err = p.UploadParameters(upload)
-		collectResults(&tukan.PhoneResult{Address: p.Address})
+		uploadHandler(&tukan.PhoneResult{Address: p.Address, Error: err})
 	}
 
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		handleSimpleResults(channel, context)
-	}()
+	go handleResults(&wg, channel, context)
 	createConnector(context).
-		Run(collectResults,
+		Run(actionLogin.handler(channel),
 			replaceOperation,
-			collectResults)
+			actionLogout.handler(channel))
 	close(channel)
 	wg.Wait()
 }

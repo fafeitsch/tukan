@@ -42,13 +42,6 @@ func (p *Phone) UploadPhoneBook(payload string) error {
 	return err
 }
 
-func PreparePhoneBookUpload(callback ResultCallback, payload string) func(p *Phone) {
-	return func(p *Phone) {
-		err := p.UploadPhoneBook(payload)
-		callback(&PhoneResult{Address: p.Address, Error: err})
-	}
-}
-
 // Downloads the phone book from the telephone. In case of an error
 // the returned string is nil.
 func (p *Phone) DownloadPhoneBook() (*string, error) {
@@ -67,16 +60,4 @@ func (p *Phone) DownloadPhoneBook() (*string, error) {
 	_, _ = buf.ReadFrom(resp.Body)
 	result := buf.String()
 	return &result, nil
-}
-
-func PreparePhoneBookDownload(callback func(result *PhoneBookResult)) func(p *Phone) {
-	return func(p *Phone) {
-		book, err := p.DownloadPhoneBook()
-		callback(&PhoneBookResult{PhoneResult: PhoneResult{Address: p.Address, Error: err}, PhoneBook: book})
-	}
-}
-
-type PhoneBookResult struct {
-	PhoneResult
-	PhoneBook *string
 }

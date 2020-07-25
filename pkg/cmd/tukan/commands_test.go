@@ -39,7 +39,7 @@ func TestScan(t *testing.T) {
 	scan(ctx)
 	got := buff.String()
 
-	assert.Equal(t, 52, len(got), "length of message is wrong")
+	assert.Equal(t, 176, len(got), "length of message is wrong")
 	assert.Containsf(t, got, server1.URL, "should contain server1 URL %s", server1.URL)
 	assert.Containsf(t, got, server2.URL, "should contain server2 URL %s", server1.URL)
 }
@@ -66,7 +66,7 @@ func TestUploadPhoneBook(t *testing.T) {
 		uploadPhoneBook(ctx)
 		got := buff.String()
 
-		assert.Equal(t, 54, len(got), "length of message is wrong")
+		assert.Equal(t, 209, len(got), "length of message is wrong")
 		assert.Containsf(t, got, server1.URL, "should contain server1 URL %s", server1.URL)
 		assert.Containsf(t, got, server2.URL, "should contain server2 URL %s", server1.URL)
 	})
@@ -100,9 +100,9 @@ func TestDownloadPhoneBook(t *testing.T) {
 	downloadPhoneBook(ctx)
 	got := strings.Split(buff.String(), "\n")
 
-	assert.Equal(t, 2, len(got)-1, "expected two lines of result")
-	assert.Equal(t, server1.URL+": ", got[0], "message of first download is wrong")
-	assert.Equal(t, "\t", got[1], "message of first download is wrong")
+	assert.Equal(t, 4, len(got)-1, "expected two lines of result")
+	assert.Equal(t, server1.URL+":", got[0], "message of first download is wrong")
+	assert.Equal(t, "\tLogin successful", got[1], "message of first download is wrong")
 	fileContent, err := ioutil.ReadFile(filepath.Join(tmpDir, phoneBookFileName(server1.URL)))
 	require.NoError(t, err, "reading the file should not give an error")
 	assert.Equal(t, phone1.Phonebook, string(fileContent), "file content is wrong")
@@ -129,9 +129,9 @@ func TestDownloadParameters(t *testing.T) {
 	downloadParameters(ctx)
 	got := strings.Split(buff.String(), "\n")
 
-	assert.Equal(t, 2, len(got)-1, "expected two lines of result")
-	assert.Equal(t, server1.URL+": ", got[0], "message of first download is wrong")
-	assert.Equal(t, "\t", got[1], "message of first download is wrong")
+	assert.Equal(t, 4, len(got)-1, "expected two lines of result")
+	assert.Equal(t, server1.URL+":", got[0], "message of first download is wrong")
+	assert.Equal(t, "\tLogin successful", got[1], "message of first download is wrong")
 	fileContent, err := ioutil.ReadFile(filepath.Join(tmpDir, parametersFileName(server1.URL)))
 	require.NoError(t, err, "reading the file should not give an error")
 	assert.Equal(t, "[\"Linda\": 89-IN (#0) (BLF)]", string(fileContent), "file content is wrong")
@@ -173,4 +173,5 @@ func TestReplaceFunctionKeys(t *testing.T) {
 	assert.Equal(t, "89-IN", got2[1]["PhoneNumber"], "phoneNumber of second phone contact should not be changed")
 	assert.Equal(t, map[string]string{}, got2[2], "third entry in phone book should still be empty")
 
+	assert.Equal(t, 348, len(buff.String()), "output is wrong")
 }

@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-const loginFlagName = "login"
+const loginFlagName = "actionLogin"
 const passwordFlagName = "password"
 const portFlagName = "port"
 const timeoutFlagName = "timeout"
@@ -27,7 +27,7 @@ func main() {
 	var port, timeout int
 	var noLogging bool
 
-	loginFlag := cli.StringFlag{Name: loginFlagName, Value: "Admin", Usage: "The login to be used", Destination: &login}
+	loginFlag := cli.StringFlag{Name: loginFlagName, Value: "Admin", Usage: "The actionLogin to be used", Destination: &login}
 	passwordFlag := cli.StringFlag{Name: passwordFlagName, Value: "admin", Usage: "The password to be used", Destination: &password}
 	portFlag := cli.IntFlag{Name: portFlagName, Value: 80, Usage: "The port to be used to connect to the telephones", Destination: &port}
 	verboseFlag := cli.BoolFlag{Name: verboseFlagName, Usage: "Disables the logging and only prints the final results", Destination: &noLogging}
@@ -75,7 +75,7 @@ func main() {
 			replaceFlag,
 			originalFlag,
 		},
-		Action: replaceFunctionKeys,
+		Action: actionReplaceFunctionKeys,
 	}
 
 	app.Commands = []cli.Command{scanCommand, phoneBookUploadCommand, phonebookDownloadCommand, functionKeysDownloadCommand, functionKeysReplaceCommand}

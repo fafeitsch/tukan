@@ -32,13 +32,6 @@ func (p *Phone) DownloadParameters() (*down.Parameters, error) {
 	return nil, err
 }
 
-func PrepareParameterDownload(callback func(result *ParametersResult)) func(p *Phone) {
-	return func(p *Phone) {
-		params, err := p.DownloadParameters()
-		callback(&ParametersResult{Address: p.Address, Parameters: params, PhoneResult: PhoneResult{Error: err}})
-	}
-}
-
 func purgeTrailingFunctionKeys(keys down.FunctionKeys) down.FunctionKeys {
 	index := len(keys) - 1
 	for index >= 0 && keys[index].IsEmpty() {
@@ -67,17 +60,4 @@ func (p *Phone) UploadParameters(params up.Parameters) error {
 		defer resp.Body.Close()
 	}
 	return checkResponse(resp, err)
-}
-
-type ParametersResult struct {
-	PhoneResult
-	Address    string
-	Parameters *down.Parameters
-}
-
-func PrepareParameterUpload(callback ResultCallback, params up.Parameters) func(p *Phone) {
-	return func(p *Phone) {
-		err := p.UploadParameters(params)
-		callback(&PhoneResult{Address: p.Address, Error: err})
-	}
 }
