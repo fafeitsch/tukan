@@ -44,6 +44,7 @@ func enforceTokenHandler(telephone *Telephone, next http.HandlerFunc) http.Handl
 
 func ParseFunctionKeysCsv(filename string) ([]map[string]string, error) {
 	reader, err := os.Open(filename)
+	defer func() { _ = reader.Close() }()
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +55,7 @@ func ParseFunctionKeysCsv(filename string) ([]map[string]string, error) {
 	}
 	result := make([]map[string]string, 0, len(all))
 	for index, row := range all[1:] {
-		if len(row) != 3 {
+		if len(row) < 3 {
 			return nil, fmt.Errorf("row %d has %d values, but exactly 3 are required", index, len(row))
 		}
 		result = append(result, map[string]string{"DisplayName": row[0], "PhoneNumber": row[1], "CallPickupCode": row[2]})

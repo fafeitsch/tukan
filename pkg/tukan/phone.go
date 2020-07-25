@@ -158,14 +158,6 @@ type Phone struct {
 	invalid bool
 }
 
-func (p *Phone) Host() string {
-	return p.Address
-}
-
-func (p *Phone) Token() string {
-	return p.token
-}
-
 // Sends a logout request to the phone. If the request passes without error
 // then the token of the phone is reset. Further usage of the phone struct
 // will most likely not work. If and error is returned, then the token stored

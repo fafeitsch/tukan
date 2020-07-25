@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
 	"github.com/fafeitsch/Tukan/pkg/tukan"
 	"github.com/urfave/cli"
@@ -117,12 +118,29 @@ func downloadParameters(context *cli.Context) {
 		handler(&tukan.PhoneResult{Address: p.Address, Error: err})
 		if err == nil && params != nil {
 			fileName := parametersFileName(p.Address)
-			path := filepath.Join(targetDirectory, fileName)
-			err := ioutil.WriteFile(path, []byte(params.FunctionKeys.String()), os.ModePerm)
+			file, err := os.OpenFile(filepath.Join(targetDirectory, fileName), os.O_CREATE|os.O_RDWR, os.ModePerm)
 			if err != nil {
 				comment := fmt.Sprintf("Downloaded content could not be written to file:%v", err)
 				channel <- commentedResult{PhoneResult: &tukan.PhoneResult{Address: p.Address, Error: err}, comment: comment}
+				return
 			}
+			defer func() { _ = file.Close() }()
+			writer := csv.NewWriter(file)
+			headerErr := writer.Write([]string{"DisplayName", "PhoneNumber", "CallPickupCode", "Type"})
+			if headerErr != nil {
+				comment := fmt.Sprintf("Downloaded content could not be written to file:%v", headerErr)
+				channel <- commentedResult{PhoneResult: &tukan.PhoneResult{Address: p.Address, Error: headerErr}, comment: comment}
+				return
+			}
+			for _, fnKey := range params.FunctionKeys {
+				err := writer.Write([]string{fnKey.DisplayName.Value, fnKey.PhoneNumber.Value, fnKey.CallPickupCode.Value, fnKey.Type.Value})
+				if err != nil {
+					comment := fmt.Sprintf("Downloaded content could not be written to file:%v", err)
+					channel <- commentedResult{PhoneResult: &tukan.PhoneResult{Address: p.Address, Error: err}, comment: comment}
+					return
+				}
+			}
+			writer.Flush()
 		}
 	}
 
@@ -173,5 +191,5 @@ func parametersFileName(address string) string {
 	regex := regexp.MustCompile("https?://")
 	result := regex.ReplaceAllString(address, "")
 	result = strings.ReplaceAll(result, ":", "_")
-	return "parameters_" + result + ".txt"
+	return "parameters_" + result + ".csv"
 }

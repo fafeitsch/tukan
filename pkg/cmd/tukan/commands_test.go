@@ -134,7 +134,7 @@ func TestDownloadParameters(t *testing.T) {
 	assert.Equal(t, "\tLogin successful", got[1], "message of first download is wrong")
 	fileContent, err := ioutil.ReadFile(filepath.Join(tmpDir, parametersFileName(server1.URL)))
 	require.NoError(t, err, "reading the file should not give an error")
-	assert.Equal(t, "[\"Linda\": 89-IN (#0) (BLF)]", string(fileContent), "file content is wrong")
+	assert.Equal(t, "DisplayName,PhoneNumber,CallPickupCode,Type\nLinda,89-IN,#0,4\n", string(fileContent), "file content is wrong")
 }
 
 func TestReplaceFunctionKeys(t *testing.T) {
