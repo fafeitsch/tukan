@@ -23,7 +23,7 @@ type Connector struct {
 	Addresses []string
 }
 
-// Tries to log in to a specific telephone identified by its address.
+// Tries to log in to a specific telephone identified by its Address.
 // On success, returns a phone Client, otherwise, an error is returned.
 func (c *Connector) SingleConnect(address string) (*Phone, error) {
 	url := fmt.Sprintf("%s/Login", address)
@@ -49,11 +49,11 @@ func (c *Connector) SingleConnect(address string) (*Phone, error) {
 	return &Phone{
 		client:  c.Client,
 		token:   tokenResp.Token,
-		address: address,
+		Address: address,
 	}, nil
 }
 
-// Expands IP Addresses. If an passed address cannot be parsed, then it is returned as is.
+// Expands IP Addresses. If an passed Address cannot be parsed, then it is returned as is.
 func ExpandAddresses(protocol string, addresses ...string) []string {
 	result := make([]string, 0, len(addresses))
 	for _, originalAddress := range addresses {
@@ -88,7 +88,7 @@ func splitAddress(address string) (string, int, int) {
 	return address[0:colon], port, number
 }
 
-// Creates number addresses to connect to phones. This first address is given by startIp, which
+// Creates number addresses to connect to phones. This first Address is given by startIp, which
 // is always inclusive. If the startIp is not a valid IP, then an empty slice is returned.
 // The resulting slice can be used in the MultipleConnect function of the Connector.
 //
@@ -118,20 +118,15 @@ func CreateAddresses(protocol, startIp string, port, number int) []string {
 }
 
 type PhoneResult struct {
-	Comment string
 	Address string
 	Error   error
-}
-
-func (p *PhoneResult) String() string {
-	return fmt.Sprintf("%s: %t (%s)", p.Address, p.Error == nil, p.Comment)
 }
 
 type ResultCallback func(p *PhoneResult)
 
 type PhoneAction func(p *Phone)
 
-func (c *Connector) Run(loginCallback ResultCallback, operations []PhoneAction, logoutCallback ResultCallback) {
+func (c *Connector) Run(loginCallback ResultCallback, operation PhoneAction, logoutCallback ResultCallback) {
 	var wg sync.WaitGroup
 	for index, address := range c.Addresses {
 		wg.Add(1)
@@ -146,9 +141,7 @@ func (c *Connector) Run(loginCallback ResultCallback, operations []PhoneAction, 
 				err = phone.Logout()
 				logoutCallback(&PhoneResult{Address: address, Error: err})
 			}()
-			for _, operation := range operations {
-				operation(phone)
-			}
+			operation(phone)
 		}(index, address)
 	}
 	wg.Wait()
@@ -161,12 +154,12 @@ func (c *Connector) Run(loginCallback ResultCallback, operations []PhoneAction, 
 type Phone struct {
 	client  *http.Client
 	token   string
-	address string
+	Address string
 	invalid bool
 }
 
 func (p *Phone) Host() string {
-	return p.address
+	return p.Address
 }
 
 func (p *Phone) Token() string {
@@ -178,7 +171,7 @@ func (p *Phone) Token() string {
 // will most likely not work. If and error is returned, then the token stored
 // in this telephone may or may not be used again, depending on the error.
 func (p *Phone) Logout() error {
-	url := fmt.Sprintf("%s/Logout", p.address)
+	url := fmt.Sprintf("%s/Logout", p.Address)
 	request, _ := http.NewRequest("POST", url, nil)
 	request.Header.Add("Authorization", "Bearer "+p.token)
 	resp, err := p.client.Do(request)

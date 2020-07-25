@@ -36,7 +36,7 @@ func scan(context *cli.Context) {
 		defer wg.Done()
 		handleSimpleResults(channel, context)
 	}()
-	createConnector(context).Run(collectResults, []tukan.PhoneAction{}, collectResults)
+	createConnector(context).Run(collectResults, func(p *tukan.Phone) {}, collectResults)
 	close(channel)
 	wg.Wait()
 }
@@ -47,13 +47,13 @@ func handleSimpleResults(channel chan *tukan.PhoneResult, context *cli.Context) 
 	keys := make([]string, 0, 0)
 	for result := range channel {
 		if verbose {
-			_, _ = fmt.Fprintf(context.App.Writer, "%s\n", result.String())
+			_, _ = fmt.Fprintf(context.App.Writer, "%v\n", result)
 		}
 		if _, present := results[result.Address]; !present {
 			results[result.Address] = make([]string, 0, 0)
 			keys = append(keys, result.Address)
 		}
-		results[result.Address] = append(results[result.Address], result.Comment)
+		results[result.Address] = append(results[result.Address], "")
 	}
 	sort.Slice(keys, func(i, j int) bool {
 		return strings.Compare(keys[i], keys[j]) <= 0
@@ -88,7 +88,7 @@ func uploadPhoneBook(context *cli.Context) {
 		handleSimpleResults(channel, context)
 	}()
 	createConnector(context).Run(collectResults,
-		[]tukan.PhoneAction{tukan.PreparePhoneBookUpload(collectResults, string(content))},
+		tukan.PreparePhoneBookUpload(collectResults, string(content)),
 		collectResults)
 	close(channel)
 	wg.Wait()
@@ -132,7 +132,7 @@ func downloadPhoneBook(context *cli.Context) {
 		}
 	}()
 	createConnector(context).Run(collectResults,
-		[]tukan.PhoneAction{tukan.PreparePhoneBookDownload(collectBooks)},
+		tukan.PreparePhoneBookDownload(collectBooks),
 		collectResults)
 	close(channel)
 	close(bookChannel)
@@ -185,10 +185,45 @@ func downloadParameters(context *cli.Context) {
 	}()
 	createConnector(context).
 		Run(collectResults,
-			[]tukan.PhoneAction{tukan.PrepareParameterDownload(collectParameters)},
+			tukan.PrepareParameterDownload(collectParameters),
 			collectResults)
 	close(channel)
 	close(parametersChannel)
+	wg.Wait()
+}
+
+func replaceFunctionKeys(context *cli.Context) {
+	original := context.String(originalFlagName)
+	replace := context.String(replaceFlagName)
+
+	channel := make(chan *tukan.PhoneResult)
+	collectResults := func(result *tukan.PhoneResult) {
+		channel <- result
+	}
+
+	replaceOperation := func(p *tukan.Phone) {
+		params, err := p.DownloadParameters()
+		if err != nil {
+			collectResults(&tukan.PhoneResult{Address: p.Address, Error: err})
+			return
+		}
+		upload, _ := params.TransformFunctionKeyNames(original, replace)
+		collectResults(&tukan.PhoneResult{Address: p.Address})
+		err = p.UploadParameters(upload)
+		collectResults(&tukan.PhoneResult{Address: p.Address})
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		handleSimpleResults(channel, context)
+	}()
+	createConnector(context).
+		Run(collectResults,
+			replaceOperation,
+			collectResults)
+	close(channel)
 	wg.Wait()
 }
 

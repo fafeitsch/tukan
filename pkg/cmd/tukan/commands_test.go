@@ -136,3 +136,41 @@ func TestDownloadParameters(t *testing.T) {
 	require.NoError(t, err, "reading the file should not give an error")
 	assert.Equal(t, "[\"Linda\": 89-IN (#0) (BLF)]", string(fileContent), "file content is wrong")
 }
+
+func TestReplaceFunctionKeys(t *testing.T) {
+	handler1, phone1 := mock.CreatePhone(username, password)
+	phone1.Parameters = mock.RawParameters{FunctionKeys: []map[string]string{{"DisplayName": "Linda", "PhoneNumber": "89-IN", "CallPickupCode": "#0"}, {}}}
+	handler2, phone2 := mock.CreatePhone(username, password)
+	phone2.Parameters = mock.RawParameters{FunctionKeys: []map[string]string{{"DisplayName": "John", "PhoneNumber": "90-DS", "CallPickupCode": "#0"}, {"DisplayName": "Linda", "PhoneNumber": "89-IN", "CallPickupCode": "#0"}, {}}}
+
+	server1 := httptest.NewServer(handler1)
+	defer server1.Close()
+	server2 := httptest.NewServer(handler2)
+	defer server2.Close()
+
+	flags := flag.NewFlagSet("", flag.PanicOnError)
+	flags.String(loginFlagName, username, "")
+	flags.String(passwordFlagName, password, "")
+	flags.String(originalFlagName, "Linda", "")
+	flags.String(replaceFlagName, "Eva", "")
+	_ = flags.Parse([]string{server1.URL, server2.URL})
+
+	var buff bytes.Buffer
+	ctx := cli.NewContext(&cli.App{Writer: &buff}, flags, nil)
+	replaceFunctionKeys(ctx)
+
+	got1 := phone1.Parameters.FunctionKeys
+	assert.Equal(t, 2, len(got1), "length of function keys of first phone not correct")
+	assert.Equal(t, "Eva", got1[0]["DisplayName"], "displayName of first phone not correctly replaced")
+	assert.Equal(t, "89-IN", got1[0]["PhoneNumber"], "phoneNumber of first phone contact should not be changed")
+	assert.Equal(t, map[string]string{}, got1[1], "second entry in phone book should still be empty")
+
+	got2 := phone2.Parameters.FunctionKeys
+	assert.Equal(t, 3, len(got2), "length of function keys of second phone not correct")
+	assert.Equal(t, "John", got2[0]["DisplayName"], "displayName in second phone should not be changed")
+	assert.Equal(t, "90-DS", got2[0]["PhoneNumber"], "phoneNumber in second phone should not be changed")
+	assert.Equal(t, "Eva", got2[1]["DisplayName"], "displayName in second phone not correctly replaced")
+	assert.Equal(t, "89-IN", got2[1]["PhoneNumber"], "phoneNumber of second phone contact should not be changed")
+	assert.Equal(t, map[string]string{}, got2[2], "third entry in phone book should still be empty")
+
+}

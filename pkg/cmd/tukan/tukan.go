@@ -1,23 +1,20 @@
 package main
 
 import (
-	"fmt"
-	http2 "github.com/fafeitsch/Tukan/pkg/http"
 	"github.com/urfave/cli"
-	"io/ioutil"
 	"log"
 	"os"
 )
 
 const loginFlagName = "login"
 const passwordFlagName = "password"
-const ipFlagName = "ip"
-const numberFlagName = "number"
 const portFlagName = "port"
 const timeoutFlagName = "timeout"
 const verboseFlagName = "verbose"
 const fileFlagName = "file"
 const targetDirFlagName = "targetDir"
+const originalFlagName = "original"
+const replaceFlagName = "replace"
 
 func main() {
 	app := cli.NewApp()
@@ -33,14 +30,10 @@ func main() {
 	loginFlag := cli.StringFlag{Name: loginFlagName, Value: "Admin", Usage: "The login to be used", Destination: &login}
 	passwordFlag := cli.StringFlag{Name: passwordFlagName, Value: "admin", Usage: "The password to be used", Destination: &password}
 	portFlag := cli.IntFlag{Name: portFlagName, Value: 80, Usage: "The port to be used to connect to the telephones", Destination: &port}
-	ipFlag := cli.StringFlag{Name: ipFlagName, Required: false, Usage: "The IP of the first phone to interact with"}
-	numberFlag := cli.IntFlag{Name: numberFlagName, Value: 1, Usage: "The number of phones to contact, including IP"}
 	verboseFlag := cli.BoolFlag{Name: verboseFlagName, Usage: "Disables the logging and only prints the final results", Destination: &noLogging}
 	timeoutFlag := cli.IntFlag{Name: timeoutFlagName, Value: 20, Usage: "Number of seconds to wait for remote connection", Destination: &timeout}
-	originalFlag := cli.StringFlag{Name: "original", Value: "", Usage: "The display name to be replaced", Destination: &original, Required: true}
-	replaceFlag := cli.StringFlag{Name: "replace", Value: "", Usage: "The new display name", Destination: &replace, Required: true}
-
-	var phoneClient http2.PhoneClient
+	originalFlag := cli.StringFlag{Name: originalFlagName, Value: "", Usage: "The display name to be replaced", Destination: &original, Required: true}
+	replaceFlag := cli.StringFlag{Name: replaceFlagName, Value: "", Usage: "The new display name", Destination: &replace, Required: true}
 
 	scanCommand := cli.Command{
 		Name:   "scan",
@@ -79,30 +72,15 @@ func main() {
 		Name:  "fnKeys-replace",
 		Usage: "Replaces display names of function keys from an elmeg ip 620/630 phone",
 		Flags: []cli.Flag{
-			ipFlag,
-			numberFlag,
 			replaceFlag,
 			originalFlag,
 		},
-		Action: func(c *cli.Context) error {
-			result := phoneClient.ReplaceFunctionKeyName(c.String("ip"), c.Int("number"), original, replace)
-			fmt.Printf("%v", result)
-			return nil
-		},
+		Action: replaceFunctionKeys,
 	}
 
 	app.Commands = []cli.Command{scanCommand, phoneBookUploadCommand, phonebookDownloadCommand, functionKeysDownloadCommand, functionKeysReplaceCommand}
 
-	app.Flags = []cli.Flag{loginFlag, passwordFlag, portFlag, timeoutFlag, verboseFlag, ipFlag, numberFlag}
-
-	app.Before = func(context *cli.Context) error {
-		phoneClient = http2.BuildPhoneClient(port, login, password, timeout)
-		if noLogging {
-			phoneClient.Logger.SetFlags(0)
-			phoneClient.Logger.SetOutput(ioutil.Discard)
-		}
-		return nil
-	}
+	app.Flags = []cli.Flag{loginFlag, passwordFlag, portFlag, timeoutFlag, verboseFlag}
 
 	err := app.Run(os.Args)
 	if err != nil {

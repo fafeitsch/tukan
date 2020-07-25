@@ -14,6 +14,8 @@ func TestParameters_TransformFunctionKeyNames(t *testing.T) {
 		FunctionKey{PhoneNumber: Setting{Value: "42"}, DisplayName: Setting{Value: "Ronald Gene"}},
 	}}
 	got, ints := parameters.TransformFunctionKeyNames("Ronald Gene", "Belinda Fox")
+	assert.Equal(t, "Ronald Gene", parameters.FunctionKeys[1].DisplayName.Value, "original struct must not be changed")
+	assert.Equal(t, "Ronald Gene", parameters.FunctionKeys[3].DisplayName.Value, "original struct must not be changed")
 	assert.Equal(t, []int{1, 3}, ints, "changed indices are wrong")
 	assert.Equal(t, up.FunctionKey{}, got.FunctionKeys[0], "first function key wrong")
 	assert.Equal(t, up.FunctionKey{DisplayName: "Belinda Fox"}, got.FunctionKeys[1], "second function key wrong")

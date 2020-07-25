@@ -22,7 +22,7 @@ Content-Type: text/xml
 // rather uploads it and leaves the parsing to the telephone.
 // If an error occurs, or the response does not carry a successful status, an non-nil error is returned.
 func (p *Phone) UploadPhoneBook(payload string) error {
-	url := fmt.Sprintf("%s/LocalPhonebook", p.address)
+	url := fmt.Sprintf("%s/LocalPhonebook", p.Address)
 	var delimiter string
 	for ok := true; ok; ok = len(delimiter) == 0 || strings.Contains(payload, delimiter) {
 		randomBytes := make([]byte, 16)
@@ -45,14 +45,14 @@ func (p *Phone) UploadPhoneBook(payload string) error {
 func PreparePhoneBookUpload(callback ResultCallback, payload string) func(p *Phone) {
 	return func(p *Phone) {
 		err := p.UploadPhoneBook(payload)
-		callback(&PhoneResult{Address: p.address, Error: err})
+		callback(&PhoneResult{Address: p.Address, Error: err})
 	}
 }
 
 // Downloads the phone book from the telephone. In case of an error
 // the returned string is nil.
 func (p *Phone) DownloadPhoneBook() (*string, error) {
-	url := fmt.Sprintf("%s/SaveLocalPhonebook", p.address)
+	url := fmt.Sprintf("%s/SaveLocalPhonebook", p.Address)
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Add("Authorization", "Bearer "+p.token)
 	resp, err := p.client.Do(req)
@@ -72,7 +72,7 @@ func (p *Phone) DownloadPhoneBook() (*string, error) {
 func PreparePhoneBookDownload(callback func(result *PhoneBookResult)) func(p *Phone) {
 	return func(p *Phone) {
 		book, err := p.DownloadPhoneBook()
-		callback(&PhoneBookResult{PhoneResult: PhoneResult{Address: p.address, Error: err}, PhoneBook: book})
+		callback(&PhoneBookResult{PhoneResult: PhoneResult{Address: p.Address, Error: err}, PhoneBook: book})
 	}
 }
 

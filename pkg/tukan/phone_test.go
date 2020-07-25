@@ -54,7 +54,7 @@ func ExampleCreateAddresses() {
 }
 
 func TestCreateAddresses(t *testing.T) {
-	t.Run("invalid address", func(t *testing.T) {
+	t.Run("invalid Address", func(t *testing.T) {
 		addresses := CreateAddresses("http", "not an ip", 8080, 4)
 		assert.Empty(t, addresses, "addresses should be empty if the ip is not valid")
 	})
