@@ -53,7 +53,7 @@ func TestPrepareUploadPhoneBook(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 	var result *PhoneResult
-	operation := PrepareUploadPhoneBook("this is my phone book", func(phoneResult *PhoneResult) { result = phoneResult })
+	operation := PreparePhoneBookUpload(func(phoneResult *PhoneResult) { result = phoneResult }, "this is my phone book")
 	connector := &Connector{Client: http.DefaultClient, UserName: username, Password: password}
 	phone, err := connector.SingleConnect(server.URL)
 	require.NoError(t, err, "no error expected")
@@ -76,7 +76,7 @@ func TestPrepareDownloadPhoneBook(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 	var result *PhoneBookResult
-	operation := PrepareDownloadPhoneBook(func(phoneResult *PhoneBookResult) { result = phoneResult })
+	operation := PreparePhoneBookDownload(func(phoneResult *PhoneBookResult) { result = phoneResult })
 	connector := &Connector{Client: http.DefaultClient, UserName: username, Password: password}
 	phone, err := connector.SingleConnect(server.URL)
 	require.NoError(t, err, "no error expected")

@@ -129,7 +129,9 @@ func (p *PhoneResult) String() string {
 
 type ResultCallback func(p *PhoneResult)
 
-func (c *Connector) Run(loginCallback ResultCallback, logoutCallback ResultCallback, operations ...func(p *Phone)) {
+type PhoneAction func(p *Phone)
+
+func (c *Connector) Run(loginCallback ResultCallback, operations []PhoneAction, logoutCallback ResultCallback) {
 	var wg sync.WaitGroup
 	for index, address := range c.Addresses {
 		wg.Add(1)

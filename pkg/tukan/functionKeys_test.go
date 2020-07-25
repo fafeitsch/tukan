@@ -80,7 +80,7 @@ func TestPrepareUploadParameters(t *testing.T) {
 	defer server.Close()
 	var result *PhoneResult
 	parameters := up.Parameters{FunctionKeys: []up.FunctionKey{{}, {DisplayName: "John Doe", PhoneNumber: "555-Nose"}}}
-	operation := PrepareUploadParameters(parameters, func(phoneResult *PhoneResult) { result = phoneResult })
+	operation := PrepareParameterUpload(func(phoneResult *PhoneResult) { result = phoneResult }, parameters)
 	connector := &Connector{Client: http.DefaultClient, UserName: username, Password: password}
 	phone, err := connector.SingleConnect(server.URL)
 	require.NoError(t, err, "no error expected")
@@ -103,7 +103,7 @@ func TestPrepareDownloadParameters(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 	var result *ParametersResult
-	operation := PrepareDownloadParameters(func(phoneResult *ParametersResult) { result = phoneResult })
+	operation := PrepareParameterDownload(func(phoneResult *ParametersResult) { result = phoneResult })
 	connector := &Connector{Client: http.DefaultClient, UserName: username, Password: password}
 	phone, err := connector.SingleConnect(server.URL)
 	require.NoError(t, err, "no error expected")

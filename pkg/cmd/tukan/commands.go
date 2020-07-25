@@ -36,7 +36,7 @@ func scan(context *cli.Context) {
 		defer wg.Done()
 		handleSimpleResults(channel, context)
 	}()
-	createConnector(context).Run(collectResults, collectResults)
+	createConnector(context).Run(collectResults, []tukan.PhoneAction{}, collectResults)
 	close(channel)
 	wg.Wait()
 }
@@ -88,8 +88,8 @@ func uploadPhoneBook(context *cli.Context) {
 		handleSimpleResults(channel, context)
 	}()
 	createConnector(context).Run(collectResults,
-		collectResults,
-		tukan.PrepareUploadPhoneBook(string(content), collectResults))
+		[]tukan.PhoneAction{tukan.PreparePhoneBookUpload(collectResults, string(content))},
+		collectResults)
 	close(channel)
 	wg.Wait()
 }
@@ -131,8 +131,9 @@ func downloadPhoneBook(context *cli.Context) {
 			_, _ = fmt.Fprintf(context.App.Writer, "There were errors writing the files:\n: %s", strings.Join(writeErrors, "\n"))
 		}
 	}()
-	createConnector(context).Run(collectResults, collectResults,
-		tukan.PrepareDownloadPhoneBook(collectBooks))
+	createConnector(context).Run(collectResults,
+		[]tukan.PhoneAction{tukan.PreparePhoneBookDownload(collectBooks)},
+		collectResults)
 	close(channel)
 	close(bookChannel)
 	wg.Wait()
@@ -183,7 +184,9 @@ func downloadParameters(context *cli.Context) {
 		}
 	}()
 	createConnector(context).
-		Run(collectResults, collectResults, tukan.PrepareDownloadParameters(collectParameters))
+		Run(collectResults,
+			[]tukan.PhoneAction{tukan.PrepareParameterDownload(collectParameters)},
+			collectResults)
 	close(channel)
 	close(parametersChannel)
 	wg.Wait()

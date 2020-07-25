@@ -32,7 +32,7 @@ func (p *Phone) DownloadParameters() (*down.Parameters, error) {
 	return nil, err
 }
 
-func PrepareDownloadParameters(callback func(result *ParametersResult)) func(p *Phone) {
+func PrepareParameterDownload(callback func(result *ParametersResult)) func(p *Phone) {
 	return func(p *Phone) {
 		params, err := p.DownloadParameters()
 		callback(&ParametersResult{Address: p.address, Parameters: params, PhoneResult: PhoneResult{Error: err}})
@@ -75,7 +75,7 @@ type ParametersResult struct {
 	Parameters *down.Parameters
 }
 
-func PrepareUploadParameters(params up.Parameters, callback ResultCallback) func(p *Phone) {
+func PrepareParameterUpload(callback ResultCallback, params up.Parameters) func(p *Phone) {
 	return func(p *Phone) {
 		err := p.UploadParameters(params)
 		callback(&PhoneResult{Address: p.address, Error: err})

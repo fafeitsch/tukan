@@ -42,7 +42,7 @@ func (p *Phone) UploadPhoneBook(payload string) error {
 	return err
 }
 
-func PrepareUploadPhoneBook(payload string, callback ResultCallback) func(p *Phone) {
+func PreparePhoneBookUpload(callback ResultCallback, payload string) func(p *Phone) {
 	return func(p *Phone) {
 		err := p.UploadPhoneBook(payload)
 		callback(&PhoneResult{Address: p.address, Error: err})
@@ -69,7 +69,7 @@ func (p *Phone) DownloadPhoneBook() (*string, error) {
 	return &result, nil
 }
 
-func PrepareDownloadPhoneBook(callback func(result *PhoneBookResult)) func(p *Phone) {
+func PreparePhoneBookDownload(callback func(result *PhoneBookResult)) func(p *Phone) {
 	return func(p *Phone) {
 		book, err := p.DownloadPhoneBook()
 		callback(&PhoneBookResult{PhoneResult: PhoneResult{Address: p.address, Error: err}, PhoneBook: book})
