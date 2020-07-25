@@ -1,9 +1,10 @@
 package down
 
 import (
+	"encoding/csv"
 	"fmt"
 	"github.com/fafeitsch/Tukan/pkg/tukan/up"
-	"strings"
+	"io"
 )
 
 type Parameters struct {
@@ -26,13 +27,17 @@ func (p *Parameters) TransformFunctionKeyNames(original, replace string) (up.Par
 
 type FunctionKeys []FunctionKey
 
-func (f FunctionKeys) String() string {
-	keys := make([]string, 0, len(f))
-	for _, key := range f {
-		str := key.String()
-		keys = append(keys, str)
+func (f FunctionKeys) WriteCsvWithHeader(writer io.Writer) error {
+	csvWriter := csv.NewWriter(writer)
+	_ = csvWriter.Write([]string{"DisplayName", "PhoneNumber", "CallPickupCode", "Type"})
+	for _, fnKey := range f {
+		_ = csvWriter.Write([]string{fnKey.DisplayName.Value, fnKey.PhoneNumber.Value, fnKey.CallPickupCode.Value, fnKey.Type.Value})
 	}
-	return strings.Join(keys, ", ")
+	csvWriter.Flush()
+	if csvWriter.Error() != nil {
+		return fmt.Errorf("could not write: %v", csvWriter.Error())
+	}
+	return nil
 }
 
 type FunctionKey struct {

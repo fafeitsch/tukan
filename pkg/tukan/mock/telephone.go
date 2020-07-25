@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/dchest/uniuri"
 	"github.com/fafeitsch/Tukan/pkg/tukan/down"
 	"github.com/fafeitsch/Tukan/pkg/tukan/up"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // A mock telephone for using in test environments. It has similar properties
@@ -51,7 +52,7 @@ func (t *Telephone) attemptLogin(w http.ResponseWriter, r *http.Request) {
 		_, _ = fmt.Fprintf(w, "provided credentials not valid")
 		return
 	}
-	token := uniuri.NewLen(32)
+	token := generateToken()
 	t.Token = &token
 	tokenObject := struct {
 		Token string `json:"token"`
@@ -61,6 +62,18 @@ func (t *Telephone) attemptLogin(w http.ResponseWriter, r *http.Request) {
 	payload, _ := json.Marshal(tokenObject)
 	w.Header().Add("Content-Type", "application/json")
 	_, _ = w.Write(payload)
+}
+
+func generateToken() string {
+	rand.Seed(time.Now().UnixNano())
+	chars := []rune("abcdefghijklmnopqrstuvwxyzåäö")
+	length := 32
+	var b strings.Builder
+	for i := 0; i < length; i++ {
+		// don't need crypt.rand here because it's a mock server for testing purposes
+		b.WriteRune(chars[rand.Intn(len(chars))])
+	}
+	return b.String()
 }
 
 func (t *Telephone) preconditionsFail(r *http.Request, contentType string, method string) (bool, int, string) {
