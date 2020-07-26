@@ -1,8 +1,8 @@
 package tukan
 
 import (
-	"github.com/fafeitsch/Tukan/pkg/tukan/mock"
-	"github.com/fafeitsch/Tukan/pkg/tukan/up"
+	"github.com/fafeitsch/Tukan/tukan/mock"
+	"github.com/fafeitsch/Tukan/tukan/up"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"

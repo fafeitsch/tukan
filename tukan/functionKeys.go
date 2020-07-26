@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/fafeitsch/Tukan/pkg/tukan/down"
-	"github.com/fafeitsch/Tukan/pkg/tukan/up"
+	"github.com/fafeitsch/Tukan/tukan/down"
+	"github.com/fafeitsch/Tukan/tukan/up"
 	"net/http"
 )
 

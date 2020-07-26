@@ -3,7 +3,7 @@ package down
 import (
 	"encoding/csv"
 	"fmt"
-	"github.com/fafeitsch/Tukan/pkg/tukan/up"
+	"github.com/fafeitsch/Tukan/tukan/up"
 	"io"
 )
 

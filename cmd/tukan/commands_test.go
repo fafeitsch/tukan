@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"github.com/fafeitsch/Tukan/pkg/tukan/mock"
+	"github.com/fafeitsch/Tukan/tukan/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli"

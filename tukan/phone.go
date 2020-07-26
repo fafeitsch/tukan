@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/fafeitsch/Tukan/pkg/tukan/up"
+	"github.com/fafeitsch/Tukan/tukan/up"
 	"math"
 	"net"
 	"net/http"

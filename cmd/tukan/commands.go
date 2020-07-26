@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/fafeitsch/Tukan/pkg/tukan"
+	"github.com/fafeitsch/Tukan/tukan"
 	"github.com/urfave/cli"
 	"io/ioutil"
 	"net/http"
