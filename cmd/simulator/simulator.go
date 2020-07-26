@@ -13,9 +13,10 @@ func main() {
 	app := cli.NewApp()
 	app.Version = "1.0.0"
 	app.Author = "Fabian Feitsch"
-	app.Name = "Elmeg ip620/630 HTTP Simulator"
-	app.Usage = "This application simulates a limited set of HTTP endpoints of the Elmeg IP 620/630 phones."
-	app.UsageText = "Call simulator with appropriate global options (see below)"
+	app.Name = "Tukan HTTP/REST Phone Simulator"
+	app.Usage = "This application simulates a REST server having endpoints which may be found on some IP/SIP telephones. This " +
+		"application should only be used to test to Tukan Phone Configurator."
+	app.UsageText = "Call simulator with appropriate global options (see below)."
 
 	var port int
 	var login string

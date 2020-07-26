@@ -20,8 +20,8 @@ func main() {
 	app := cli.NewApp()
 	app.Version = "1.0.0"
 	app.Author = "Fabian Feitsch"
-	app.Name = "Elmeg ip620/630 HTTP Configurator"
-	app.Usage = "This application configures some parts of Elmeg ip620/630 telephones"
+	app.Name = "Tukan REST Client for IP-Phones"
+	app.Usage = "This application connects to the REST endpoints of some VoIP telephones and offers to upload/download data."
 
 	var login, password, original, replace string
 	var port, timeout int
@@ -37,13 +37,13 @@ func main() {
 
 	scanCommand := cli.Command{
 		Name:   "scan",
-		Usage:  "Scans an IP range for elmeg ip620/630 and tries to log into them",
+		Usage:  "Scans an IP range for IP phones.",
 		Action: scan,
 	}
 
 	phoneBookUploadCommand := cli.Command{
 		Name:  "pb-up",
-		Usage: "Uploads a phone book to a set of elmeg ip 620/630 phones",
+		Usage: "Uploads a phone book to a set of VoIP phones.",
 		Flags: []cli.Flag{
 			cli.StringFlag{Name: fileFlagName, Required: true, Usage: "The phone book file to be loaded up.", TakesFile: true},
 		},
@@ -52,7 +52,7 @@ func main() {
 
 	phonebookDownloadCommand := cli.Command{
 		Name:  "pb-down",
-		Usage: "Downloads a phone book from a elmeg ip 620/630 phone",
+		Usage: "Downloads the phone books from a set of VoIP phones and stores them in files.",
 		Flags: []cli.Flag{
 			cli.StringFlag{Name: targetDirFlagName, Required: true, Usage: "The directory where the downloaded phonebooks are saved."},
 		},
@@ -61,7 +61,7 @@ func main() {
 
 	functionKeysDownloadCommand := cli.Command{
 		Name:  "fnkeys-down",
-		Usage: "Downloads the function keys from an elmeg ip 620/630 phone",
+		Usage: "Downloads the function keys from a set of VoIP phones and stores them in files.",
 		Flags: []cli.Flag{
 			cli.StringFlag{Name: targetDirFlagName, Required: true, Usage: "The directory where the downloaded phonebooks are saved."},
 		},
@@ -70,7 +70,7 @@ func main() {
 
 	functionKeysReplaceCommand := cli.Command{
 		Name:  "fnkeys-replace",
-		Usage: "Replaces display names of function keys from an elmeg ip 620/630 phone",
+		Usage: "Replaces display names of function keys from VoIP phones.",
 		Flags: []cli.Flag{
 			replaceFlag,
 			originalFlag,
