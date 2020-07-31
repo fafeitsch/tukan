@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-const loginFlagName = "actionLogin"
+const loginFlagName = "login"
 const passwordFlagName = "password"
 const portFlagName = "port"
 const timeoutFlagName = "timeout"
@@ -63,7 +63,7 @@ func main() {
 		Name:  "fnkeys-down",
 		Usage: "Downloads the function keys from a set of VoIP phones and stores them in files.",
 		Flags: []cli.Flag{
-			cli.StringFlag{Name: targetDirFlagName, Required: true, Usage: "The directory where the downloaded phonebooks are saved."},
+			cli.StringFlag{Name: targetDirFlagName, Required: true, Usage: "The directory where the downloaded function keys are saved."},
 		},
 		Action: downloadParameters,
 	}
