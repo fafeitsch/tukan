@@ -13,6 +13,7 @@ const timeoutFlagName = "timeout"
 const verboseFlagName = "verbose"
 const fileFlagName = "file"
 const targetDirFlagName = "targetDir"
+const sourceDirFlagName = "sourceDir"
 const originalFlagName = "original"
 const replaceFlagName = "replace"
 
@@ -68,6 +69,15 @@ func main() {
 		Action: backup,
 	}
 
+	restoreCommand := cli.Command{
+		Name:  "restore",
+		Usage: "Reads a YAML parameters file and restores it onto the telephone.",
+		Flags: []cli.Flag{
+			cli.StringFlag{Name: sourceDirFlagName, Required: true, Usage: "The directory where to find the file used for restoring."},
+		},
+		Action: restore,
+	}
+
 	functionKeysReplaceCommand := cli.Command{
 		Name:  "fnkeys-replace",
 		Usage: "Replaces display names of function keys from VoIP phones.",
@@ -78,7 +88,7 @@ func main() {
 		Action: replaceFunctionKeys,
 	}
 
-	app.Commands = []cli.Command{scanCommand, phoneBookUploadCommand, phonebookDownloadCommand, backupCommand, functionKeysReplaceCommand}
+	app.Commands = []cli.Command{scanCommand, phoneBookUploadCommand, phonebookDownloadCommand, backupCommand, restoreCommand, functionKeysReplaceCommand}
 
 	app.Flags = []cli.Flag{loginFlag, passwordFlag, portFlag, timeoutFlag, verboseFlag}
 

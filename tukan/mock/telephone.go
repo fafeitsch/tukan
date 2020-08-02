@@ -150,6 +150,7 @@ func (t *Telephone) changeFunctionKeys(w http.ResponseWriter, body io.ReadCloser
 		_, _ = fmt.Fprintf(w, "request body contained more than one json object, which is not allowed")
 		return
 	}
+	// TODO: do a real merge here
 	if len(t.Parameters.FunctionKeys) < len(keys.FunctionKeys) {
 		msg := fmt.Sprintf("the request contained %d function keys, but the phone only has %d", len(keys.FunctionKeys), len(t.Parameters.FunctionKeys))
 		http.Error(w, msg, http.StatusBadRequest)

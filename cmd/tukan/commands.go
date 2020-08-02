@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/fafeitsch/Tukan/tukan"
+	params2 "github.com/fafeitsch/Tukan/tukan/params"
 	"github.com/goccy/go-yaml"
 	"github.com/urfave/cli"
 	"io/ioutil"
@@ -140,6 +141,39 @@ func backup(context *cli.Context) {
 	wg.Wait()
 }
 
+func restore(context *cli.Context) {
+	sourceDirectory := context.String(sourceDirFlagName)
+	channel := make(chan commentedResult)
+
+	handler := actionUploadParameters.handler(channel)
+	upload := func(p *tukan.Phone) {
+		fileName := parametersFileName(p.Address)
+		data, err := ioutil.ReadFile(filepath.Join(sourceDirectory, fileName))
+		if err != nil {
+			handler(&tukan.PhoneResult{Address: p.Address, Error: err})
+			return
+		}
+		parameters := params2.Parameters{}
+		err = yaml.Unmarshal(data, &parameters)
+		if err != nil {
+			handler(&tukan.PhoneResult{Address: p.Address, Error: err})
+			return
+		}
+		err = p.UploadParameters(parameters)
+		handler(&tukan.PhoneResult{Address: p.Address, Error: err})
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go handleResults(&wg, channel, context)
+	createConnector(context).
+		Run(actionLogin.handler(channel),
+			upload,
+			actionLogout.handler(channel))
+	close(channel)
+	wg.Wait()
+}
+
 func replaceFunctionKeys(context *cli.Context) {
 	original := context.String(originalFlagName)
 	replace := context.String(replaceFlagName)
@@ -176,5 +210,5 @@ func parametersFileName(address string) string {
 	regex := regexp.MustCompile("https?://")
 	result := regex.ReplaceAllString(address, "")
 	result = strings.ReplaceAll(result, ":", "_")
-	return "parameters_" + result + ".csv"
+	return "parameters_" + result + ".yaml"
 }
