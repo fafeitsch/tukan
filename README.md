@@ -28,9 +28,9 @@ the provided credentials:
            Uploading Phone Book successful
            Logout successful
    ```
-3. Download function key definition:
+3. Download the whole phone configuration:
    ```shell script
-   ?> go tukan fnkeys-down --targetDir /tmp 127.0.0.1:8080
+   ?> go tukan backup --targetDir /tmp 127.0.0.1:8080
    http://10.20.30.40:8080:
            Login successful
            Downloading Parameters successful

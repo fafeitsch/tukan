@@ -162,29 +162,14 @@ func (t *Telephone) changeFunctionKeys(w http.ResponseWriter, body io.ReadCloser
 	w.WriteHeader(http.StatusNoContent)
 }
 
-type property struct {
-	DisplayName    map[string]string
-	PhoneNumber    map[string]string
-	CallPickupCode map[string]string
-	Type           map[string]string
-}
-
 func (t *Telephone) getParameters(w http.ResponseWriter) {
-	// TODO: there must be a better way than those maps …
-	keys := make([]property, 0, len(t.Parameters.FunctionKeys))
-	for _, key := range t.Parameters.FunctionKeys {
-		number := map[string]string{"value": key.PhoneNumber.String()}
-		display := map[string]string{"value": key.DisplayName.String()}
-		callpickup := map[string]string{"value": key.CallPickupCode.String()}
-		keyType := map[string]string{"value": KeyTypeBLF}
-		if number["value"] == "" && display["value"] == "" {
-			keyType["value"] = KeyTypeNone
-		}
-		domKey := property{DisplayName: display, PhoneNumber: number, CallPickupCode: callpickup, Type: keyType}
-		keys = append(keys, domKey)
-	}
-	parameters := map[string][]property{"FunctionKeys": keys}
-	payload, _ := json.MarshalIndent(parameters, "", "  ")
+	// Actually, this is not what the real telephones do!
+	// Instead for every string setting, the telephones send a whole JSON object
+	// {"value": "8080", "flags": 8, "validator": … , …}
+	// However, this mock phone just sends the string value (same format as the POST method expects)
+	// This is due to technical reasons because I don't want to copy the whole Parameters struct just
+	// to define another Marshall method for the Settings.
+	payload, _ := json.MarshalIndent(t.Parameters, "", "  ")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(payload)
 }

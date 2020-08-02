@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/fafeitsch/Tukan/tukan"
+	"github.com/goccy/go-yaml"
 	"github.com/urfave/cli"
 	"io/ioutil"
 	"net/http"
@@ -102,7 +103,7 @@ func phoneBookFileName(address string) string {
 	return "phonebook_" + result + ".xml"
 }
 
-func downloadParameters(context *cli.Context) {
+func backup(context *cli.Context) {
 	targetDirectory := context.String(targetDirFlagName)
 	err := os.MkdirAll(targetDirectory, os.ModePerm)
 	if err != nil {
@@ -116,13 +117,12 @@ func downloadParameters(context *cli.Context) {
 		params, err := p.DownloadParameters()
 		if err == nil && params != nil {
 			fileName := parametersFileName(p.Address)
-			file, err := os.OpenFile(filepath.Join(targetDirectory, fileName), os.O_CREATE|os.O_RDWR, os.ModePerm)
+			bytes, _ := yaml.Marshal(&params)
+			err := ioutil.WriteFile(filepath.Join(targetDirectory, fileName), bytes, os.ModePerm)
 			if err != nil {
 				handler(&tukan.PhoneResult{Address: p.Address, Error: err})
 				return
 			}
-			defer func() { _ = file.Close() }()
-			err = params.FunctionKeys.WriteCsvWithHeader(file)
 			handler(&tukan.PhoneResult{Address: p.Address, Error: err})
 		} else {
 			handler(&tukan.PhoneResult{Address: p.Address, Error: err})

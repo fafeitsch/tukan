@@ -133,27 +133,29 @@ func TestTelephone_HandleParameters_GET(t *testing.T) {
 		{DisplayName: "", PhoneNumber: "", CallPickupCode: ""},
 		{DisplayName: "", PhoneNumber: "", CallPickupCode: ""},
 	}
-	wantBytes, _ := ioutil.ReadFile("./mockdata/parameters.json")
 	telephone := Telephone{Parameters: params.Parameters{FunctionKeys: keys}}
-	tests := []struct {
-		name       string
-		method     string
-		wantStatus int
-		wantMsg    string
-	}{
-		{name: "get parameters successfully", method: "GET", wantStatus: http.StatusOK, wantMsg: string(wantBytes)},
-		{name: "wrong method", method: "PUT", wantStatus: http.StatusMethodNotAllowed, wantMsg: "The method \"PUT\" is not allowed. Only \"GET\" and \"POST\" are supported"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			request := httptest.NewRequest(tt.method, "/Parameters", strings.NewReader(""))
-			recorder := httptest.NewRecorder()
-			telephone.handleParameters(recorder, request)
-			status, data := getStatusAndData(recorder)
-			assert.Equal(t, tt.wantStatus, status, "status code is wrong")
-			assert.Equal(t, tt.wantMsg, string(data), "received phonebook wrong")
-		})
-	}
+	t.Run("success", func(t *testing.T) {
+		request := httptest.NewRequest("GET", "/Parameters", strings.NewReader(""))
+		recorder := httptest.NewRecorder()
+		telephone.handleParameters(recorder, request)
+		status, data := getStatusAndData(recorder)
+		assert.Equal(t, http.StatusOK, status, "status code is wrong")
+		got := params.Parameters{}
+		err := json.Unmarshal([]byte(data), &got)
+		require.NoError(t, err, "no error expected")
+		assert.Equal(t, "Shep Alves", got.FunctionKeys[0].DisplayName.String())
+		assert.Equal(t, "929", got.FunctionKeys[3].PhoneNumber.String())
+		assert.Equal(t, "##", got.FunctionKeys[4].CallPickupCode.String())
+	})
+	t.Run("failure", func(t *testing.T) {
+		request := httptest.NewRequest("PUT", "/Parameters", strings.NewReader(""))
+		recorder := httptest.NewRecorder()
+		telephone.handleParameters(recorder, request)
+		status, data := getStatusAndData(recorder)
+		assert.Equal(t, http.StatusMethodNotAllowed, status, "status code is wrong")
+		assert.Equal(t, "The method \"PUT\" is not allowed. Only \"GET\" and \"POST\" are supported", string(data), "received phonebook wrong")
+
+	})
 }
 
 func TestTelephone_HandleParameters_POST(t *testing.T) {

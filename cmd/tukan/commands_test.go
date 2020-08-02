@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/fafeitsch/Tukan/tukan/mock"
 	"github.com/fafeitsch/Tukan/tukan/params"
+	"github.com/goccy/go-yaml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli"
@@ -113,7 +114,7 @@ func TestDownloadParameters(t *testing.T) {
 	handler1, phone1 := mock.CreatePhone(username, password)
 	phone1.Parameters = params.Parameters{
 		FunctionKeys: []params.FunctionKey{
-			{DisplayName: "Linda", PhoneNumber: "89-IN", CallPickupCode: "#0"},
+			{DisplayName: "Linda", PhoneNumber: "89-IN", CallPickupCode: " #0"},
 			{},
 		},
 	}
@@ -131,7 +132,7 @@ func TestDownloadParameters(t *testing.T) {
 	defer func() { _ = os.RemoveAll(tmpDir) }()
 	flags.String(targetDirFlagName, tmpDir, "")
 	ctx := cli.NewContext(&cli.App{Writer: &buff}, flags, nil)
-	downloadParameters(ctx)
+	backup(ctx)
 	got := strings.Split(buff.String(), "\n")
 
 	assert.Equal(t, 4, len(got)-1, "expected two lines of result")
@@ -139,7 +140,10 @@ func TestDownloadParameters(t *testing.T) {
 	assert.Equal(t, "\tLogin successful", got[1], "message of first download is wrong")
 	fileContent, err := ioutil.ReadFile(filepath.Join(tmpDir, parametersFileName(server1.URL)))
 	require.NoError(t, err, "reading the file should not give an error")
-	assert.Equal(t, "DisplayName,PhoneNumber,CallPickupCode,Type\nLinda,89-IN,#0,4\n", string(fileContent), "file content is wrong")
+	para := params.Parameters{}
+	err = yaml.Unmarshal(fileContent, &para)
+	require.NoError(t, err, "no error while unmarshalling expected")
+	assert.Equal(t, params.FunctionKey{PhoneNumber: "89-IN", DisplayName: "Linda", CallPickupCode: " #0"}, para.FunctionKeys[0], "function key not downloaded correctly")
 }
 
 func TestReplaceFunctionKeys(t *testing.T) {

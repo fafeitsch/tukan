@@ -59,13 +59,13 @@ func main() {
 		Action: downloadPhoneBook,
 	}
 
-	functionKeysDownloadCommand := cli.Command{
-		Name:  "fnkeys-down",
-		Usage: "Downloads the function keys from a set of VoIP phones and stores them in files.",
+	backupCommand := cli.Command{
+		Name:  "backup",
+		Usage: "Downloads all parameters from the phone and stores them in a yaml file.",
 		Flags: []cli.Flag{
-			cli.StringFlag{Name: targetDirFlagName, Required: true, Usage: "The directory where the downloaded function keys are saved."},
+			cli.StringFlag{Name: targetDirFlagName, Required: true, Usage: "The directory where the downloaded parameters are saved."},
 		},
-		Action: downloadParameters,
+		Action: backup,
 	}
 
 	functionKeysReplaceCommand := cli.Command{
@@ -78,7 +78,7 @@ func main() {
 		Action: replaceFunctionKeys,
 	}
 
-	app.Commands = []cli.Command{scanCommand, phoneBookUploadCommand, phonebookDownloadCommand, functionKeysDownloadCommand, functionKeysReplaceCommand}
+	app.Commands = []cli.Command{scanCommand, phoneBookUploadCommand, phonebookDownloadCommand, backupCommand, functionKeysReplaceCommand}
 
 	app.Flags = []cli.Flag{loginFlag, passwordFlag, portFlag, timeoutFlag, verboseFlag}
 
