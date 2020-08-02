@@ -4,8 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/fafeitsch/Tukan/tukan/down"
-	"github.com/fafeitsch/Tukan/tukan/up"
+	"github.com/fafeitsch/Tukan/tukan/params"
 	"io"
 	"log"
 	"math/rand"
@@ -14,6 +13,9 @@ import (
 	"time"
 )
 
+const KeyTypeBLF = "4"
+const KeyTypeNone = "-1"
+
 // A mock telephone for using in test environments. It has similar properties
 // to those of the IP620/630 telephones and can be manipulated directly.
 type Telephone struct {
@@ -21,11 +23,7 @@ type Telephone struct {
 	Password   string
 	Token      *string
 	Phonebook  string
-	Parameters RawParameters
-}
-
-type RawParameters struct {
-	FunctionKeys []map[string]string
+	Parameters params.Parameters
 }
 
 func (t *Telephone) attemptLogin(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +32,7 @@ func (t *Telephone) attemptLogin(w http.ResponseWriter, r *http.Request) {
 		_, _ = fmt.Fprintf(w, msg)
 		return
 	}
-	creds := up.Credentials{}
+	creds := params.Credentials{}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&creds)
 	if err != nil {
@@ -141,7 +139,7 @@ func (t *Telephone) handleParameters(w http.ResponseWriter, r *http.Request) {
 
 func (t *Telephone) changeFunctionKeys(w http.ResponseWriter, body io.ReadCloser) {
 	decoder := json.NewDecoder(body)
-	keys := RawParameters{}
+	keys := params.Parameters{}
 	err := decoder.Decode(&(keys))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("could not deserialize json: %v", err), http.StatusBadRequest)
@@ -158,32 +156,34 @@ func (t *Telephone) changeFunctionKeys(w http.ResponseWriter, body io.ReadCloser
 		return
 	}
 	for index, key := range keys.FunctionKeys {
-		if t.Parameters.FunctionKeys[index] == nil {
-			t.Parameters.FunctionKeys[index] = make(map[string]string)
-		}
-		for propertyName, value := range key {
-			t.Parameters.FunctionKeys[index][propertyName] = value
-		}
+		t.Parameters.FunctionKeys[index].Merge(key)
 	}
 	log.Printf("Received function keys")
 	w.WriteHeader(http.StatusNoContent)
 }
 
+type property struct {
+	DisplayName    map[string]string
+	PhoneNumber    map[string]string
+	CallPickupCode map[string]string
+	Type           map[string]string
+}
+
 func (t *Telephone) getParameters(w http.ResponseWriter) {
-	parameters := down.Parameters{}
-	keys := make([]down.FunctionKey, 0, len(t.Parameters.FunctionKeys))
+	// TODO: there must be a better way than those maps …
+	keys := make([]property, 0, len(t.Parameters.FunctionKeys))
 	for _, key := range t.Parameters.FunctionKeys {
-		number := down.Setting{Value: key["PhoneNumber"], Options: []interface{}{}}
-		display := down.Setting{Value: key["DisplayName"], Options: []interface{}{}}
-		callpickup := down.Setting{Value: key["CallPickupCode"], Options: []interface{}{}}
-		keyType := down.Setting{Value: down.KeyTypeBLF, Options: []interface{}{0, 1, 2, 3, down.KeyTypeBLF, 5, 6, 7}}
-		if number.Value == "" && display.Value == "" {
-			keyType.Value = down.KeyTypeNone
+		number := map[string]string{"value": key.PhoneNumber.String()}
+		display := map[string]string{"value": key.DisplayName.String()}
+		callpickup := map[string]string{"value": key.CallPickupCode.String()}
+		keyType := map[string]string{"value": KeyTypeBLF}
+		if number["value"] == "" && display["value"] == "" {
+			keyType["value"] = KeyTypeNone
 		}
-		domKey := down.FunctionKey{DisplayName: display, PhoneNumber: number, CallPickupCode: callpickup, Type: keyType}
+		domKey := property{DisplayName: display, PhoneNumber: number, CallPickupCode: callpickup, Type: keyType}
 		keys = append(keys, domKey)
 	}
-	parameters.FunctionKeys = keys
+	parameters := map[string][]property{"FunctionKeys": keys}
 	payload, _ := json.MarshalIndent(parameters, "", "  ")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(payload)

@@ -3,7 +3,7 @@ package mock
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/fafeitsch/Tukan/tukan/up"
+	"github.com/fafeitsch/Tukan/tukan/params"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
@@ -123,18 +123,18 @@ func TestTelephone_SaveLocalPhoneBook(t *testing.T) {
 }
 
 func TestTelephone_HandleParameters_GET(t *testing.T) {
-	keys := []map[string]string{
-		{"DisplayName": "Shep Alves", "PhoneNumber": "854", "CallPickupCode": "***"},
-		{"DisplayName": "", "PhoneNumber": "", "CallPickupCode": ""},
-		{"DisplayName": "Koren Wolledge", "PhoneNumber": "294", "CallPickupCode": "##"},
-		{"DisplayName": "Ossi Lisimore", "PhoneNumber": "929", "CallPickupCode": "##"},
-		{"DisplayName": "Jordana Jeromson", "PhoneNumber": "245", "CallPickupCode": "##"},
-		{"DisplayName": "", "PhoneNumber": "", "CallPickupCode": ""},
-		{"DisplayName": "", "PhoneNumber": "", "CallPickupCode": ""},
-		{"DisplayName": "", "PhoneNumber": "", "CallPickupCode": ""},
+	keys := []params.FunctionKey{
+		{DisplayName: "Shep Alves", PhoneNumber: "854", CallPickupCode: "***"},
+		{DisplayName: "", PhoneNumber: "", CallPickupCode: ""},
+		{DisplayName: "Koren Wolledge", PhoneNumber: "294", CallPickupCode: "##"},
+		{DisplayName: "Ossi Lisimore", PhoneNumber: "929", CallPickupCode: "##"},
+		{DisplayName: "Jordana Jeromson", PhoneNumber: "245", CallPickupCode: "##"},
+		{DisplayName: "", PhoneNumber: "", CallPickupCode: ""},
+		{DisplayName: "", PhoneNumber: "", CallPickupCode: ""},
+		{DisplayName: "", PhoneNumber: "", CallPickupCode: ""},
 	}
 	wantBytes, _ := ioutil.ReadFile("./mockdata/parameters.json")
-	telephone := Telephone{Parameters: RawParameters{FunctionKeys: keys}}
+	telephone := Telephone{Parameters: params.Parameters{FunctionKeys: keys}}
 	tests := []struct {
 		name       string
 		method     string
@@ -157,10 +157,10 @@ func TestTelephone_HandleParameters_GET(t *testing.T) {
 }
 
 func TestTelephone_HandleParameters_POST(t *testing.T) {
-	payload := up.Parameters{FunctionKeys: []up.FunctionKey{{}, {DisplayName: "Ossi Lisimore"}}}
+	payload := params.Parameters{FunctionKeys: []params.FunctionKey{{}, {DisplayName: "Ossi Lisimore"}}}
 	marsh, err := json.Marshal(&payload)
 	require.NoError(t, err, "no error expected")
-	tooLongPayload := up.Parameters{FunctionKeys: []up.FunctionKey{{}, {DisplayName: "Ossi Lisimore"}, {}, {PhoneNumber: "10"}}}
+	tooLongPayload := params.Parameters{FunctionKeys: []params.FunctionKey{{}, {DisplayName: "Ossi Lisimore"}, {}, {PhoneNumber: "10"}}}
 	marshTooLong, err := json.Marshal(&tooLongPayload)
 	require.NoError(t, err, "no error expected")
 	tests := []struct {
@@ -179,11 +179,11 @@ func TestTelephone_HandleParameters_POST(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			keys := []map[string]string{
-				{"DisplayName": "Shep Alves", "PhoneNumber": "854", "CallPickupCode": "***"},
-				nil,
+			keys := []params.FunctionKey{
+				{DisplayName: "Shep Alves", PhoneNumber: "854", CallPickupCode: "***"},
+				{},
 			}
-			telephone := Telephone{Parameters: RawParameters{FunctionKeys: keys}}
+			telephone := Telephone{Parameters: params.Parameters{FunctionKeys: keys}}
 			request := httptest.NewRequest(tt.method, "/Parameters", strings.NewReader(tt.payload))
 			request.Header.Add("Content-Type", tt.contentType)
 			recorder := httptest.NewRecorder()
@@ -193,9 +193,9 @@ func TestTelephone_HandleParameters_POST(t *testing.T) {
 			assert.Equal(t, tt.wantMsg, data, "data is wrong")
 			if status == http.StatusNoContent {
 				assert.Equal(t, keys[0], telephone.Parameters.FunctionKeys[0], "first entry should not be touched")
-				assert.Equal(t, "Ossi Lisimore", telephone.Parameters.FunctionKeys[1]["DisplayName"], "display name should be changed")
+				assert.Equal(t, "Ossi Lisimore", telephone.Parameters.FunctionKeys[1].DisplayName.String(), "display name should be changed")
 			} else {
-				assert.Nil(t, telephone.Parameters.FunctionKeys[1], "display name should not be changed in case of an error")
+				assert.True(t, telephone.Parameters.FunctionKeys[1].IsEmpty(), "display name should not be changed in case of an error")
 			}
 		})
 	}
@@ -205,5 +205,5 @@ func TestParseFunctionKeysCsv(t *testing.T) {
 	csv, err := ParseFunctionKeysCsv("mockdata/functionkeys.csv")
 	require.NoError(t, err, "no error expected")
 	require.Equal(t, 8, len(csv), "length of function keys not correct")
-	assert.Equal(t, "Henderson Featonby,38,#0", fmt.Sprintf("%s,%s,%s", csv[0]["DisplayName"], csv[0]["PhoneNumber"], csv[0]["CallPickupCode"]))
+	assert.Equal(t, "Henderson Featonby,38,#0", fmt.Sprintf("%s,%s,%s", csv[0].DisplayName, csv[0].PhoneNumber, csv[0].CallPickupCode))
 }

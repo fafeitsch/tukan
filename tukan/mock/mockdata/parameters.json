@@ -2,346 +2,114 @@
   "FunctionKeys": [
     {
       "DisplayName": {
-        "value": "Shep Alves",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": "Shep Alves"
       },
       "PhoneNumber": {
-        "value": "854",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": "854"
       },
       "CallPickupCode": {
-        "value": "***",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": "***"
       },
       "Type": {
-        "value": "4",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": [
-          0,
-          1,
-          2,
-          3,
-          "4",
-          5,
-          6,
-          7
-        ]
+        "value": "4"
       }
     },
     {
       "DisplayName": {
-        "value": "",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": ""
       },
       "PhoneNumber": {
-        "value": "",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": ""
       },
       "CallPickupCode": {
-        "value": "",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": ""
       },
       "Type": {
-        "value": "-1",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": [
-          0,
-          1,
-          2,
-          3,
-          "4",
-          5,
-          6,
-          7
-        ]
+        "value": "-1"
       }
     },
     {
       "DisplayName": {
-        "value": "Koren Wolledge",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": "Koren Wolledge"
       },
       "PhoneNumber": {
-        "value": "294",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": "294"
       },
       "CallPickupCode": {
-        "value": "##",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": "##"
       },
       "Type": {
-        "value": "4",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": [
-          0,
-          1,
-          2,
-          3,
-          "4",
-          5,
-          6,
-          7
-        ]
+        "value": "4"
       }
     },
     {
       "DisplayName": {
-        "value": "Ossi Lisimore",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": "Ossi Lisimore"
       },
       "PhoneNumber": {
-        "value": "929",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": "929"
       },
       "CallPickupCode": {
-        "value": "##",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": "##"
       },
       "Type": {
-        "value": "4",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": [
-          0,
-          1,
-          2,
-          3,
-          "4",
-          5,
-          6,
-          7
-        ]
+        "value": "4"
       }
     },
     {
       "DisplayName": {
-        "value": "Jordana Jeromson",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": "Jordana Jeromson"
       },
       "PhoneNumber": {
-        "value": "245",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": "245"
       },
       "CallPickupCode": {
-        "value": "##",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": "##"
       },
       "Type": {
-        "value": "4",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": [
-          0,
-          1,
-          2,
-          3,
-          "4",
-          5,
-          6,
-          7
-        ]
+        "value": "4"
       }
     },
     {
       "DisplayName": {
-        "value": "",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": ""
       },
       "PhoneNumber": {
-        "value": "",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": ""
       },
       "CallPickupCode": {
-        "value": "",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": ""
       },
       "Type": {
-        "value": "-1",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": [
-          0,
-          1,
-          2,
-          3,
-          "4",
-          5,
-          6,
-          7
-        ]
+        "value": "-1"
       }
     },
     {
       "DisplayName": {
-        "value": "",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": ""
       },
       "PhoneNumber": {
-        "value": "",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": ""
       },
       "CallPickupCode": {
-        "value": "",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": ""
       },
       "Type": {
-        "value": "-1",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": [
-          0,
-          1,
-          2,
-          3,
-          "4",
-          5,
-          6,
-          7
-        ]
+        "value": "-1"
       }
     },
     {
       "DisplayName": {
-        "value": "",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": ""
       },
       "PhoneNumber": {
-        "value": "",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": ""
       },
       "CallPickupCode": {
-        "value": "",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": []
+        "value": ""
       },
       "Type": {
-        "value": "-1",
-        "flags": 0,
-        "validator": {
-          "regexp": ""
-        },
-        "options": [
-          0,
-          1,
-          2,
-          3,
-          "4",
-          5,
-          6,
-          7
-        ]
+        "value": "-1"
       }
     }
   ]

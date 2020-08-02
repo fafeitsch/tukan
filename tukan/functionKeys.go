@@ -4,14 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/fafeitsch/Tukan/tukan/down"
-	"github.com/fafeitsch/Tukan/tukan/up"
+	"github.com/fafeitsch/Tukan/tukan/params"
 	"net/http"
 )
 
 // Downloads the phone's parameters, for example the function key definitions from the
 // telephone or returns an error if the download is not successful.
-func (p *Phone) DownloadParameters() (*down.Parameters, error) {
+func (p *Phone) DownloadParameters() (*params.Parameters, error) {
 	url := fmt.Sprintf("%s/Parameters", p.Address)
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Add("Authorization", "Bearer "+p.token)
@@ -23,7 +22,7 @@ func (p *Phone) DownloadParameters() (*down.Parameters, error) {
 	if err != nil {
 		return nil, err
 	}
-	params := down.Parameters{}
+	params := params.Parameters{}
 	err = json.NewDecoder(resp.Body).Decode(&params)
 	if err == nil {
 		params.FunctionKeys = purgeTrailingFunctionKeys(params.FunctionKeys)
@@ -32,13 +31,13 @@ func (p *Phone) DownloadParameters() (*down.Parameters, error) {
 	return nil, err
 }
 
-func purgeTrailingFunctionKeys(keys down.FunctionKeys) down.FunctionKeys {
+func purgeTrailingFunctionKeys(keys params.FunctionKeys) params.FunctionKeys {
 	index := len(keys) - 1
 	for index >= 0 && keys[index].IsEmpty() {
 		index = index - 1
 	}
 	current := 0
-	result := make([]down.FunctionKey, 0, 8)
+	result := make([]params.FunctionKey, 0, 8)
 	for current <= index {
 		result = append(result, keys[current])
 		current = current + 1
@@ -48,7 +47,7 @@ func purgeTrailingFunctionKeys(keys down.FunctionKeys) down.FunctionKeys {
 
 // Uploads the parameters to the telephone. Returns an error if
 // an error occurred during the request or if the response code was not successful.
-func (p *Phone) UploadParameters(params up.Parameters) error {
+func (p *Phone) UploadParameters(params params.Parameters) error {
 	url := fmt.Sprintf("%s/Parameters", p.Address)
 	payload, _ := json.Marshal(params)
 	reader := bytes.NewBuffer(payload)

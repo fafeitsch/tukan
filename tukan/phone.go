@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/fafeitsch/Tukan/tukan/up"
+	"github.com/fafeitsch/Tukan/tukan/params"
 	"math"
 	"net"
 	"net/http"
@@ -27,7 +27,7 @@ type Connector struct {
 // On success, returns a phone Client, otherwise, an error is returned.
 func (c *Connector) SingleConnect(address string) (*Phone, error) {
 	url := fmt.Sprintf("%s/Login", address)
-	credentials := up.Credentials{
+	credentials := params.Credentials{
 		Login:    c.UserName,
 		Password: c.Password,
 	}
