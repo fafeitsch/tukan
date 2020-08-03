@@ -156,6 +156,68 @@ type Parameters struct {
 	LANPort                                  Setting              `json:"LANPort"`
 	VLANIdentifierLAN                        Setting              `json:"VLANIdentifierLAN"`
 	LDAPCompany                              Setting              `json:"LDAPCompany"`
+	SyslogServer                             Setting              `json:"SyslogServer"`
+	DebugLevelMaskWATCHDOG                   Setting              `json:"DebugLevelMaskWATCHDOG"`
+	AutoDetermineAddress                     Setting              `json:"AutoDetermineAddress"`
+	PhoneModel                               Setting              `json:"PhoneModel"`
+	Contrast                                 Setting              `json:"Contrast"`
+	ProgrammableKeysDNDFACDisable            Setting              `json:"ProgrammableKeysDNDFACDisable"`
+	AutoAdjustClockForDST                    Setting              `json:"AutoAdjustClockForDST"`
+	SIPRtpRTCPXRServerPort                   Setting              `json:"SIPRtpRTCXRServerPort"`
+	ProvisioningServer                       Setting              `json:"ProvisioningServer"`
+	VoiceQuality                             Setting              `json:"VoiceQuality"`
+	OneMelodyRingtoneGroup                   Setting              `json:"OneMelodyRingtoneGroup"`
+	AcceptAllCertificates                    Setting              `json:"AcceptAllCertificates"`
+	AutomaticRebootWeekdays                  Setting              `json:"AutomaticRebootWeekdays"`
+	LinkSpeedDuplexLanPort                   Setting              `json:"LinkSpeedDuplexLanPort"`
+	ProgrammableKeysConferenceType           Setting              `json:"ProgrammableKeysConferenceType"`
+	VLANPriorityLAN                          Setting              `json:"VLANPriorityLAN"`
+	UserPassword                             Setting              `json:"UserPassword"`
+	AutomaticCheckForUpdates                 Setting              `json:"AutomaticCheckForUpdates"`
+	SettingsVersion                          Setting              `json:"SettingsVersion"`
+	DebugLevelMaskNETWORK                    Setting              `json:"DebugLevelMaskNETWORK"`
+	LDAPBaseDN                               Setting              `json:"LDAPBaseDN"`
+	MenuMainMenu                             Setting              `json:"MenuMainMenu"`
+	MenuKeysAndLEDs                          Setting              `json:"MenuKeysAndLEDs"`
+	ConnectionEstablished                    Setting              `json:"ConnectionEstablished"`
+	DeriveTargetAddress                      Setting              `json:"DeriveTargetAddress"`
+	Variant                                  Setting              `json:"Variant"`
+	WebUICallDivertDisable                   Setting              `json:"WebUICallDivertDisable"`
+	DebugLEvelMaskAUTOREBOOT                 Setting              `json:"DebugLevelMaskAutoREBOOT"`
+	MACAddress                               Setting              `json:"MACAddress"`
+	LDAPSecurity                             Setting              `json:"LDAPSecurity"`
+	IncomingCall                             Setting              `json:"IncomingCall"`
+	MenuLocalPhonebook                       Setting              `json:"MenuLocalPhonebook"`
+	WebUILanguage                            Setting              `json:"WebUILanguage"`
+	ProxyServerAddress                       Setting              `json:"ProxyServerAddress"`
+	TimeServerDHCP                           Setting              `json:"TimeServerDHCP"`
+	VLANTagging                              Setting              `json:"VLANTagging"`
+	ProxyServerPort                          Setting              `json:"ProxyServerPort"`
+	LDAPPAssword                             Setting              `json:"LDAPPassword"`
+	MainMenuContent                          Setting              `json:"MainMenuContent"`
+	BroadsoftACDStatus                       Setting              `json:"BroadsoftACDStatus"`
+	ProgrammableKeysConferenceDTMFCode       Setting              `json:"ProgrammableKeysDTMFCode"`
+	ProgrammableKeysConferenceFAC            Setting              `json:"ProgrammableKeysConferenceFAC"`
+	MenuDoNotDisturb                         Setting              `json:"MenuDoNotDisturb"`
+	DebugLevelMaskAUDIO                      Setting              `json:"DebugLevelMaskAUDIO"`
+	XmlEnableWhiteDirectory                  Setting              `json:"XmlEnableWhiteDirectory"`
+	ConfigurationCode                        Setting              `json:"ConfigurationCode"`
+	DebugLevelMaskDisplayGUI                 Setting              `json:"DebugLevelMaskDisplayGUI"`
+	SIPG729AnnexB                            Setting              `json:"SIPG729AnnexB"`
+	BroadsoftLookupOutgoingEnabled           Setting              `json:"BroadsoftLookupOutgoingEnabled"`
+	ShowPassword                             Setting              `json:"ShowPassword"`
+	MenuSystemLogging                        Setting              `json:"MenuSystemLogging"`
+	RegistrationFailed                       Setting              `json:"RegistrationFailed"`
+	MenuStorageAllocation                    Setting              `json:"MenuStorageAllocation"`
+	DebugLevelMaskMTIMERS                    Setting              `json:"DebugLevelMaskMTIMERS"`
+	ActiveRingbackDisable                    Setting              `json:"ActiveRingbackDisable"`
+	ConfigurationWith                        Setting              `json:"ConfigurationWith"`
+	MenuExtensionModule1                     Setting              `json:"MenuExtensionModule1"`
+	AutomaticRebootTime                      Setting              `json:"AutomaticRebootTime"`
+	SystemLocalPhonebookUpdateTime           Setting              `json:"SystemLocalPhonebookUpdateTime"`
+	ColourSchemeThress                       Setting              `json:"ColourSchemeThree"`
+	RegistrationSucceeded                    Setting              `json:"RegistrationSucceeded"`
+	AvailableCodecs                          Setting              `json:"AvailableCodecs"`
 }
 
 func (p *Parameters) TransformFunctionKeyNames(original, replace string) (Parameters, []int) {
