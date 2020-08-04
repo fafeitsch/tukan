@@ -1,9 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/fafeitsch/Tukan/tukan/mock"
-	"github.com/goccy/go-yaml"
 	"github.com/urfave/cli"
 	"io/ioutil"
 	"log"
@@ -40,7 +40,7 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			err = yaml.Unmarshal(data, &phone.Parameters)
+			err = json.Unmarshal(data, &phone.Parameters)
 			if err != nil {
 				log.Fatal(err)
 			}
