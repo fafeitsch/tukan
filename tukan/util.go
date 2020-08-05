@@ -2,6 +2,7 @@ package tukan
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -14,7 +15,9 @@ func checkResponse(resp *http.Response, err error) error {
 		return err
 	}
 	if resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusUnauthorized {
-		return fmt.Errorf("authentication error, status code: %d with message \"%s\"", resp.StatusCode, resp.Status)
+		data, _ := ioutil.ReadAll(resp.Body)
+		msg := string(data)
+		return fmt.Errorf("authentication error, status code: %d with message \"%s\" and content \"%s\"", resp.StatusCode, resp.Status, msg)
 	}
 	if resp.StatusCode > 299 {
 		return fmt.Errorf("unexpected status code: %d with message \"%s\"", resp.StatusCode, resp.Status)

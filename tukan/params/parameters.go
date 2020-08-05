@@ -6,8 +6,8 @@ import (
 )
 
 type Credentials struct {
-	Login    string
-	Password string
+	Login    string `json:"login"`
+	Password string `json:"password"`
 }
 
 // Parameters describes all the settings of the VoIP phone. The phones have
@@ -291,73 +291,73 @@ type Parameters struct {
 	ScreensaverBacklight                   Setting              `json:"ScreensaverBacklight,omitempty"`
 	ScreensaverHTTPSource                  Setting              `json:"ScreensaverHTTPSource,omitempty"`
 	ScreensaverPictures                    Setting              `json:"ScreensaverPictures,omitempty"`
-	SelectedCodecs                         Setting              `json:"SelectedCodecs,omitempty"`
-	SelectedServesDisable                  Setting              `json:"SelectedServicesDisable,omitempty"`
-	SemiAttendedTransferType               Setting              `json:"SemiAttendedTransferType,omitempty"`
-	SettingsVersion                        Setting              `json:"SettingsVersion,omitempty"`
-	ShowPIN                                Setting              `json:"ShowPIN,omitempty"`
-	ShowPassword                           Setting              `json:"ShowPassword,omitempty"`
-	ShowSIPMessagesOnDisplay               Setting              `json:"ShowSIPMessagesOnDisplay,omitempty"`
-	Sip                                    []Sip                `json:"SIP,omitempty"`
-	SoftReboots                            Setting              `json:"SoftReboots,omitempty"`
-	SoftwareVariant                        Setting              `json:"SoftwareVariant,omitempty"`
-	SoftwareVersion                        Setting              `json:"SoftwareVersion,omitempty"`
-	StandbyBacklight                       Setting              `json:"StandbyBacklight,omitempty"`
-	Startups                               Setting              `json:"Startups,omitempty"`
-	SyslogEnabled                          Setting              `json:"SyslogEnabled,omitempty"`
-	SyslogServer                           Setting              `json:"SyslogServer,omitempty"`
-	SystemLocalPhonebookUpdateTime         Setting              `json:"SystemLocalPhonebookUpdateTime,omitempty"`
-	SystemLocalPhonebookUrl                Setting              `json:"SystemLocalPhonebookUrl,omitempty"`
-	TimeFormat                             Setting              `json:"TimeFormat,omitempty"`
-	TimeServer                             Setting              `json:"TimeServer,omitempty"`
-	TimeServerDHCP                         Setting              `json:"TimeServerDHCP,omitempty"`
-	TimeServerProvisioning                 Setting              `json:"TimeServerProvisioning,omitempty"`
-	TimeZone                               Setting              `json:"TimeZone,omitempty"`
-	Timestamp                              Setting              `json:"Timestamp,omitempty"`
-	ToneScheme                             Setting              `json:"TomeScheme,omitempty"`
-	UserPassword                           Setting              `json:"UserPassword,omitempty"`
-	VLANIdentifierLAN                      Setting              `json:"VLANIdentifierLAN,omitempty"`
-	VLANIdentifierPC                       Setting              `json:"VLANIdentifierPC,omitempty"`
-	VLANLocked                             Setting              `json:"VLANLocked,omitempty"`
-	VLANPriorityLAN                        Setting              `json:"VLANPriorityLAN,omitempty"`
-	VLANPriorityPC                         Setting              `json:"VLANPriorityDC,omitempty"`
-	VLANTagging                            Setting              `json:"VLANTagging,omitempty"`
-	Variant                                Setting              `json:"Variant,omitempty"`
-	VoiceQuality                           Setting              `json:"VoiceQuality,omitempty"`
-	VoicemailMessagesActive                Setting              `json:"VoicemailMessagesActive,omitempty"`
-	WebUICallDivertDisable                 Setting              `json:"WebUICallDivertDisable,omitempty"`
-	WebUICallWaitingDisable                Setting              `json:"WebUICallWaitingDisable,omitempty"`
-	WebUILanguage                          Setting              `json:"WebUILanguage,omitempty"`
-	WitholdNumberDisable                   Setting              `json:"WitholdNumberDisable,omitempty"`
-	WorkgingCounter                        Setting              `json:"WorkingCounter,omitempty"`
-	WorkingCounterSec                      Setting              `json:"WorkingCounterSec,omitempty"`
-	XMLProviderName                        Setting              `json:"XMLProviderName,omitempty"`
-	XSIAuthName                            Setting              `json:"XSIAuthName,omitempty"`
-	XSIAuthPassword                        Setting              `json:"XSIAuthPassword,omitempty"`
-	XSICallLogType                         Setting              `json:"XSICallLogType,omitempty"`
-	XSIEnterpriseCommonDirectoryEnabled    Setting              `json:"XSIEnterpriseCommonDirectoryEnabled,omitempty"`
-	XSIEnterpriseCommonDirectoryName       Setting              `json:"XSIEnterpriseCommonDirectoryName,omitempty"`
-	XSIEnterpriseDirectoryEnabled          Setting              `json:"XSIEnterpriseDirectoryEnabled,omitempty"`
-	XSIEnterpriseDirectoryName             Setting              `json:"XSIEnterpriseDirectoryName,omitempty"`
-	XSIGroupCommonDirectoryEnabled         Setting              `json:"XSIGroupCommonDirectoryEnabled,omitempty"`
-	XSIGroupCommonDirectoryName            Setting              `json:"XSIGroupCommonDirectoryName,omitempty"`
-	XSIGroupDirectoryEnabled               Setting              `json:"XSIGroupDirectoryEnabled,omitempty"`
-	XSIGroupDirectoryName                  Setting              `json:"XSIGroupDirectoryName,omitempty"`
-	XSIPersonalDirectoryEnabled            Setting              `json:"XSIPersonalDirectoryEnabled,omitempty"`
-	XSIPersonalDirectoryName               Setting              `json:"XSIPersonalDirectoryName,omitempty"`
-	XSISIPAuthentication                   Setting              `json:"XSISIPAuthentication,omitempty"`
-	XSISearchAnywhereInNameEnabled         Setting              `json:"XSISearchAnywhereInNameEnabled,omitempty"`
-	XSIServer                              Setting              `json:"XSIServer,omitempty"`
-	XmlEnablePrivateDirectory              Setting              `json:"XmlEnablePrivateDirectory,omitempty"`
-	XmlEnableWhiteDirectory                Setting              `json:"XmlEnableWhiteDirectory,omitempty"`
-	XmlEnableYellowDirectory               Setting              `json:"XmlEnableYellowDirectory,omitempty"`
-	XmlNumberFilter                        Setting              `json:"XmlNumberFilter,omitempty"`
-	XmlPassword                            Setting              `json:"XMLPassword,omitempty"`
-	XmlPrivateDirectoryName                Setting              `json:"XMLPrivateDirectoryName,omitempty"`
-	XmlServerAddress                       Setting              `json:"XmlServerAddress,omitempty"`
-	XmlUsername                            Setting              `json:"XmlUsername,omitempty"`
-	XmlWhiteDirectoryName                  Setting              `json:"XmlWhiteDirectoryName,omitempty"`
-	XmlYellowDirectoryName                 Setting              `json:"XmlYellowDirectoryName,omitempty"`
+	// SelectedCodecs                         Setting              `json:"SelectedCodecs,omitempty"`
+	SelectedServesDisable               Setting `json:"SelectedServicesDisable,omitempty"`
+	SemiAttendedTransferType            Setting `json:"SemiAttendedTransferType,omitempty"`
+	SettingsVersion                     Setting `json:"SettingsVersion,omitempty"`
+	ShowPIN                             Setting `json:"ShowPIN,omitempty"`
+	ShowPassword                        Setting `json:"ShowPassword,omitempty"`
+	ShowSIPMessagesOnDisplay            Setting `json:"ShowSIPMessagesOnDisplay,omitempty"`
+	Sip                                 []Sip   `json:"SIP,omitempty"`
+	SoftReboots                         Setting `json:"SoftReboots,omitempty"`
+	SoftwareVariant                     Setting `json:"SoftwareVariant,omitempty"`
+	SoftwareVersion                     Setting `json:"SoftwareVersion,omitempty"`
+	StandbyBacklight                    Setting `json:"StandbyBacklight,omitempty"`
+	Startups                            Setting `json:"Startups,omitempty"`
+	SyslogEnabled                       Setting `json:"SyslogEnabled,omitempty"`
+	SyslogServer                        Setting `json:"SyslogServer,omitempty"`
+	SystemLocalPhonebookUpdateTime      Setting `json:"SystemLocalPhonebookUpdateTime,omitempty"`
+	SystemLocalPhonebookUrl             Setting `json:"SystemLocalPhonebookUrl,omitempty"`
+	TimeFormat                          Setting `json:"TimeFormat,omitempty"`
+	TimeServer                          Setting `json:"TimeServer,omitempty"`
+	TimeServerDHCP                      Setting `json:"TimeServerDHCP,omitempty"`
+	TimeServerProvisioning              Setting `json:"TimeServerProvisioning,omitempty"`
+	TimeZone                            Setting `json:"TimeZone,omitempty"`
+	Timestamp                           Setting `json:"Timestamp,omitempty"`
+	ToneScheme                          Setting `json:"TomeScheme,omitempty"`
+	UserPassword                        Setting `json:"UserPassword,omitempty"`
+	VLANIdentifierLAN                   Setting `json:"VLANIdentifierLAN,omitempty"`
+	VLANIdentifierPC                    Setting `json:"VLANIdentifierPC,omitempty"`
+	VLANLocked                          Setting `json:"VLANLocked,omitempty"`
+	VLANPriorityLAN                     Setting `json:"VLANPriorityLAN,omitempty"`
+	VLANPriorityPC                      Setting `json:"VLANPriorityDC,omitempty"`
+	VLANTagging                         Setting `json:"VLANTagging,omitempty"`
+	Variant                             Setting `json:"Variant,omitempty"`
+	VoiceQuality                        Setting `json:"VoiceQuality,omitempty"`
+	VoicemailMessagesActive             Setting `json:"VoicemailMessagesActive,omitempty"`
+	WebUICallDivertDisable              Setting `json:"WebUICallDivertDisable,omitempty"`
+	WebUICallWaitingDisable             Setting `json:"WebUICallWaitingDisable,omitempty"`
+	WebUILanguage                       Setting `json:"WebUILanguage,omitempty"`
+	WitholdNumberDisable                Setting `json:"WitholdNumberDisable,omitempty"`
+	WorkgingCounter                     Setting `json:"WorkingCounter,omitempty"`
+	WorkingCounterSec                   Setting `json:"WorkingCounterSec,omitempty"`
+	XMLProviderName                     Setting `json:"XMLProviderName,omitempty"`
+	XSIAuthName                         Setting `json:"XSIAuthName,omitempty"`
+	XSIAuthPassword                     Setting `json:"XSIAuthPassword,omitempty"`
+	XSICallLogType                      Setting `json:"XSICallLogType,omitempty"`
+	XSIEnterpriseCommonDirectoryEnabled Setting `json:"XSIEnterpriseCommonDirectoryEnabled,omitempty"`
+	XSIEnterpriseCommonDirectoryName    Setting `json:"XSIEnterpriseCommonDirectoryName,omitempty"`
+	XSIEnterpriseDirectoryEnabled       Setting `json:"XSIEnterpriseDirectoryEnabled,omitempty"`
+	XSIEnterpriseDirectoryName          Setting `json:"XSIEnterpriseDirectoryName,omitempty"`
+	XSIGroupCommonDirectoryEnabled      Setting `json:"XSIGroupCommonDirectoryEnabled,omitempty"`
+	XSIGroupCommonDirectoryName         Setting `json:"XSIGroupCommonDirectoryName,omitempty"`
+	XSIGroupDirectoryEnabled            Setting `json:"XSIGroupDirectoryEnabled,omitempty"`
+	XSIGroupDirectoryName               Setting `json:"XSIGroupDirectoryName,omitempty"`
+	XSIPersonalDirectoryEnabled         Setting `json:"XSIPersonalDirectoryEnabled,omitempty"`
+	XSIPersonalDirectoryName            Setting `json:"XSIPersonalDirectoryName,omitempty"`
+	XSISIPAuthentication                Setting `json:"XSISIPAuthentication,omitempty"`
+	XSISearchAnywhereInNameEnabled      Setting `json:"XSISearchAnywhereInNameEnabled,omitempty"`
+	XSIServer                           Setting `json:"XSIServer,omitempty"`
+	XmlEnablePrivateDirectory           Setting `json:"XmlEnablePrivateDirectory,omitempty"`
+	XmlEnableWhiteDirectory             Setting `json:"XmlEnableWhiteDirectory,omitempty"`
+	XmlEnableYellowDirectory            Setting `json:"XmlEnableYellowDirectory,omitempty"`
+	XmlNumberFilter                     Setting `json:"XmlNumberFilter,omitempty"`
+	XmlPassword                         Setting `json:"XMLPassword,omitempty"`
+	XmlPrivateDirectoryName             Setting `json:"XMLPrivateDirectoryName,omitempty"`
+	XmlServerAddress                    Setting `json:"XmlServerAddress,omitempty"`
+	XmlUsername                         Setting `json:"XmlUsername,omitempty"`
+	XmlWhiteDirectoryName               Setting `json:"XmlWhiteDirectoryName,omitempty"`
+	XmlYellowDirectoryName              Setting `json:"XmlYellowDirectoryName,omitempty"`
 }
 
 func (p *Parameters) TransformFunctionKeyNames(original, replace string) (Parameters, []int) {
@@ -398,33 +398,33 @@ type FunctionKey struct {
 }
 
 func (f *FunctionKey) IsEmpty() bool {
-	return (f.Type == "" && f.PhoneNumber == "" && f.DisplayName == "" && f.CallPickupCode == "") || f.Type == "-1"
+	return (f.Type.String() == "" && f.PhoneNumber.String() == "" && f.DisplayName.String() == "" && f.CallPickupCode.String() == "") || f.Type.String() == "-1"
 }
 
 func (f *FunctionKey) Merge(other FunctionKey) {
-	if other.PhoneNumber != "" {
+	if other.PhoneNumber.String() != "" {
 		f.PhoneNumber = other.PhoneNumber
 	}
-	if other.CallPickupCode != "" {
+	if other.CallPickupCode.String() != "" {
 		f.CallPickupCode = other.PhoneNumber
 	}
-	if other.Type != "" {
+	if other.Type.String() != "" {
 		f.Type = other.Type
 	}
-	if other.DisplayName != "" {
+	if other.DisplayName.String() != "" {
 		f.DisplayName = other.DisplayName
 	}
 }
 
 type Setting string
 
-func (s *Setting) String() string {
-	return string(*s)
+func (s Setting) String() string {
+	return string(s)
 }
 
 func (s *Setting) UnmarshalJSON(data []byte) error {
 	setting := struct {
-		Value json.RawMessage `json:"value,omitempty"`
+		Value string `json:"value,omitempty"`
 	}{}
 	err := json.Unmarshal(data, &setting)
 	// data is not download-format, try the upload format:
@@ -438,6 +438,32 @@ func (s *Setting) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 	got := Setting(setting.Value)
+	*s = got
+	return nil
+}
+
+type IntSetting string
+
+func (s IntSetting) String() string {
+	return string(s)
+}
+
+func (s *IntSetting) UnmarshalJSON(data []byte) error {
+	setting := struct {
+		Value int `json:"value,omitempty"`
+	}{}
+	err := json.Unmarshal(data, &setting)
+	// data is not download-format, try the upload format:
+	if err != nil {
+		number := ""
+		err = json.Unmarshal(data, &number)
+		if err != nil {
+			return err
+		}
+		*s = IntSetting(number)
+		return nil
+	}
+	got := IntSetting(setting.Value)
 	*s = got
 	return nil
 }
@@ -463,54 +489,54 @@ func (s *Setting) UnmarshalYAML(data []byte) error {
 }
 
 type Sip struct {
-	AccountName                   Setting `json:"AccountName,omitempty"`
-	Active                        Setting `json:"Active,omitempty"`
-	AllowRouteHeaders             Setting `json:"AllowRouteHeaders,omitempty"`
-	AuthenaticationName           Setting `json:"AuthenticationName,omitempty"`
-	AuthenticationPassword        Setting `json:"AuthenticationPassword,omitempty"`
-	AutoNegOfDTMFTransmission     Setting `json:"AutoNetOfDTMSTransmission,omitempty"`
-	CLIPSource                    Setting `json:"CLIPSource,omitempty"`
-	CLIR                          Setting `json:"CLIR,omitempty"`
-	CallWaiting                   Setting `json:"CallWaiting,omitempty"`
-	CallWaitingSignal             Setting `json:"CallWaitingSignal,omitempty"`
-	CountMissedAcceptedCalls      Setting `json:"CountMissedAcceptedCalls,omitempty"`
-	DNSQuery                      Setting `json:"DNSQuery,omitempty"`
-	DTMFTransmission              Setting `json:"DTMFTransmission,omitempty"`
-	DisplayName                   Setting `json:"DisplayName,omitempty"`
-	Domain                        Setting `json:"Domain,omitempty"`
-	FailoverServerAddress         Setting `json:"FailoverServerAddress,omitempty"`
-	FailoverServerEnabled         Setting `json:"FailoverServerEnabled,omitempty"`
-	FailoverServerPort            Setting `json:"FailoverServerPort,omitempty"`
-	HeaderDoorstation             Setting `json:"HeaderDoorstation,omitempty"`
-	HeaderExternal                Setting `json:"HeaderExternal,omitempty"`
-	HeaderGroup                   Setting `json:"HeaderGroup,omitempty"`
-	HeaderInternal                Setting `json:"HeaderInternal,omitempty"`
-	HeaderOptional                Setting `json:"HeaderOptional,omitempty"`
-	ICE                           Setting `json:"ICE,omitempty"`
-	NATRefreshTime                Setting `json:"NATRefreshTime,omitempty"`
-	OutboundProxyAddress          Setting `json:"OutboundProxyAddress,omitempty"`
-	OutboundProxyMode             Setting `json:"OutboundProxyMode,omitempty"`
-	OutboundProxyPort             Setting `json:"OutboundProxyPort,omitempty"`
-	Provider                      Setting `json:"Provider,omitempty"`
-	ProxyServerAddress            Setting `json:"ProxyServerAddress,omitempty"`
-	ProxyServerPort               Setting `json:"ProxyServerPort,omitempty"`
-	RegistrationServerAddress     Setting `json:"RegistrationServerAddress,omitempty"`
-	RegistrationServerPort        Setting `json:"RegistrationSeverPort,omitempty"`
-	RegistrationServerRefreshTiem Setting `json:"RegistrationServerRefreshTime,omitempty"`
-	RequestCheckOptions           Setting `json:"RequestCheckOptions,omitempty"`
-	ReregisterAlternative         Setting `json:"ReregisterAlternative,omitempty"`
-	RingtoneDoorStation           Setting `json:"RingtoneDoorStation,omitempty"`
-	RingtoneExternal              Setting `json:"RingtoneExternal,omitempty"`
-	RingtoneGroup                 Setting `json:"RingtoneGroup,omitempty"`
-	RingtoneInternal              Setting `json:"RingtoneInternal,omitempty"`
-	RingtoneOptional              Setting `json:"RingtoneOptional,omitempty"`
-	STUNEnabled                   Setting `json:"STUNEnabled,omitempty"`
-	STUNRefreshTime               Setting `json:"STUNRefreshTime,omitempty"`
-	STUNServerAddress             Setting `json:"STUNServerAddress,omitempty"`
-	STUNServerPort                Setting `json:"STUNServerPort,omitempty"`
-	Username                      Setting `json:"Username,omitempty"`
-	VoiceMailActive               Setting `json:"VoiceMailActive,omitempty"`
-	VoiceMailMailbox              Setting `json:"VoiceMailMailbox,omitempty"`
+	AccountName                   Setting    `json:"AccountName,omitempty"`
+	Active                        Setting    `json:"Active,omitempty"`
+	AllowRouteHeaders             Setting    `json:"AllowRouteHeaders,omitempty"`
+	AuthenaticationName           Setting    `json:"AuthenticationName,omitempty"`
+	AuthenticationPassword        Setting    `json:"AuthenticationPassword,omitempty"`
+	AutoNegOfDTMFTransmission     Setting    `json:"AutoNetOfDTMSTransmission,omitempty"`
+	CLIPSource                    Setting    `json:"CLIPSource,omitempty"`
+	CLIR                          Setting    `json:"CLIR,omitempty"`
+	CallWaiting                   Setting    `json:"CallWaiting,omitempty"`
+	CallWaitingSignal             Setting    `json:"CallWaitingSignal,omitempty"`
+	CountMissedAcceptedCalls      Setting    `json:"CountMissedAcceptedCalls,omitempty"`
+	DNSQuery                      Setting    `json:"DNSQuery,omitempty"`
+	DTMFTransmission              Setting    `json:"DTMFTransmission,omitempty"`
+	DisplayName                   Setting    `json:"DisplayName,omitempty"`
+	Domain                        Setting    `json:"Domain,omitempty"`
+	FailoverServerAddress         Setting    `json:"FailoverServerAddress,omitempty"`
+	FailoverServerEnabled         Setting    `json:"FailoverServerEnabled,omitempty"`
+	FailoverServerPort            IntSetting `json:"FailoverServerPort,omitempty"`
+	HeaderDoorstation             Setting    `json:"HeaderDoorstation,omitempty"`
+	HeaderExternal                Setting    `json:"HeaderExternal,omitempty"`
+	HeaderGroup                   Setting    `json:"HeaderGroup,omitempty"`
+	HeaderInternal                Setting    `json:"HeaderInternal,omitempty"`
+	HeaderOptional                Setting    `json:"HeaderOptional,omitempty"`
+	ICE                           Setting    `json:"ICE,omitempty"`
+	NATRefreshTime                IntSetting `json:"NATRefreshTime,omitempty"`
+	OutboundProxyAddress          Setting    `json:"OutboundProxyAddress,omitempty"`
+	OutboundProxyMode             Setting    `json:"OutboundProxyMode,omitempty"`
+	OutboundProxyPort             IntSetting `json:"OutboundProxyPort,omitempty"`
+	Provider                      Setting    `json:"Provider,omitempty"`
+	ProxyServerAddress            Setting    `json:"ProxyServerAddress,omitempty"`
+	ProxyServerPort               IntSetting `json:"ProxyServerPort,omitempty"`
+	RegistrationServerAddress     Setting    `json:"RegistrationServerAddress,omitempty"`
+	RegistrationServerPort        IntSetting `json:"RegistrationSeverPort,omitempty"`
+	RegistrationServerRefreshTiem IntSetting `json:"RegistrationServerRefreshTime,omitempty"`
+	RequestCheckOptions           Setting    `json:"RequestCheckOptions,omitempty"`
+	ReregisterAlternative         Setting    `json:"ReregisterAlternative,omitempty"`
+	RingtoneDoorStation           Setting    `json:"RingtoneDoorStation,omitempty"`
+	RingtoneExternal              Setting    `json:"RingtoneExternal,omitempty"`
+	RingtoneGroup                 Setting    `json:"RingtoneGroup,omitempty"`
+	RingtoneInternal              Setting    `json:"RingtoneInternal,omitempty"`
+	RingtoneOptional              Setting    `json:"RingtoneOptional,omitempty"`
+	STUNEnabled                   Setting    `json:"STUNEnabled,omitempty"`
+	STUNRefreshTime               IntSetting `json:"STUNRefreshTime,omitempty"`
+	STUNServerAddress             Setting    `json:"STUNServerAddress,omitempty"`
+	STUNServerPort                IntSetting `json:"STUNServerPort,omitempty"`
+	Username                      Setting    `json:"Username,omitempty"`
+	VoiceMailActive               Setting    `json:"VoiceMailActive,omitempty"`
+	VoiceMailMailbox              Setting    `json:"VoiceMailMailbox,omitempty"`
 }
 
 type Dnd struct {

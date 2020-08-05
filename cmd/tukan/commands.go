@@ -1,10 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/fafeitsch/Tukan/tukan"
 	params2 "github.com/fafeitsch/Tukan/tukan/params"
-	"github.com/goccy/go-yaml"
 	"github.com/urfave/cli"
 	"io/ioutil"
 	"net/http"
@@ -118,7 +118,7 @@ func backup(context *cli.Context) {
 		params, err := p.DownloadParameters()
 		if err == nil && params != nil {
 			fileName := parametersFileName(p.Address)
-			bytes, _ := yaml.Marshal(&params)
+			bytes, _ := json.Marshal(&params)
 			err := ioutil.WriteFile(filepath.Join(targetDirectory, fileName), bytes, os.ModePerm)
 			if err != nil {
 				handler(&tukan.PhoneResult{Address: p.Address, Error: err})
@@ -154,7 +154,7 @@ func restore(context *cli.Context) {
 			return
 		}
 		parameters := params2.Parameters{}
-		err = yaml.Unmarshal(data, &parameters)
+		err = json.Unmarshal(data, &parameters)
 		if err != nil {
 			handler(&tukan.PhoneResult{Address: p.Address, Error: err})
 			return
