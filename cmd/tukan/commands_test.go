@@ -41,7 +41,7 @@ func TestScan(t *testing.T) {
 	scan(ctx)
 	got := buff.String()
 
-	assert.Equal(t, 176, len(got), "length of message is wrong")
+	assert.Equal(t, 221, len(got), "length of message is wrong")
 	assert.Containsf(t, got, server1.URL, "should contain server1 URL %s", server1.URL)
 	assert.Containsf(t, got, server2.URL, "should contain server2 URL %s", server1.URL)
 }
@@ -68,7 +68,7 @@ func TestUploadPhoneBook(t *testing.T) {
 		uploadPhoneBook(ctx)
 		got := buff.String()
 
-		assert.Equal(t, 209, len(got), "length of message is wrong")
+		assert.Equal(t, 254, len(got), "length of message is wrong")
 		assert.Containsf(t, got, server1.URL, "should contain server1 URL %s", server1.URL)
 		assert.Containsf(t, got, server2.URL, "should contain server2 URL %s", server1.URL)
 	})
@@ -181,16 +181,16 @@ func TestReplaceFunctionKeys(t *testing.T) {
 
 	got1 := phone1.Parameters.FunctionKeys
 	assert.Equal(t, 2, len(got1), "length of function keys of first phone not correct")
-	assert.Equal(t, "Eva", got1[0].DisplayName.String(), "displayName of first phone not correctly replaced")
-	assert.Equal(t, "89-IN", got1[0].PhoneNumber.String(), "phoneNumber of first phone contact should not be changed")
+	assert.Equal(t, "Eva", got1[0].DisplayName, "displayName of first phone not correctly replaced")
+	assert.Equal(t, "89-IN", got1[0].PhoneNumber, "phoneNumber of first phone contact should not be changed")
 	assert.Equal(t, params.FunctionKey{}, got1[1], "second entry in phone book should still be empty")
 
 	got2 := phone2.Parameters.FunctionKeys
 	assert.Equal(t, 3, len(got2), "length of function keys of second phone not correct")
-	assert.Equal(t, "John", got2[0].DisplayName.String(), "displayName in second phone should not be changed")
-	assert.Equal(t, "90-DS", got2[0].PhoneNumber.String(), "phoneNumber in second phone should not be changed")
-	assert.Equal(t, "Eva", got2[1].DisplayName.String(), "displayName in second phone not correctly replaced")
-	assert.Equal(t, "89-IN", got2[1].PhoneNumber.String(), "phoneNumber of second phone contact should not be changed")
+	assert.Equal(t, "John", got2[0].DisplayName, "displayName in second phone should not be changed")
+	assert.Equal(t, "90-DS", got2[0].PhoneNumber, "phoneNumber in second phone should not be changed")
+	assert.Equal(t, "Eva", got2[1].DisplayName, "displayName in second phone not correctly replaced")
+	assert.Equal(t, "89-IN", got2[1].PhoneNumber, "phoneNumber of second phone contact should not be changed")
 	assert.Equal(t, params.FunctionKey{}, got2[2], "third entry in phone book should still be empty")
 
 	assert.Equal(t, 348, len(buff.String()), "output is wrong")

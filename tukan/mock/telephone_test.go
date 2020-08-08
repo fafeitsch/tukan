@@ -143,9 +143,9 @@ func TestTelephone_HandleParameters_GET(t *testing.T) {
 		got := params.Parameters{}
 		err := json.Unmarshal([]byte(data), &got)
 		require.NoError(t, err, "no error expected")
-		assert.Equal(t, "Shep Alves", got.FunctionKeys[0].DisplayName.String())
-		assert.Equal(t, "929", got.FunctionKeys[3].PhoneNumber.String())
-		assert.Equal(t, "##", got.FunctionKeys[4].CallPickupCode.String())
+		assert.Equal(t, "Shep Alves", got.FunctionKeys[0].DisplayName)
+		assert.Equal(t, "929", got.FunctionKeys[3].PhoneNumber)
+		assert.Equal(t, "##", got.FunctionKeys[4].CallPickupCode)
 	})
 	t.Run("failure", func(t *testing.T) {
 		request := httptest.NewRequest("PUT", "/Parameters", strings.NewReader(""))
@@ -195,17 +195,10 @@ func TestTelephone_HandleParameters_POST(t *testing.T) {
 			assert.Equal(t, tt.wantMsg, data, "data is wrong")
 			if status == http.StatusNoContent {
 				assert.Equal(t, keys[0], telephone.Parameters.FunctionKeys[0], "first entry should not be touched")
-				assert.Equal(t, "Ossi Lisimore", telephone.Parameters.FunctionKeys[1].DisplayName.String(), "display name should be changed")
+				assert.Equal(t, "Ossi Lisimore", telephone.Parameters.FunctionKeys[1].DisplayName, "display name should be changed")
 			} else {
 				assert.True(t, telephone.Parameters.FunctionKeys[1].IsEmpty(), "display name should not be changed in case of an error")
 			}
 		})
 	}
-}
-
-func TestParseFunctionKeysCsv(t *testing.T) {
-	csv, err := ParseFunctionKeysCsv("mockdata/functionkeys.csv")
-	require.NoError(t, err, "no error expected")
-	require.Equal(t, 8, len(csv), "length of function keys not correct")
-	assert.Equal(t, "Henderson Featonby,38,#0", fmt.Sprintf("%s,%s,%s", csv[0].DisplayName, csv[0].PhoneNumber, csv[0].CallPickupCode))
 }

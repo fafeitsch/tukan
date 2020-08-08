@@ -1,12 +1,10 @@
 package mock
 
 import (
-	"encoding/csv"
 	"fmt"
 	"github.com/fafeitsch/Tukan/tukan/params"
 	"github.com/gorilla/mux"
 	"net/http"
-	"os"
 	"strings"
 )
 
@@ -41,25 +39,4 @@ func enforceTokenHandler(telephone *Telephone, next http.HandlerFunc) http.Handl
 		}
 		next.ServeHTTP(w, r)
 	})
-}
-
-func ParseFunctionKeysCsv(filename string) ([]params.FunctionKey, error) {
-	reader, err := os.Open(filename)
-	defer func() { _ = reader.Close() }()
-	if err != nil {
-		return nil, err
-	}
-	csvReader := csv.NewReader(reader)
-	all, err := csvReader.ReadAll()
-	if err != nil {
-		return nil, fmt.Errorf("could not parse csv content: %v", err)
-	}
-	result := make([]params.FunctionKey, 0, len(all))
-	for index, row := range all[1:] {
-		if len(row) < 3 {
-			return nil, fmt.Errorf("row %d has %d values, but exactly 3 are required", index, len(row))
-		}
-		result = append(result, params.FunctionKey{DisplayName: params.Setting(row[0]), PhoneNumber: params.Setting(row[1]), CallPickupCode: params.Setting(row[2])})
-	}
-	return result, nil
 }

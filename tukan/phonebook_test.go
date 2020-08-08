@@ -42,7 +42,7 @@ func TestPhone_DownloadPhoneBook(t *testing.T) {
 	t.Run("error", func(t *testing.T) {
 		phone.token = "abc"
 		book, err := phone.DownloadPhoneBook()
-		require.EqualError(t, err, "authentication error, status code: 401 with message \"401 Unauthorized\"", "error expected")
+		require.EqualError(t, err, "authentication error, status code: 401 with message \"401 Unauthorized\" and content \"Token not valid.\"", "error expected")
 		assert.Nil(t, book, "result should be nil in case of an error")
 	})
 }

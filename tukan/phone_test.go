@@ -36,7 +36,7 @@ func TestConnector_SingleConnect(t *testing.T) {
 	t.Run("invalid logins", func(t *testing.T) {
 		connector.Password = ""
 		phone, err := connector.SingleConnect(server.URL)
-		assert.EqualError(t, err, "authentication error, status code: 403 with message \"403 Forbidden\"", "error message not as expected")
+		assert.EqualError(t, err, "authentication error, status code: 403 with message \"403 Forbidden\" and content \"provided credentials not valid\"", "error message not as expected")
 		assert.Nil(t, phone, "phone should be nil in case of error")
 	})
 }
@@ -85,7 +85,7 @@ func TestPhone_Logout(t *testing.T) {
 		assert.NoError(t, err, "no error expected")
 		phone.token = "invalid"
 		err = phone.Logout()
-		assert.EqualError(t, err, "authentication error, status code: 401 with message \"401 Unauthorized\"", "no error expected")
+		assert.EqualError(t, err, "authentication error, status code: 401 with message \"401 Unauthorized\" and content \"Token not valid.\"", "no error expected")
 	})
 }
 
