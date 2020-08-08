@@ -62,7 +62,7 @@ func main() {
 
 	backupCommand := cli.Command{
 		Name:  "backup",
-		Usage: "Downloads all parameters from the phone and stores them in a yaml file.",
+		Usage: "Downloads all parameters from the phone and stores them in a json file.",
 		Flags: []cli.Flag{
 			cli.StringFlag{Name: targetDirFlagName, Required: true, Usage: "The directory where the downloaded parameters are saved."},
 		},
@@ -71,7 +71,7 @@ func main() {
 
 	restoreCommand := cli.Command{
 		Name:  "restore",
-		Usage: "Reads a YAML parameters file and restores it onto the telephone.",
+		Usage: "Reads a json parameters file and restores it onto the telephone.",
 		Flags: []cli.Flag{
 			cli.StringFlag{Name: sourceDirFlagName, Required: true, Usage: "The directory where to find the file used for restoring."},
 		},

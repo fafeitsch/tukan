@@ -1,116 +1,666 @@
 {
+  "AcceptAllCertificates": "0",
+  "AcceptInvalidCSeq": "0",
+  "AccessCodeEnabled": "1",
+  "AccessCodeFor": "0",
+  "AdaptiveJitterBufferInitialPrefetchValue": 30,
+  "AdaptiveJitterBufferMaximumDelay": 400,
+  "AdaptiveJitterBufferMinimumDelay": 30,
+  "AdminPassword": "admin",
+  "AllowAccessWeb": "0",
+  "AllowFragmentation": "0",
+  "AllowSpanning": "0",
+  "AnonymousCallBlock": "0",
+  "AreaCodesCountry": "Other",
+  "AutoAdjustClockForDST": "AutomatedDaylightSavingEnabled",
+  "AutoAdjustTime": "NTPServiceDHCP",
+  "AutoDetermineAddress": "Enabled",
+  "AutomaticCheckForUpdates": "1",
+  "AutomaticFKFilling": "1",
+  "AutomaticRebootEnabled": "0",
+  "AutomaticRebootTime": "04:00",
+  "AvailableCodecs": "0",
+  "Backlight": 7,
+  "BroadsoftACDStatus": "1",
+  "BroadsoftLookupIncomingEnabled": "1",
+  "BroadsoftLookupOutgoingEnabled": "1",
+  "BroadsoftRemoteOfficeVisible": "0",
+  "CallDivertDisable": "0",
+  "CallDivertAll": [
+    {
+      "VoiceMail": "1",
+      "Active": "0"
+    },
+    {
+      "VoiceMail": "1",
+      "Active": "0"
+    },
+    {
+      "VoiceMail": "1",
+      "Active": "0"
+    },
+    {
+      "VoiceMail": "1",
+      "Active": "0"
+    },
+    {
+      "VoiceMail": "1",
+      "Active": "0"
+    },
+    {
+      "VoiceMail": "1",
+      "Active": "0"
+    }
+  ],
+  "CallDivertBusy": [
+    {
+      "VoiceMail": "1",
+      "Active": "0"
+    },
+    {
+      "VoiceMail": "1",
+      "Active": "0"
+    },
+    {
+      "VoiceMail": "1",
+      "Active": "0"
+    },
+    {
+      "VoiceMail": "1",
+      "Active": "0"
+    },
+    {
+      "VoiceMail": "1",
+      "Active": "0"
+    },
+    {
+      "VoiceMail": "1",
+      "Active": "0"
+    }
+  ],
+  "CallDivertNoAnswer": [
+    {
+      "Delay": "120"
+    },
+    {
+      "Delay": "120"
+    },
+    {
+      "Delay": "120"
+    },
+    {
+      "Delay": "120"
+    },
+    {
+      "Delay": "120"
+    },
+    {
+      "Delay": "120"
+    }
+  ],
+  "CallWaitingDisable": "0",
+  "CallsViaCallManager": "2",
+  "ClearSIPMessageWithBackKey": "1",
+  "ColourSchemeBasic": "4",
+  "ColourSchemeThree": "0",
+  "ConfigurationCode": "0",
+  "ConfigurationWith": "0",
+  "ContactsDownloadPath": "/var/volatile/contacts",
+  "Contrast": "5",
+  "CoreDumpsEnabled": "0",
+  "DateOrder": "dd.mm.yyyy",
+  "DebugLevelMaskAUDIO": "46",
+  "DebugLevelMaskDisplayGUI": "46",
+  "DebugLevelMaskEXTENSIONBOARD": "46",
+  "DebugLevelMaskMTIMERS": "46",
+  "DebugLevelMaskNETWORK": "46",
+  "DebugLevelMaskPCM": "46",
+  "DebugLevelMaskSIP": "46",
+  "DebugLevelMaskSYSCONF": "46",
+  "DebugLevelMaskWATCHDOG": "46",
+  "DefaultAccount": "1",
+  "DefaultRingtone": "08_Peak.mp3",
+  "DefaultURLForAdmin": "Settings/Network/IP",
+  "DefaultURLForUser": "Settings/DeskPhone/Ringtones",
+  "DeriveTargetAddress": "sipurl",
+  "DeviceNameInNetwork": "Phone_0815",
+  "DisableWebUI": "0",
+  "DisplayDiversionInfo": "1",
+  "DistinctiveRingingEnabled": "1",
+  "DnDListActive": "0",
+  "DnD": [
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {}
+  ],
+  "DoorStations": [
+    {
+      "PictureRefreshTime": "500"
+    },
+    {
+      "PictureRefreshTime": "500"
+    },
+    {
+      "PictureRefreshTime": "500"
+    },
+    {
+      "PictureRefreshTime": "500"
+    },
+    {
+      "PictureRefreshTime": "500"
+    },
+    {
+      "PictureRefreshTime": "500"
+    },
+    {
+      "PictureRefreshTime": "500"
+    },
+    {
+      "PictureRefreshTime": "500"
+    },
+    {
+      "PictureRefreshTime": "500"
+    },
+    {
+      "PictureRefreshTime": "500"
+    },
+    {
+      "PictureRefreshTime": "500"
+    },
+    {
+      "PictureRefreshTime": "500"
+    },
+    {
+      "PictureRefreshTime": "500"
+    },
+    {
+      "PictureRefreshTime": "500"
+    },
+    {
+      "PictureRefreshTime": "500"
+    },
+    {
+      "PictureRefreshTime": "500"
+    },
+    {
+      "PictureRefreshTime": "500"
+    },
+    {
+      "PictureRefreshTime": "500"
+    },
+    {
+      "PictureRefreshTime": "500"
+    },
+    {
+      "PictureRefreshTime": "500"
+    }
+  ],
+  "EnableAec": "Yes",
+  "EnablePortMirroring": "0",
+  "FirmwareDataServer": "example.com/swupdate",
+  "FirmwareDownloadPath": "/config/swupdate",
+  "FlexibleSeatingEnabled": "0",
   "FunctionKeys": [
     {
-      "DisplayName": {
-        "value": "Shep Alves"
-      },
-      "PhoneNumber": {
-        "value": "854"
-      },
-      "CallPickupCode": {
-        "value": "***"
-      },
-      "Type": {
-        "value": "4"
-      }
+      "AutomaticallyFilled": "0",
+      "CallDivertType": "1",
+      "CallPickupCode": "#0",
+      "Color": "3",
+      "Connection": "1",
+      "DisplayName": "John",
+      "LockProvisioning": "1",
+      "PhoneNumber": "201",
+      "Silent": "0",
+      "Type": "4"
     },
     {
-      "DisplayName": {
-        "value": ""
-      },
-      "PhoneNumber": {
-        "value": ""
-      },
-      "CallPickupCode": {
-        "value": ""
-      },
-      "Type": {
-        "value": "-1"
-      }
+      "AutomaticallyFilled": "0",
+      "CallDivertType": "1",
+      "CallPickupCode": "#0",
+      "Color": "3",
+      "Connection": "1",
+      "DisplayName": "Linda",
+      "LockProvisioning": "1",
+      "PhoneNumber": "202",
+      "Silent": "0",
+      "Type": "4"
     },
     {
-      "DisplayName": {
-        "value": "Koren Wolledge"
-      },
-      "PhoneNumber": {
-        "value": "294"
-      },
-      "CallPickupCode": {
-        "value": "##"
-      },
-      "Type": {
-        "value": "4"
-      }
+      "AutomaticallyFilled": "0",
+      "CallDivertType": "1",
+      "CallPickupCode": "#0",
+      "Color": "3",
+      "Connection": "1",
+      "DisplayName": "Karel",
+      "LockProvisioning": "1",
+      "PhoneNumber": "203",
+      "Silent": "0",
+      "Type": "4"
     },
     {
-      "DisplayName": {
-        "value": "Ossi Lisimore"
-      },
-      "PhoneNumber": {
-        "value": "929"
-      },
-      "CallPickupCode": {
-        "value": "##"
-      },
-      "Type": {
-        "value": "4"
-      }
+      "AutomaticallyFilled": "0",
+      "CallDivertType": "1",
+      "CallPickupCode": "#0",
+      "Color": "3",
+      "Connection": "1",
+      "DisplayName": "William",
+      "LockProvisioning": "1",
+      "PhoneNumber": "204",
+      "Silent": "0",
+      "Type": "4"
     },
     {
-      "DisplayName": {
-        "value": "Jordana Jeromson"
-      },
-      "PhoneNumber": {
-        "value": "245"
-      },
-      "CallPickupCode": {
-        "value": "##"
-      },
-      "Type": {
-        "value": "4"
-      }
+      "AutomaticallyFilled": "0",
+      "CallDivertType": "1",
+      "Color": "3",
+      "Connection": "1",
+      "DisplayName": "Donald HO",
+      "LockProvisioning": "1",
+      "PhoneNumber": "0012345676",
+      "Silent": "0",
+      "Type": "3"
     },
     {
-      "DisplayName": {
-        "value": ""
-      },
-      "PhoneNumber": {
-        "value": ""
-      },
-      "CallPickupCode": {
-        "value": ""
-      },
-      "Type": {
-        "value": "-1"
-      }
+      "AutomaticallyFilled": "0",
+      "CallDivertType": "1",
+      "CallPickupCode": "#0",
+      "Color": "3",
+      "Connection": "1",
+      "DisplayName": "Max",
+      "LockProvisioning": "1",
+      "PhoneNumber": "206",
+      "Silent": "0",
+      "Type": "4"
     },
     {
-      "DisplayName": {
-        "value": ""
-      },
-      "PhoneNumber": {
-        "value": ""
-      },
-      "CallPickupCode": {
-        "value": ""
-      },
-      "Type": {
-        "value": "-1"
-      }
+      "AutomaticallyFilled": "0",
+      "CallDivertType": "1",
+      "CallPickupCode": "#0",
+      "Color": "3",
+      "Connection": "1",
+      "DisplayName": "Judy",
+      "LockProvisioning": "1",
+      "PhoneNumber": "207",
+      "Silent": "0",
+      "Type": "4"
     },
     {
-      "DisplayName": {
-        "value": ""
-      },
-      "PhoneNumber": {
-        "value": ""
-      },
-      "CallPickupCode": {
-        "value": ""
-      },
-      "Type": {
-        "value": "-1"
-      }
+      "AutomaticallyFilled": "0",
+      "CallDivertType": "1",
+      "CallPickupCode": "#0",
+      "Color": "3",
+      "Connection": "1",
+      "DisplayName": "Jack",
+      "LockProvisioning": "1",
+      "PhoneNumber": "208",
+      "Silent": "0",
+      "Type": "4"
     }
-  ]
+  ],
+  "FunctionKeysIcons": "1",
+  "HTTPConnectionType": "HTTP",
+  "HTTPPort": 80,
+  "HTTPSPort": 443,
+  "HandsetMode": "5",
+  "HandsFreeMode": "5",
+  "HeadsetMode": "5",
+  "HoldOnTransferAttended": "Enabled",
+  "HoldOnTransferUnattended": "Enabled",
+  "IPAddressType": "0",
+  "IPv4Address": "10.20.30.44",
+  "IPv4AlternateDNSServer": "0.0.0.0",
+  "IPv4PreferredDNSServer": "10.20.30.40",
+  "IPv4StandardGateway": "10.20.30.0",
+  "IPv4SubnetMask": "255.255.255.0",
+  "IncCallsWithoutCallManager": "0",
+  "LANPort": "0",
+  "LDAPAdditionalAttribute": "telephoneNumber",
+  "LDAPAdditionalAttributeDialable": "No",
+  "LDAPBaseDN": "sn=*",
+  "LDAPDirectoryName": "hybird",
+  "LDAPDisplayFormat": "%sn, %givenName",
+  "LDAPEnable": "0",
+  "LDAPLookup": "0",
+  "LDAPMaxNumberOfSearchResults": 50,
+  "LDAPNameFilter": "sn=%",
+  "LDAPNumberFilter": "telephoneNumber=%",
+  "LDAPPassword": "-1",
+  "LDAPPhoneOffice": "telephoneNumber",
+  "LDAPResponseTimeout": 1,
+  "LDAPSecurity": "0",
+  "LDAPServerAddress": "10.20.30.41",
+  "LDAPServerPort": 389,
+  "LDAPSurname": "sn",
+  "LDAPUsername": "34",
+  "LinkSpeedDuplexLanPort": "Autonegotiation",
+  "LogoutTimer": 10,
+  "LookupIncomming": "1",
+  "LookupOutgoing": "1",
+  "MACAddress": "any_mac_address",
+  "MainMenuContent": "Standard",
+  "MenuAdaptiveJitterBuffer": "1",
+  "MenuAdjustment": "1",
+  "MenuAudio": "1",
+  "MenuCLI": "1",
+  "MenuCallDivert": "1",
+  "MenuCallHistory": "1",
+  "MenuConnections": "1",
+  "MenuCoreDumps": "1",
+  "MenuCorporate": "1",
+  "MenuDateAndTime": "1",
+  "MenuDebugging": "1",
+  "MenuDeskPhone": "1",
+  "MenuDevice": "1",
+  "MenuDiallingPlans": "1",
+  "MenuDisplay": "1",
+  "MenuDoNotDisturb": "1",
+  "MenuDoorStation": "1",
+  "MenuEvents": "1",
+  "MenuExpertAudio": "1",
+  "MenuExtensionModule1": "1",
+  "MenuExtensionModule2": "1",
+  "MenuExtensionModule3": "1",
+  "MenuFirmwareUpdate": "1",
+  "MenuIP": "1",
+  "MenuKeysAndLEDs": "1",
+  "MenuLan": "",
+  "MenuLocalPhonebook": "1",
+  "MenuMainMenu": "1",
+  "MenuMessageNotification": "1",
+  "MenuNetwork": "1",
+  "MenuOnlineDirectories": "1",
+  "MenuPCAPLogging": "1",
+  "MenuPhoneSystem": "1",
+  "MenuPhoneWebServer": "1",
+  "MenuPictures": "1",
+  "MenuProvisioningConfiguration": "1",
+  "MenuPublic": "0",
+  "MenuReboot": "1",
+  "MenuRebootAndReset": "1",
+  "MenuRingtones": "1",
+  "MenuSaveAndRestore": "1",
+  "MenuSecurity": "1",
+  "MenuStatus": "1",
+  "MenuStatusConnections": "1",
+  "MenuStorageAllocation": "1",
+  "MenuSystem": "1",
+  "MenuSystemLogging": "1",
+  "MenuTelephony": "1",
+  "MenuVoIP": "1",
+  "MenuWebConfigurator": "1",
+  "MenuWebcam": "0",
+  "MenuXML": "1",
+  "MissedCallsNotificationActive": "1",
+  "NetworkType": "0",
+  "OneMelodyRingtoneDoorStation": "0",
+  "OneMelodyRingtoneExternal": "0",
+  "OneMelodyRingtoneGroup": "0",
+  "OneMelodyRingtoneOptional": "0",
+  "OutCallsViaFunctionKey": "2",
+  "PCPort": 1,
+  "PIN": "1111",
+  "PacketTimeForRTP": "20",
+  "PhoneLanguage": "en-en",
+  "PhoneModel": "1",
+  "PhoneName": "Phone 0815",
+  "PhoneSystem": "0",
+  "ProgrammableKeysConferenceType": "0",
+  "ProgrammableKeysDNDType": "0",
+  "ProgrammableKeysDirectoryType": "1",
+  "ProgrammableKeysHoldType": "0",
+  "ProgrammableKeysMessagesType": "0",
+  "ProvisioningServer": "example.com/provisioning",
+  "ProxyServerActive": "0",
+  "QuickDialKeys": [
+    {
+      "Type": "0"
+    },
+    {
+      "Type": "0"
+    },
+    {
+      "Type": "0"
+    },
+    {
+      "Type": "0"
+    }
+  ],
+  "RemoteControlAllow": "0",
+  "SIPG729AnnexB": "0",
+  "SIPPort": 5060,
+  "SIPQoSDSCP": 34,
+  "SIPRtpPort": 10000,
+  "SIPRtpSymetricPort": "0",
+  "SIPRtpUseRTCPXR": "0",
+  "SIPRtprRtcp": "0",
+  "SIPSCertificate": "0",
+  "SIPSPrivateKey": "0",
+  "SIPSecurity": "1",
+  "SIPSecurityEnabled": "true",
+  "SIPSessionTimer": 3600,
+  "SIPTimerT1": 500,
+  "SIPTimersFailedRegistration": 300,
+  "SIPTimersSubscription": 1800,
+  "SIPTimersSubscriptionBLFFollowRegister": "0",
+  "SIPTransportProtocol": "1",
+  "ScreenSaverTimeout": "20",
+  "Screensaver": "1",
+  "ScreensaverBacklight": 3,
+  "SelectedCodecs": [
+    9,
+    8,
+    0
+  ],
+  "SelectedServicesDisable": "0",
+  "SemiAttendedTransferType": "0",
+  "ShowPIN": "0",
+  "ShowPassword": "0",
+  "ShowSIPMessagesOnDisplay": "1",
+  "SIP": [
+    {
+      "AccountName": "IP1",
+      "Active": "0",
+      "AllowRouteHeaders": "0",
+      "CLIPSource": "2",
+      "CLIR": "0",
+      "CallWaiting": "1",
+      "CallWaitingSignal": "Off",
+      "CountMissedAcceptedCalls": "0",
+      "DNSQuery": "0",
+      "DTMFTransmission": "1",
+      "FailoverServerEnabled": "1",
+      "FailoverServerPort": 5060,
+      "HeaderDoorstation": "\u003chttp://www.notused.com\u003e;info=alert-door",
+      "HeaderExternal": "\u003chttp://www.notused.com\u003e;info=alert-external",
+      "HeaderGroup": "\u003chttp://www.notused.com\u003e;info=alert-group",
+      "HeaderInternal": "\u003chttp://www.notused.com\u003e;info=alert-internal",
+      "ICE": "0",
+      "NATRefreshTime": 20,
+      "OutboundProxyMode": "2",
+      "OutboundProxyPort": 5060,
+      "ProxyServerPort": 5060,
+      "RegistrationServerRefreshTime": 180,
+      "RequestCheckOptions": 15,
+      "ReregisterAlternative": "0",
+      "STUNEnabled": "0",
+      "STUNRefreshTime": 25,
+      "STUNServerPort": 3478,
+      "VoiceMailActive": "0"
+    },
+    {
+      "AccountName": "IP2",
+      "Active": "1",
+      "AllowRouteHeaders": "0",
+      "AuthenticationName": "phone_0815",
+      "AuthenticationPassword": "super_secure_password",
+      "CLIPSource": "2",
+      "CLIR": "0",
+      "CallWaiting": "1",
+      "CallWaitingSignal": "Off",
+      "CountMissedAcceptedCalls": "0",
+      "DNSQuery": "0",
+      "DTMFTransmission": "1",
+      "DisplayName": "Tom",
+      "Domain": "example.com/pbx",
+      "FailoverServerEnabled": "1",
+      "FailoverServerPort": 5060,
+      "HeaderDoorstation": "\u003chttp://www.notused.com\u003e;info=alert-door",
+      "HeaderExternal": "\u003chttp://www.notused.com\u003e;info=alert-external",
+      "HeaderGroup": "\u003chttp://www.notused.com\u003e;info=alert-group",
+      "HeaderInternal": "\u003chttp://www.notused.com\u003e;info=alert-internal",
+      "ICE": "0",
+      "NATRefreshTime": 20,
+      "OutboundProxyMode": "2",
+      "OutboundProxyPort": 5060,
+      "ProxyServerPort": 5060,
+      "RegistrationServerRefreshTime": 180,
+      "RequestCheckOptions": 7,
+      "ReregisterAlternative": "0",
+      "STUNEnabled": "0",
+      "STUNRefreshTime": 25,
+      "STUNServerPort": 3478,
+      "Username": "phone_0815",
+      "VoiceMailActive": "0"
+    },
+    {
+      "Active": "0",
+      "AllowRouteHeaders": "0",
+      "CLIPSource": "2",
+      "CLIR": "0",
+      "CallWaiting": "1",
+      "CallWaitingSignal": "Off",
+      "CountMissedAcceptedCalls": "0",
+      "DNSQuery": "0",
+      "DTMFTransmission": "1",
+      "FailoverServerEnabled": "1",
+      "FailoverServerPort": 5060,
+      "HeaderDoorstation": "\u003chttp://www.notused.com\u003e;info=alert-door",
+      "HeaderExternal": "\u003chttp://www.notused.com\u003e;info=alert-external",
+      "HeaderGroup": "\u003chttp://www.notused.com\u003e;info=alert-group",
+      "HeaderInternal": "\u003chttp://www.notused.com\u003e;info=alert-internal",
+      "ICE": "0",
+      "NATRefreshTime": 20,
+      "OutboundProxyMode": "2",
+      "OutboundProxyPort": 5060,
+      "ProxyServerPort": 5060,
+      "RegistrationServerRefreshTime": 180,
+      "RequestCheckOptions": 7,
+      "ReregisterAlternative": "0",
+      "STUNEnabled": "0",
+      "STUNRefreshTime": 25,
+      "STUNServerPort": 3478,
+      "VoiceMailActive": "0"
+    },
+    {
+      "Active": "0",
+      "AllowRouteHeaders": "0",
+      "CLIPSource": "2",
+      "CLIR": "0",
+      "CallWaiting": "1",
+      "CallWaitingSignal": "Off",
+      "CountMissedAcceptedCalls": "0",
+      "DNSQuery": "0",
+      "DTMFTransmission": "1",
+      "FailoverServerEnabled": "1",
+      "FailoverServerPort": 5060,
+      "HeaderDoorstation": "\u003chttp://www.notused.com\u003e;info=alert-door",
+      "HeaderExternal": "\u003chttp://www.notused.com\u003e;info=alert-external",
+      "HeaderGroup": "\u003chttp://www.notused.com\u003e;info=alert-group",
+      "HeaderInternal": "\u003chttp://www.notused.com\u003e;info=alert-internal",
+      "ICE": "0",
+      "NATRefreshTime": 20,
+      "OutboundProxyMode": "2",
+      "OutboundProxyPort": 5060,
+      "ProxyServerPort": 5060,
+      "RegistrationServerRefreshTime": 180,
+      "RequestCheckOptions": 7,
+      "ReregisterAlternative": "0",
+      "STUNEnabled": "0",
+      "STUNRefreshTime": 25,
+      "STUNServerPort": 3478,
+      "VoiceMailActive": "0"
+    }
+  ],
+  "SoftwareVariant": "default",
+  "SoftwareVersion": "1.2.3.4",
+  "StandbyBacklight": 3,
+  "SyslogEnabled": "0",
+  "SyslogServer": "0",
+  "SystemLocalPhonebookUpdateTime": "1:11",
+  "TimeFormat": "24h",
+  "TimeServer": "10.20.30.40",
+  "TimeServerDHCP": "10.20.30.40",
+  "TimeZone": "GMT+1.Europe/Amsterdam",
+  "UserPassword": "user",
+  "VLANIdentifierLAN": 1,
+  "VLANIdentifierPC": 1,
+  "VLANLocked": "0",
+  "VLANPriorityLAN": "6",
+  "VLANTagging": "0",
+  "Variant": "default",
+  "VoiceQuality": "0",
+  "VoicemailMessagesActive": "1",
+  "WebUICallDivertDisable": "0",
+  "WebUICallWaitingDisable": "0",
+  "WebUILanguage": "de-de",
+  "WitholdNumberDisable": "0",
+  "XSICallLogType": "0",
+  "XSIEnterpriseCommonDirectoryEnabled": "0",
+  "XSIEnterpriseDirectoryEnabled": "0",
+  "XSIGroupCommonDirectoryEnabled": "0",
+  "XSIGroupDirectoryEnabled": "0",
+  "XSIPersonalDirectoryEnabled": "0",
+  "XSISIPAuthentication": "0",
+  "XSISearchAnywhereInNameEnabled": "0",
+  "XmlEnablePrivateDirectory": "0",
+  "XmlEnableWhiteDirectory": "0",
+  "XmlEnableYellowDirectory": "0",
+  "XmlNumberFilter": "bp"
 }

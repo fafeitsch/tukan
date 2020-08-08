@@ -118,7 +118,7 @@ func backup(context *cli.Context) {
 		params, err := p.DownloadParameters()
 		if err == nil && params != nil {
 			fileName := parametersFileName(p.Address)
-			bytes, _ := json.Marshal(&params)
+			bytes, _ := json.MarshalIndent(&params, "", "  ")
 			err := ioutil.WriteFile(filepath.Join(targetDirectory, fileName), bytes, os.ModePerm)
 			if err != nil {
 				handler(&tukan.PhoneResult{Address: p.Address, Error: err})
@@ -210,5 +210,5 @@ func parametersFileName(address string) string {
 	regex := regexp.MustCompile("https?://")
 	result := regex.ReplaceAllString(address, "")
 	result = strings.ReplaceAll(result, ":", "_")
-	return "parameters_" + result + ".yaml"
+	return "parameters_" + result + ".json"
 }

@@ -28,7 +28,7 @@ func main() {
 		cli.IntFlag{Name: "port", Value: 80, Usage: "The port the simulated phone will listen to", Destination: &port},
 		cli.StringFlag{Name: "login", Value: "Admin", Usage: "The login name for the simulator", Destination: &login},
 		cli.StringFlag{Name: "password", Value: "admin", Usage: "The password for the simulator", Destination: &password},
-		cli.StringFlag{Name: "parameters", Value: "", Usage: "yaml or json file containing the parameters", Destination: &parametersFile},
+		cli.StringFlag{Name: "parameters", Value: "", Usage: "json file containing the parameters", Destination: &parametersFile},
 	}
 
 	app.HideHelp = true

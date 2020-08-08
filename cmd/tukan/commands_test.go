@@ -2,11 +2,11 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/fafeitsch/Tukan/tukan/mock"
 	"github.com/fafeitsch/Tukan/tukan/params"
-	"github.com/goccy/go-yaml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli"
@@ -141,7 +141,7 @@ func TestDownloadParameters(t *testing.T) {
 	fileContent, err := ioutil.ReadFile(filepath.Join(tmpDir, parametersFileName(server1.URL)))
 	require.NoError(t, err, "reading the file should not give an error")
 	para := params.Parameters{}
-	err = yaml.Unmarshal(fileContent, &para)
+	err = json.Unmarshal(fileContent, &para)
 	require.NoError(t, err, "no error while unmarshalling expected")
 	assert.Equal(t, params.FunctionKey{PhoneNumber: "89-IN", DisplayName: "Linda", CallPickupCode: " #0"}, para.FunctionKeys[0], "function key not downloaded correctly")
 }

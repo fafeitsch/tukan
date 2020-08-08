@@ -409,7 +409,7 @@ func (f *FunctionKey) Merge(other FunctionKey) {
 		f.PhoneNumber = other.PhoneNumber
 	}
 	if other.CallPickupCode != "" {
-		f.CallPickupCode = other.PhoneNumber
+		f.CallPickupCode = other.CallPickupCode
 	}
 	if other.Type != "" {
 		f.Type = other.Type
