@@ -162,8 +162,6 @@ func TestTelephone_HandleParameters_POST(t *testing.T) {
 	payload := params.Parameters{FunctionKeys: []params.FunctionKey{{}, {DisplayName: "Ossi Lisimore"}}}
 	marsh, err := json.Marshal(&payload)
 	require.NoError(t, err, "no error expected")
-	tooLongPayload := params.Parameters{FunctionKeys: []params.FunctionKey{{}, {DisplayName: "Ossi Lisimore"}, {}, {PhoneNumber: "10"}}}
-	marshTooLong, err := json.Marshal(&tooLongPayload)
 	require.NoError(t, err, "no error expected")
 	tests := []struct {
 		name        string
@@ -174,7 +172,6 @@ func TestTelephone_HandleParameters_POST(t *testing.T) {
 		wantMsg     string
 	}{
 		{name: "success", method: "POST", contentType: "application/json", payload: string(marsh), wantStatus: http.StatusNoContent},
-		{name: "payload too long", method: "POST", contentType: "application/json", payload: string(marshTooLong), wantStatus: http.StatusBadRequest, wantMsg: "the request contained 4 function keys, but the phone only has 2\n"},
 		{name: "wrong media type", method: "POST", contentType: "application/xml", payload: string(marsh), wantStatus: http.StatusUnsupportedMediaType, wantMsg: "contentType \"application/xml\" not supported"},
 		{name: "invalid json", method: "POST", contentType: "application/json", payload: "{", wantStatus: http.StatusBadRequest, wantMsg: "could not deserialize json: unexpected EOF\n"},
 		{name: "double json", method: "POST", contentType: "application/json", payload: "{}{}", wantStatus: http.StatusBadRequest, wantMsg: "request body contained more than one json object, which is not allowed"},
@@ -194,7 +191,7 @@ func TestTelephone_HandleParameters_POST(t *testing.T) {
 			assert.Equal(t, tt.wantStatus, status, "status code is wrong")
 			assert.Equal(t, tt.wantMsg, data, "data is wrong")
 			if status == http.StatusNoContent {
-				assert.Equal(t, keys[0], telephone.Parameters.FunctionKeys[0], "first entry should not be touched")
+				assert.Equal(t, params.FunctionKey{}, telephone.Parameters.FunctionKeys[0])
 				assert.Equal(t, "Ossi Lisimore", telephone.Parameters.FunctionKeys[1].DisplayName, "display name should be changed")
 			} else {
 				assert.True(t, telephone.Parameters.FunctionKeys[1].IsEmpty(), "display name should not be changed in case of an error")

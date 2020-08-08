@@ -150,15 +150,9 @@ func (t *Telephone) changeFunctionKeys(w http.ResponseWriter, body io.ReadCloser
 		_, _ = fmt.Fprintf(w, "request body contained more than one json object, which is not allowed")
 		return
 	}
-	// TODO: do a real merge here
-	if len(t.Parameters.FunctionKeys) < len(keys.FunctionKeys) {
-		msg := fmt.Sprintf("the request contained %d function keys, but the phone only has %d", len(keys.FunctionKeys), len(t.Parameters.FunctionKeys))
-		http.Error(w, msg, http.StatusBadRequest)
-		return
-	}
-	for index, key := range keys.FunctionKeys {
-		t.Parameters.FunctionKeys[index].Merge(key)
-	}
+	// The actual phones rather do a merge here (only overwrite values that exist in the request body),
+	// but we want to keep it simple here.
+	t.Parameters = keys
 	log.Printf("Received function keys")
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -169,7 +163,7 @@ func (t *Telephone) getParameters(w http.ResponseWriter) {
 	// {"value": "8080", "flags": 8, "validator": … , …}
 	// However, this mock phone just sends the string value (same format as the POST method expects)
 	// This is due to technical reasons because I don't want to copy the whole Parameters struct just
-	// to define another Marshall method for the Settings.
+	// to define another Marshall method for the settings.
 	payload, _ := json.MarshalIndent(t.Parameters, "", "  ")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(payload)

@@ -19,10 +19,10 @@ func TestParameters_TransformFunctionKeyNames(t *testing.T) {
 	assert.Equal(t, "Ronald Gene", parameters.FunctionKeys[1].DisplayName, "original struct must not be changed")
 	assert.Equal(t, "Ronald Gene", parameters.FunctionKeys[3].DisplayName, "original struct must not be changed")
 	assert.Equal(t, []int{1, 3}, ints, "changed indices are wrong")
-	assert.Equal(t, FunctionKey{}, got.FunctionKeys[0], "first function key wrong")
-	assert.Equal(t, FunctionKey{DisplayName: "Belinda Fox"}, got.FunctionKeys[1], "second function key wrong")
-	assert.Equal(t, FunctionKey{}, got.FunctionKeys[2], "forth function key wrong")
-	assert.Equal(t, FunctionKey{DisplayName: "Belinda Fox"}, got.FunctionKeys[3], "fifth function key wrong")
+	assert.Equal(t, parameters.FunctionKeys[0], got.FunctionKeys[0], "first function key wrong")
+	assert.Equal(t, FunctionKey{DisplayName: "Belinda Fox", PhoneNumber: "30"}, got.FunctionKeys[1], "second function key wrong")
+	assert.Equal(t, parameters.FunctionKeys[2], got.FunctionKeys[2], "forth function key wrong")
+	assert.Equal(t, FunctionKey{DisplayName: "Belinda Fox", PhoneNumber: "42"}, got.FunctionKeys[3], "fifth function key wrong")
 }
 
 func TestFunctionKey_IsEmpty(t *testing.T) {
@@ -37,21 +37,6 @@ func TestFunctionKey_IsEmpty(t *testing.T) {
 	t.Run("not empty", func(t *testing.T) {
 		key := &FunctionKey{Type: "4", DisplayName: "John"}
 		assert.False(t, key.IsEmpty(), "key should not be empty")
-	})
-}
-
-func TestFunctionKey_Merge(t *testing.T) {
-	t.Run("merge phone number (empty)", func(t *testing.T) {
-		key := &FunctionKey{}
-		key2 := &FunctionKey{PhoneNumber: "555-Nose"}
-		key.Merge(*key2)
-		assert.Equal(t, key2.PhoneNumber, key.PhoneNumber, "if field is empty, merge")
-	})
-	t.Run("merge phone number", func(t *testing.T) {
-		key := &FunctionKey{PhoneNumber: "123-Nothing"}
-		key2 := &FunctionKey{PhoneNumber: ""}
-		key.Merge(*key2)
-		assert.Equal(t, "123-Nothing", key.PhoneNumber, "if field is empty, merge")
 	})
 }
 

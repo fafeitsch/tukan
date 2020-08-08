@@ -151,7 +151,7 @@ func TestReplaceFunctionKeys(t *testing.T) {
 	phone1.Parameters = params.Parameters{
 		FunctionKeys: []params.FunctionKey{
 			{DisplayName: "Linda", PhoneNumber: "89-IN", CallPickupCode: "#0"},
-			{},
+			{DisplayName: "John", PhoneNumber: "90-DS", CallPickupCode: "#0"},
 		},
 	}
 	handler2, phone2 := mock.CreatePhone(username, password)
@@ -159,7 +159,7 @@ func TestReplaceFunctionKeys(t *testing.T) {
 		FunctionKeys: []params.FunctionKey{
 			{DisplayName: "John", PhoneNumber: "90-DS", CallPickupCode: "#0"},
 			{DisplayName: "Linda", PhoneNumber: "89-IN", CallPickupCode: "#0"},
-			{},
+			{DisplayName: "Hugh", PhoneNumber: "65-ID", CallPickupCode: "***"},
 		},
 	}
 
@@ -183,7 +183,7 @@ func TestReplaceFunctionKeys(t *testing.T) {
 	assert.Equal(t, 2, len(got1), "length of function keys of first phone not correct")
 	assert.Equal(t, "Eva", got1[0].DisplayName, "displayName of first phone not correctly replaced")
 	assert.Equal(t, "89-IN", got1[0].PhoneNumber, "phoneNumber of first phone contact should not be changed")
-	assert.Equal(t, params.FunctionKey{}, got1[1], "second entry in phone book should still be empty")
+	assert.Equal(t, params.FunctionKey{DisplayName: "John", PhoneNumber: "90-DS", CallPickupCode: "#0"}, got1[1], "second entry in phone book should still be empty")
 
 	got2 := phone2.Parameters.FunctionKeys
 	assert.Equal(t, 3, len(got2), "length of function keys of second phone not correct")
@@ -191,7 +191,7 @@ func TestReplaceFunctionKeys(t *testing.T) {
 	assert.Equal(t, "90-DS", got2[0].PhoneNumber, "phoneNumber in second phone should not be changed")
 	assert.Equal(t, "Eva", got2[1].DisplayName, "displayName in second phone not correctly replaced")
 	assert.Equal(t, "89-IN", got2[1].PhoneNumber, "phoneNumber of second phone contact should not be changed")
-	assert.Equal(t, params.FunctionKey{}, got2[2], "third entry in phone book should still be empty")
+	assert.Equal(t, params.FunctionKey{DisplayName: "Hugh", PhoneNumber: "65-ID", CallPickupCode: "***"}, got2[2], "third entry in phone book should still be empty")
 
 	assert.Equal(t, 348, len(buff.String()), "output is wrong")
 }

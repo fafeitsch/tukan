@@ -367,12 +367,11 @@ func (p *Parameters) TransformFunctionKeyNames(original, replace string) (Parame
 	keys := make([]FunctionKey, 0, len(p.FunctionKeys))
 	changed := make([]int, 0, 0)
 	for index, fnKey := range p.FunctionKeys {
-		var key = FunctionKey{}
 		if fnKey.DisplayName == original {
-			key = FunctionKey{DisplayName: replace}
+			fnKey.DisplayName = replace
 			changed = append(changed, index)
 		}
-		keys = append(keys, key)
+		keys = append(keys, fnKey)
 	}
 	return Parameters{FunctionKeys: keys}, changed
 }
@@ -402,21 +401,6 @@ type FunctionKey struct {
 
 func (f *FunctionKey) IsEmpty() bool {
 	return (f.Type == "" && f.PhoneNumber == "" && f.DisplayName == "" && f.CallPickupCode == "") || f.Type == "-1"
-}
-
-func (f *FunctionKey) Merge(other FunctionKey) {
-	if other.PhoneNumber != "" {
-		f.PhoneNumber = other.PhoneNumber
-	}
-	if other.CallPickupCode != "" {
-		f.CallPickupCode = other.CallPickupCode
-	}
-	if other.Type != "" {
-		f.Type = other.Type
-	}
-	if other.DisplayName != "" {
-		f.DisplayName = other.DisplayName
-	}
 }
 
 func (f *FunctionKey) UnmarshalJSON(data []byte) error {

@@ -62,9 +62,9 @@ func TestPhone_UploadParameters(t *testing.T) {
 		assert.Equal(t, "", telephone.Parameters.FunctionKeys[1].DisplayName, "Display name of first function key should be empty before")
 		err = phone.UploadParameters(params.Parameters{FunctionKeys: keys})
 		require.NoError(t, err, "no error is expected")
-		assert.Equal(t, "Joe", telephone.Parameters.FunctionKeys[0].DisplayName, "Display name of first function key should not have been changed")
+		assert.Equal(t, "", telephone.Parameters.FunctionKeys[0].DisplayName, "Display name of first function key should not have been changed")
 		assert.Equal(t, "Ellen", telephone.Parameters.FunctionKeys[1].DisplayName, "Display name of first function key is wrong")
 		assert.Equal(t, "42", telephone.Parameters.FunctionKeys[1].PhoneNumber, "Phone number of first function key is wrong")
-		assert.Equal(t, "***", telephone.Parameters.FunctionKeys[1].CallPickupCode, "CallPickupCode should not have been changed")
+		assert.Equal(t, "", telephone.Parameters.FunctionKeys[1].CallPickupCode, "CallPickupCode should not have been changed")
 	})
 }
