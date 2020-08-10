@@ -37,19 +37,20 @@ func scan(context *cli.Context) {
 }
 
 func uploadPhoneBook(context *cli.Context) {
-	file := context.String(fileFlagName)
-
-	content, err := ioutil.ReadFile(file)
-	if err != nil {
-		_, _ = fmt.Fprintf(context.App.Writer, "could not load phone book file: %v", err)
-		return
-	}
-
+	sourceDirectory := context.String(sourceDirFlagName)
 	channel := make(chan commentedResult)
 
 	uploadHandler := actionUploadPhoneBook.handler(channel)
 	upload := func(p *tukan.Phone) {
-		err := p.UploadPhoneBook(string(content))
+		fileName := phoneBookFileName(p.Address)
+		path := filepath.Join(sourceDirectory, fileName)
+
+		content, err := ioutil.ReadFile(path)
+		if err != nil {
+			uploadHandler(&tukan.PhoneResult{Address: p.Address, Error: err})
+			return
+		}
+		err = p.UploadPhoneBook(string(content))
 		uploadHandler(&tukan.PhoneResult{Address: p.Address, Error: err})
 	}
 

@@ -11,7 +11,6 @@ const passwordFlagName = "password"
 const portFlagName = "port"
 const timeoutFlagName = "timeout"
 const verboseFlagName = "verbose"
-const fileFlagName = "file"
 const targetDirFlagName = "targetDir"
 const sourceDirFlagName = "sourceDir"
 const originalFlagName = "original"
@@ -46,7 +45,7 @@ func main() {
 		Name:  "pb-up",
 		Usage: "Uploads a phone book to a set of VoIP phones.",
 		Flags: []cli.Flag{
-			cli.StringFlag{Name: fileFlagName, Required: true, Usage: "The phone book file to be loaded up.", TakesFile: true},
+			cli.StringFlag{Name: sourceDirFlagName, Required: true, Usage: "The directory where the phone books to upload can be found.", TakesFile: true},
 		},
 		Action: uploadPhoneBook,
 	}

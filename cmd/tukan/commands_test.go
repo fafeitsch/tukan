@@ -17,10 +17,16 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 var username = "doe"
 var password = "admin123"
+
+func TestMain(m *testing.M) {
+	rand.Seed(time.Now().UnixNano())
+	os.Exit(m.Run())
+}
 
 func TestScan(t *testing.T) {
 	handler1, _ := mock.CreatePhone(username, password)
@@ -61,24 +67,38 @@ func TestUploadPhoneBook(t *testing.T) {
 	flags.String(passwordFlagName, password, "")
 	_ = flags.Parse([]string{server1.URL, server2.URL})
 
+	number := rand.Int()
+	tmpDir := filepath.Join(os.TempDir(), fmt.Sprintf("tukan-test%d", number))
+	err := os.Mkdir(tmpDir, os.ModePerm)
+	require.NoError(t, err, "no error expected")
+	defer func() { _ = os.RemoveAll(tmpDir) }()
+	err = ioutil.WriteFile(filepath.Join(tmpDir, phoneBookFileName(server1.URL)), []byte("phone book 1"), os.ModePerm)
+	require.NoError(t, err, "no error expected")
+	err = ioutil.WriteFile(filepath.Join(tmpDir, phoneBookFileName(server2.URL)), []byte("phone book 2"), os.ModePerm)
+	require.NoError(t, err, "no error expected")
+
 	t.Run("success", func(t *testing.T) {
 		var buff bytes.Buffer
-		flags.String(fileFlagName, "./test-resources/phonebook.txt", "")
+		flags.String(sourceDirFlagName, tmpDir, "")
 		ctx := cli.NewContext(&cli.App{Writer: &buff}, flags, nil)
 		uploadPhoneBook(ctx)
 		got := buff.String()
 
 		assert.Equal(t, 254, len(got), "length of message is wrong")
 		assert.Containsf(t, got, server1.URL, "should contain server1 URL %s", server1.URL)
-		assert.Containsf(t, got, server2.URL, "should contain server2 URL %s", server1.URL)
+		assert.Containsf(t, got, server2.URL, "should contain server2 URL %s", server2.URL)
+		assert.Equal(t, "phone book 1\n", phone1.Phonebook, "phone book 1 not uploaded correctly")
 	})
 	t.Run("file not found", func(t *testing.T) {
 		var buff bytes.Buffer
 		flags := flag.NewFlagSet("", flag.PanicOnError)
-		flags.String(fileFlagName, "./test-resources/not-existing.txt", "")
+		flags.String(sourceDirFlagName, filepath.Join(tmpDir, "not_existing"), "")
+		flags.String(loginFlagName, username, "")
+		flags.String(passwordFlagName, password, "")
+		_ = flags.Parse([]string{server1.URL})
 		ctx := cli.NewContext(&cli.App{Writer: &buff}, flags, nil)
 		uploadPhoneBook(ctx)
-		assert.Equal(t, "could not load phone book file: open ./test-resources/not-existing.txt: no such file or directory", buff.String(), "result message in case of error wrong")
+		assert.Contains(t, buff.String(), "Uploading Phone Book returned error: open "+filepath.Join(tmpDir, "not_existing", phoneBookFileName(server1.URL))+": no such file or directory", "result message in case of error wrong")
 	})
 }
 
@@ -194,4 +214,54 @@ func TestReplaceFunctionKeys(t *testing.T) {
 	assert.Equal(t, params.FunctionKey{DisplayName: "Hugh", PhoneNumber: "65-ID", CallPickupCode: "***"}, got2[2], "third entry in phone book should still be empty")
 
 	assert.Equal(t, 348, len(buff.String()), "output is wrong")
+}
+
+func TestRestorePhoneBook(t *testing.T) {
+	handler1, phone1 := mock.CreatePhone(username, password)
+	phone1.Phonebook = ""
+	server1 := httptest.NewServer(handler1)
+	defer server1.Close()
+
+	handler2, _ := mock.CreatePhone(username, "secret")
+	server2 := httptest.NewServer(handler2)
+	defer server2.Close()
+
+	flags := flag.NewFlagSet("", flag.PanicOnError)
+	flags.String(loginFlagName, username, "")
+	flags.String(passwordFlagName, password, "")
+	_ = flags.Parse([]string{server1.URL, server2.URL})
+
+	number := rand.Int()
+	tmpDir := filepath.Join(os.TempDir(), fmt.Sprintf("tukan-test%d", number))
+	err := os.Mkdir(tmpDir, os.ModePerm)
+	require.NoError(t, err, "no error expected")
+	defer func() { _ = os.RemoveAll(tmpDir) }()
+	err = ioutil.WriteFile(filepath.Join(tmpDir, parametersFileName(server1.URL)), []byte("{\"PhoneModel\":\"Model XYZ\"}"), os.ModePerm)
+	require.NoError(t, err, "no error expected")
+	err = ioutil.WriteFile(filepath.Join(tmpDir, parametersFileName(server2.URL)), []byte("{\"PhoneModel\":\"Model XYZ\"}"), os.ModePerm)
+	require.NoError(t, err, "no error expected")
+
+	t.Run("success", func(t *testing.T) {
+		var buff bytes.Buffer
+		flags.String(sourceDirFlagName, tmpDir, "")
+		ctx := cli.NewContext(&cli.App{Writer: &buff}, flags, nil)
+		restore(ctx)
+		got := buff.String()
+
+		assert.Equal(t, 254, len(got), "length of message is wrong")
+		assert.Containsf(t, got, server1.URL, "should contain server1 URL %s", server1.URL)
+		assert.Containsf(t, got, server2.URL, "should contain server2 URL %s", server2.URL)
+		assert.Equal(t, phone1.Parameters.PhoneModel, "Model XYZ", "parameters not uploaded correctly")
+	})
+	t.Run("file not found", func(t *testing.T) {
+		var buff bytes.Buffer
+		flags := flag.NewFlagSet("", flag.PanicOnError)
+		flags.String(sourceDirFlagName, filepath.Join(tmpDir, "not_existing"), "")
+		flags.String(loginFlagName, username, "")
+		flags.String(passwordFlagName, password, "")
+		_ = flags.Parse([]string{server1.URL})
+		ctx := cli.NewContext(&cli.App{Writer: &buff}, flags, nil)
+		restore(ctx)
+		assert.Contains(t, buff.String(), "Uploading Parameters returned error: open "+filepath.Join(tmpDir, "not_existing", parametersFileName(server1.URL))+": no such file or directory", "result message in case of error wrong")
+	})
 }

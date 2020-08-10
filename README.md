@@ -27,7 +27,7 @@ the provided credentials:
     ```
 2. Upload local telephone books:
    ```shell script
-   ?> tukan --login pb-up -file /tmp/phonebook.xml 10.20.30.40:8080
+   ?> tukan --login pb-up -sourceDir /tmp 10.20.30.40:8080
    http://10.20.30.40:8080:
            Login successful
            Uploading Phone Book successful
