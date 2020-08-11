@@ -158,6 +158,26 @@ type Phone struct {
 	invalid bool
 }
 
+func (p *Phone) Reset() error {
+	url := fmt.Sprintf("%s/State", p.Address)
+	request, _ := http.NewRequest("POST", url, strings.NewReader("{\"System.Reset\":5}"))
+	request.Header.Add("Authorization", "Bearer "+p.token)
+	resp, err := p.client.Do(request)
+	err = checkResponse(resp, err)
+	if err != nil {
+		return err
+	}
+	err = p.Logout()
+	if err != nil {
+		return err
+	}
+	url = fmt.Sprintf("%s/State/.System.Reset", p.Address)
+	request, _ = http.NewRequest("GET", url, nil)
+	request.Header.Add("Authorization", "Bearer "+p.token)
+	resp, err = p.client.Do(request)
+	return checkResponse(resp, err)
+}
+
 // Sends a logout request to the phone. If the request passes without error
 // then the token of the phone is reset. Further usage of the phone struct
 // will most likely not work. If and error is returned, then the token stored

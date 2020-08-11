@@ -87,7 +87,13 @@ func main() {
 		Action: replaceFunctionKeys,
 	}
 
-	app.Commands = []cli.Command{scanCommand, phoneBookUploadCommand, phonebookDownloadCommand, backupCommand, restoreCommand, functionKeysReplaceCommand}
+	resetCommand := cli.Command{
+		Name:   "reset",
+		Usage:  "Resets the whole telephone.",
+		Action: reset,
+	}
+
+	app.Commands = []cli.Command{scanCommand, phoneBookUploadCommand, phonebookDownloadCommand, backupCommand, restoreCommand, functionKeysReplaceCommand, resetCommand}
 
 	app.Flags = []cli.Flag{loginFlag, passwordFlag, portFlag, timeoutFlag, verboseFlag}
 

@@ -24,10 +24,11 @@ const (
 	actionReplaceFunctionKeys
 	actionDownloadParameters
 	actionUploadParameters
+	actionReset
 )
 
 func (a action) String() string {
-	names := []string{"Login", "Logout", "Uploading Phone Book", "Downloading Phone Book", "Replacing Function Keys", "Downloading Parameters", "Uploading Parameters"}
+	names := []string{"Login", "Logout", "Uploading Phone Book", "Downloading Phone Book", "Replacing Function Keys", "Downloading Parameters", "Uploading Parameters", "Resetting"}
 	return names[a]
 }
 

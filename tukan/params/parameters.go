@@ -290,7 +290,7 @@ type Parameters struct {
 	SIPTimersSubscription                  int                  `json:"SIPTimersSubscription,omitempty"`
 	SIPTimersSubscriptionBLFFollowRegister string               `json:"SIPTimersSubscriptionBLFFollowRegister,omitempty"`
 	SIPTransportProtocol                   string               `json:"SIPTransportProtocol,omitempty"`
-	SIPsrtp                                string               `json:"SIPsrtp,omitempty"`
+	SIPSrtp                                string               `json:"SIPSrtp,omitempty"`
 	ScreenSaverTimeout                     string               `json:"ScreenSaverTimeout,omitempty"`
 	Screensaver                            string               `json:"Screensaver,omitempty"`
 	ScreensaverBacklight                   int                  `json:"ScreensaverBacklight,omitempty"`

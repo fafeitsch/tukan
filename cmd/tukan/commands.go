@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"github.com/fafeitsch/Tukan/tukan"
@@ -32,6 +33,33 @@ func scan(context *cli.Context) {
 	wg.Add(1)
 	go handleResults(&wg, channel, context)
 	createConnector(context).Run(actionLogin.handler(channel), func(p *tukan.Phone) {}, actionLogout.handler(channel))
+	close(channel)
+	wg.Wait()
+}
+
+func reset(context *cli.Context) {
+	channel := make(chan commentedResult)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go handleResults(&wg, channel, context)
+	handler := actionReset.handler(channel)
+	resetPhone := func(p *tukan.Phone) {
+		err := p.Reset()
+		handler(&tukan.PhoneResult{Address: p.Address, Error: err})
+	}
+	// Do nothing with logout because it fails nonetheless (the phone immediately resets itself)
+	logoutCallback := func(p *tukan.PhoneResult) {}
+	connector := createConnector(context)
+	addresses := connector.Addresses
+	_, _ = fmt.Fprintf(context.App.Writer, "Do you really want to reset %d phones? Type YES: ", len(addresses))
+	reader := bufio.NewReader(os.Stdin)
+	input, _ := reader.ReadString('\n')
+	if input != "YES\n" {
+		close(channel)
+		wg.Wait()
+		return
+	}
+	connector.Run(actionLogin.handler(channel), resetPhone, logoutCallback)
 	close(channel)
 	wg.Wait()
 }
