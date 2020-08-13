@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/fafeitsch/Tukan/tukan/params"
 	"io"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -155,6 +156,18 @@ func (t *Telephone) changeFunctionKeys(w http.ResponseWriter, body io.ReadCloser
 	t.Parameters = keys
 	log.Printf("Received function keys")
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (t *Telephone) backup(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "application/octet-stream")
+	_, _ = fmt.Fprintf(w, "This is the backup")
+	w.WriteHeader(http.StatusOK)
+}
+
+func (t *Telephone) restore(w http.ResponseWriter, req *http.Request) {
+	content, _ := ioutil.ReadAll(req.Body)
+	log.Printf(string(content))
+	w.WriteHeader(http.StatusOK)
 }
 
 func (t *Telephone) getParameters(w http.ResponseWriter) {

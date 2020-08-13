@@ -152,7 +152,7 @@ func TestDownloadParameters(t *testing.T) {
 	defer func() { _ = os.RemoveAll(tmpDir) }()
 	flags.String(targetDirFlagName, tmpDir, "")
 	ctx := cli.NewContext(&cli.App{Writer: &buff}, flags, nil)
-	backup(ctx)
+	saveConfig(ctx)
 	got := strings.Split(buff.String(), "\n")
 
 	assert.Equal(t, 4, len(got)-1, "expected two lines of result")

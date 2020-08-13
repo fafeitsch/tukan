@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/fafeitsch/Tukan/tukan"
-	params2 "github.com/fafeitsch/Tukan/tukan/params"
 	"github.com/urfave/cli"
 	"io/ioutil"
 	"net/http"
@@ -133,7 +132,7 @@ func phoneBookFileName(address string) string {
 	return "phonebook_" + result + ".xml"
 }
 
-func backup(context *cli.Context) {
+func saveConfig(context *cli.Context) {
 	targetDirectory := context.String(targetDirFlagName)
 	err := os.MkdirAll(targetDirectory, os.ModePerm)
 	if err != nil {
@@ -170,25 +169,52 @@ func backup(context *cli.Context) {
 	wg.Wait()
 }
 
+func backup(context *cli.Context) {
+	targetDirectory := context.String(targetDirFlagName)
+	err := os.MkdirAll(targetDirectory, os.ModePerm)
+	if err != nil {
+		_, _ = fmt.Fprintf(context.App.Writer, "could not create target directory: %v", err)
+		return
+	}
+	channel := make(chan commentedResult)
+
+	handler := actionBackup.handler(channel)
+	backup := func(p *tukan.Phone) {
+		data, err := p.Backup()
+		if err == nil && data != nil {
+			fileName := backupFileName(p.Address)
+			fileName = filepath.Join(targetDirectory, fileName)
+			err := ioutil.WriteFile(fileName, data, os.ModePerm)
+			handler(&tukan.PhoneResult{Address: p.Address, Error: err})
+		} else {
+			handler(&tukan.PhoneResult{Address: p.Address, Error: err})
+		}
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go handleResults(&wg, channel, context)
+	createConnector(context).
+		Run(actionLogin.handler(channel),
+			backup,
+			actionLogout.handler(channel))
+	close(channel)
+	wg.Wait()
+}
+
 func restore(context *cli.Context) {
 	sourceDirectory := context.String(sourceDirFlagName)
 	channel := make(chan commentedResult)
 
 	handler := actionUploadParameters.handler(channel)
 	upload := func(p *tukan.Phone) {
-		fileName := parametersFileName(p.Address)
+		fileName := backupFileName(p.Address)
 		data, err := ioutil.ReadFile(filepath.Join(sourceDirectory, fileName))
 		if err != nil {
 			handler(&tukan.PhoneResult{Address: p.Address, Error: err})
 			return
 		}
-		parameters := params2.Parameters{}
-		err = json.Unmarshal(data, &parameters)
-		if err != nil {
-			handler(&tukan.PhoneResult{Address: p.Address, Error: err})
-			return
-		}
-		err = p.UploadParameters(parameters)
+		err = p.Restore(data)
 		handler(&tukan.PhoneResult{Address: p.Address, Error: err})
 	}
 
@@ -240,4 +266,11 @@ func parametersFileName(address string) string {
 	result := regex.ReplaceAllString(address, "")
 	result = strings.ReplaceAll(result, ":", "_")
 	return "parameters_" + result + ".json"
+}
+
+func backupFileName(address string) string {
+	regex := regexp.MustCompile("https?://")
+	result := regex.ReplaceAllString(address, "")
+	result = strings.ReplaceAll(result, ":", "_")
+	return "parameters_" + result + ".cfg"
 }

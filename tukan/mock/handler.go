@@ -25,6 +25,8 @@ func CreatePhone(login string, password string) (http.Handler, *Telephone) {
 	router.Handle("/LocalPhonebook", enforceTokenHandler(&tele, tele.postPhoneBook))
 	router.Handle("/SaveLocalPhonebook", enforceTokenHandler(&tele, tele.saveLocalPhoneBook))
 	router.Handle("/Parameters", enforceTokenHandler(&tele, tele.handleParameters))
+	router.Handle("/SaveAllSettings", enforceTokenHandler(&tele, tele.backup))
+	router.Handle("/RestoreSettings", enforceTokenHandler(&tele, tele.restore))
 	return router, &tele
 }
 

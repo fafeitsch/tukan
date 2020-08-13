@@ -59,9 +59,18 @@ func main() {
 		Action: downloadPhoneBook,
 	}
 
-	backupCommand := cli.Command{
+	downloadCommand := cli.Command{
+		Name:  "downloadConfig",
+		Usage: "Downloads all parameters from the phone and stores them in a json file. Though possible, the downloaded params are only meant for analyzing the settings, not for a complete restore on the phone.",
+		Flags: []cli.Flag{
+			cli.StringFlag{Name: targetDirFlagName, Required: true, Usage: "The directory where the downloaded parameters are saved."},
+		},
+		Action: saveConfig,
+	}
+
+	backup := cli.Command{
 		Name:  "backup",
-		Usage: "Downloads all parameters from the phone and stores them in a json file.",
+		Usage: "Downloads a binary backup from the phones which can be restored.",
 		Flags: []cli.Flag{
 			cli.StringFlag{Name: targetDirFlagName, Required: true, Usage: "The directory where the downloaded parameters are saved."},
 		},
@@ -93,7 +102,7 @@ func main() {
 		Action: reset,
 	}
 
-	app.Commands = []cli.Command{scanCommand, phoneBookUploadCommand, phonebookDownloadCommand, backupCommand, restoreCommand, functionKeysReplaceCommand, resetCommand}
+	app.Commands = []cli.Command{scanCommand, phoneBookUploadCommand, phonebookDownloadCommand, downloadCommand, restoreCommand, functionKeysReplaceCommand, resetCommand, backup}
 
 	app.Flags = []cli.Flag{loginFlag, passwordFlag, portFlag, timeoutFlag, verboseFlag}
 
