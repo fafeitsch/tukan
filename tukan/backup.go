@@ -34,6 +34,7 @@ func (p *Phone) Restore(data []byte) error {
 		return nil
 	}
 	_, err = part.Write(data)
+	_ = writer.Close()
 	if err != nil {
 		return err
 	}
@@ -42,6 +43,7 @@ func (p *Phone) Restore(data []byte) error {
 		return err
 	}
 	request.Header.Add("Authorization", "Bearer "+p.token)
+	request.Header.Add("Content-Type", writer.FormDataContentType())
 	resp, err := p.client.Do(request)
 	return checkResponse(resp, err)
 }

@@ -166,7 +166,7 @@ func (t *Telephone) backup(w http.ResponseWriter, req *http.Request) {
 
 func (t *Telephone) restore(w http.ResponseWriter, req *http.Request) {
 	content, _ := ioutil.ReadAll(req.Body)
-	log.Printf(string(content))
+	log.Printf("Content-Type: %s\n%s", req.Header.Get("Content-Type"), string(content))
 	w.WriteHeader(http.StatusOK)
 }
 
