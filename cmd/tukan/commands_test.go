@@ -220,6 +220,54 @@ func TestReplaceFunctionKeys(t *testing.T) {
 	assert.Equal(t, 348, len(buff.String()), "output is wrong")
 }
 
+func TestSipOverrideDisplayNames(t *testing.T) {
+	handler1, phone1 := mock.CreatePhone(username, password)
+	phone1.Parameters = params.Parameters{
+		PhoneModel: "Phone ABC",
+		Sip: params.Sips{
+			{DisplayName: "John"},
+			{DisplayName: ""},
+			{DisplayName: "Fabian"},
+		},
+	}
+	handler2, phone2 := mock.CreatePhone(username, password)
+	phone2.Parameters = params.Parameters{
+		PhoneModel: "Phone ABC",
+		Sip: params.Sips{
+			{DisplayName: "Fabian"},
+		},
+	}
+
+	server1 := httptest.NewServer(handler1)
+	defer server1.Close()
+	server2 := httptest.NewServer(handler2)
+	defer server2.Close()
+
+	flags := flag.NewFlagSet("", flag.PanicOnError)
+	flags.String(loginFlagName, username, "")
+	flags.String(passwordFlagName, password, "")
+	flags.String(replaceFlagName, "999 Eva", "")
+	_ = flags.Parse([]string{server1.URL, server2.URL})
+
+	var buff bytes.Buffer
+	ctx := cli.NewContext(&cli.App{Writer: &buff}, flags, nil)
+	SipOverrideDisplayNames(ctx)
+
+	got1 := phone1.Parameters.Sip
+	assert.Equal(t, 3, len(got1), "length of sips of first phone not correct")
+	assert.Equal(t, "999 Eva", got1[0].DisplayName, "displayName of sip correctly replaced")
+	assert.Equal(t, "", got1[1].DisplayName, "second entry in Sips should still be empty")
+	assert.Equal(t, "999 Eva", got1[2].DisplayName, "displayName of sip correctly replaced")
+	assert.Empty(t, phone1.Parameters.PhoneModel, "Phone Model should be empty now because only the function keys should be sent to the phone")
+
+	got2 := phone2.Parameters.Sip
+	assert.Equal(t, 1, len(got2), "length of sips of second phone not correct")
+	assert.Equal(t, "999 Eva", got2[0].DisplayName, "displayName in second phone not correctly replaced")
+	assert.Empty(t, phone2.Parameters.PhoneModel, "Phone Model should be empty now because only the function keys should be sent to the phone")
+
+	assert.Equal(t, 374, len(buff.String()), "output is wrong")
+}
+
 func TestRestore(t *testing.T) {
 	handler1, phone1 := mock.CreatePhone(username, password)
 	phone1.Backup = []byte("")

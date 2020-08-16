@@ -254,6 +254,37 @@ func replaceFunctionKeys(context *cli.Context) {
 	wg.Wait()
 }
 
+func SipOverrideDisplayNames(context *cli.Context) {
+	replace := context.String(replaceFlagName)
+
+	channel := make(chan commentedResult)
+
+	downloadHandler := actionDownloadParameters.handler(channel)
+	uploadHandler := actionSipOverrideDisplayName.handler(channel)
+	replaceOperation := func(p *tukan.Phone) {
+		parameters, err := p.DownloadParameters()
+		downloadHandler(&tukan.PhoneResult{Address: p.Address, Error: err})
+		if err != nil {
+			return
+		}
+		upload, changed := parameters.Sip.Transform(params.SipOverrideDisplayName(replace))
+		comment := fmt.Sprintf("%s (changed sip): %v", actionSipOverrideDisplayName.String(), changed)
+		channel <- commentedResult{PhoneResult: &tukan.PhoneResult{Address: p.Address, Error: err}, comment: comment}
+		err = p.UploadParameters(params.Parameters{Sip: upload})
+		uploadHandler(&tukan.PhoneResult{Address: p.Address, Error: err})
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go handleResults(&wg, channel, context)
+	createConnector(context).
+		Run(actionLogin.handler(channel),
+			replaceOperation,
+			actionLogout.handler(channel))
+	close(channel)
+	wg.Wait()
+}
+
 func parametersFileName(address string) string {
 	regex := regexp.MustCompile("https?://")
 	result := regex.ReplaceAllString(address, "")

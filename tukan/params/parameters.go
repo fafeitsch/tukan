@@ -303,7 +303,7 @@ type Parameters struct {
 	ShowPIN                                string               `json:"ShowPIN,omitempty"`
 	ShowPassword                           string               `json:"ShowPassword,omitempty"`
 	ShowSIPMessagesOnDisplay               string               `json:"ShowSIPMessagesOnDisplay,omitempty"`
-	Sip                                    []Sip                `json:"SIP,omitempty"`
+	Sip                                    Sips                 `json:"SIP,omitempty"`
 	SoftReboots                            int                  `json:"SoftReboots,omitempty"`
 	SoftwareVariant                        string               `json:"SoftwareVariant,omitempty"`
 	SoftwareVersion                        string               `json:"SoftwareVersion,omitempty"`
@@ -379,12 +379,12 @@ type FunctionKeys []FunctionKey
 // some keys may have changed according to the transformer. The changed keys are reported back via a second return parameter,
 // an []int slice that contains the indices of updated function keys.
 // The original function keys are not altered.
-func (f FunctionKeys) Transform(tansformer func(index int, key *FunctionKey) bool) (FunctionKeys, []int) {
+func (f FunctionKeys) Transform(transformer func(index int, key *FunctionKey) bool) (FunctionKeys, []int) {
 	keys := make([]FunctionKey, 0, len(f))
 	changed := make([]int, 0, 0)
 	for index, fnKey := range f {
 		key := &fnKey
-		if tansformer(index, key) {
+		if transformer(index, key) {
 			changed = append(changed, index)
 		}
 		keys = append(keys, *key)
@@ -479,6 +479,36 @@ type Sip struct {
 	Username                      string `json:"Username,omitempty"`
 	VoiceMailActive               string `json:"VoiceMailActive,omitempty"`
 	VoiceMailMailbox              string `json:"VoiceMailMailbox,omitempty"`
+}
+
+type Sips []Sip
+
+// Transform changes the Sip entries according to the passed transformer. It returns
+// a new Sips instance with all Sip entries, including those who have not changed.
+// The second return parameter includes a list of indices which have changed.
+func (s Sips) Transform(transformer func(index int, sip *Sip) bool) (Sips, []int) {
+	sips := make([]Sip, 0, len(s))
+	changed := make([]int, 0, 0)
+	for index, origSip := range s {
+		newSip := &origSip
+		if transformer(index, newSip) {
+			changed = append(changed, index)
+		}
+		sips = append(sips, *newSip)
+	}
+	return sips, changed
+}
+
+// SipOverrideDisplayName overrides the DisplayName of the passed Sip if it
+// is not empty, and returns true in that case, otherwise, false.
+func SipOverrideDisplayName(newName string) func(index int, sip *Sip) bool {
+	return func(index int, sip *Sip) bool {
+		if sip.DisplayName != "" {
+			sip.DisplayName = newName
+			return true
+		}
+		return false
+	}
 }
 
 func (s *Sip) UnmarshalJSON(data []byte) error {

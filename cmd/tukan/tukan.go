@@ -96,13 +96,22 @@ func main() {
 		Action: replaceFunctionKeys,
 	}
 
+	sipOverrideDisplayNamesCommand := cli.Command{
+		Name:  "sip-override",
+		Usage: "Overrides SIP display names if they are not empty",
+		Flags: []cli.Flag{
+			replaceFlag,
+		},
+		Action: SipOverrideDisplayNames,
+	}
+
 	resetCommand := cli.Command{
 		Name:   "reset",
 		Usage:  "Resets the whole telephone.",
 		Action: reset,
 	}
 
-	app.Commands = []cli.Command{scanCommand, phoneBookUploadCommand, phonebookDownloadCommand, downloadCommand, restoreCommand, functionKeysReplaceCommand, resetCommand, backup}
+	app.Commands = []cli.Command{scanCommand, phoneBookUploadCommand, phonebookDownloadCommand, downloadCommand, restoreCommand, functionKeysReplaceCommand, resetCommand, backup, sipOverrideDisplayNamesCommand}
 
 	app.Flags = []cli.Flag{loginFlag, passwordFlag, portFlag, timeoutFlag, verboseFlag}
 

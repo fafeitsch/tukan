@@ -52,3 +52,16 @@ func TestParameters_UnmarshalJSON(t *testing.T) {
 	assert.Equal(t, "example.com/pbx", parameters.Sip[1].Domain)
 	assert.Equal(t, "24h", parameters.TimeFormat)
 }
+
+func TestSips_Transform(t *testing.T) {
+	sips := Sips{
+		{DisplayName: "John"},
+		{DisplayName: ""},
+		{DisplayName: "Freyan"},
+	}
+	got, ints := sips.Transform(SipOverrideDisplayName("222 John"))
+	assert.Equal(t, []int{0, 2}, ints, "changed indices are not correct")
+	assert.Equal(t, "222 John", got[0].DisplayName)
+	assert.Equal(t, "", got[1].DisplayName)
+	assert.Equal(t, "222 John", got[2].DisplayName)
+}

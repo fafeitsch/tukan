@@ -26,10 +26,11 @@ const (
 	actionUploadParameters
 	actionReset
 	actionBackup
+	actionSipOverrideDisplayName
 )
 
 func (a action) String() string {
-	names := []string{"Login", "Logout", "Uploading Phone Book", "Downloading Phone Book", "Replacing Function Keys", "Downloading Parameters", "Uploading Parameters", "Resetting", "Backing up"}
+	names := []string{"Login", "Logout", "Uploading Phone Book", "Downloading Phone Book", "Replacing Function Keys", "Downloading Parameters", "Uploading Parameters", "Resetting", "Backing up", "Overriding Sip Display Names"}
 	return names[a]
 }
 
