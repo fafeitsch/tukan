@@ -8,21 +8,23 @@ import (
 	"testing"
 )
 
-func TestParameters_TransformFunctionKeyNames(t *testing.T) {
-	parameters := Parameters{FunctionKeys: FunctionKeys{
+func TestFunctionKeys_Transform(t *testing.T) {
+	keys := FunctionKeys{
 		FunctionKey{PhoneNumber: "20", DisplayName: "Ron Doe"},
 		FunctionKey{PhoneNumber: "30", DisplayName: "Ronald Gene"},
 		FunctionKey{PhoneNumber: "40", DisplayName: "Mary Hope"},
 		FunctionKey{PhoneNumber: "42", DisplayName: "Ronald Gene"},
-	}}
-	got, ints := parameters.TransformFunctionKeyNames("Ronald Gene", "Belinda Fox")
-	assert.Equal(t, "Ronald Gene", parameters.FunctionKeys[1].DisplayName, "original struct must not be changed")
-	assert.Equal(t, "Ronald Gene", parameters.FunctionKeys[3].DisplayName, "original struct must not be changed")
+	}
+	got, ints := keys.Transform(ReplaceDisplayName("Ronald Gene", "Belinda Fox"))
 	assert.Equal(t, []int{1, 3}, ints, "changed indices are wrong")
-	assert.Equal(t, parameters.FunctionKeys[0], got.FunctionKeys[0], "first function key wrong")
-	assert.Equal(t, FunctionKey{DisplayName: "Belinda Fox", PhoneNumber: "30"}, got.FunctionKeys[1], "second function key wrong")
-	assert.Equal(t, parameters.FunctionKeys[2], got.FunctionKeys[2], "forth function key wrong")
-	assert.Equal(t, FunctionKey{DisplayName: "Belinda Fox", PhoneNumber: "42"}, got.FunctionKeys[3], "fifth function key wrong")
+	assert.Equal(t, keys[0], got[0], "first key must not be changed")
+	assert.Equal(t, "30", got[1].PhoneNumber, "phone number of second function key wrong")
+	assert.Equal(t, "Belinda Fox", got[1].DisplayName, "display name of second function key wrong")
+	assert.Equal(t, "Ronald Gene", keys[1].DisplayName, "original display name must not be changed")
+	assert.Equal(t, keys[2], got[2], "second key must not be changed")
+	assert.Equal(t, "42", got[3].PhoneNumber, "phone number of forth function key wrong")
+	assert.Equal(t, "Belinda Fox", got[3].DisplayName, "display name of forth function key wrong")
+	assert.Equal(t, "Ronald Gene", keys[3].DisplayName, "original display name must not be changed")
 }
 
 func TestFunctionKey_IsEmpty(t *testing.T) {

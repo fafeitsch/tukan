@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/fafeitsch/Tukan/tukan/params"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -25,6 +24,7 @@ type Telephone struct {
 	Token      *string
 	Phonebook  string
 	Parameters params.Parameters
+	Backup     []byte
 }
 
 func (t *Telephone) attemptLogin(w http.ResponseWriter, r *http.Request) {
@@ -129,7 +129,7 @@ func (t *Telephone) handleParameters(w http.ResponseWriter, r *http.Request) {
 			_, _ = fmt.Fprintf(w, "contentType \"%s\" not supported", r.Header.Get("Content-Type"))
 			return
 		}
-		t.changeFunctionKeys(w, r.Body)
+		t.setParameters(w, r.Body)
 		break
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -138,7 +138,7 @@ func (t *Telephone) handleParameters(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (t *Telephone) changeFunctionKeys(w http.ResponseWriter, body io.ReadCloser) {
+func (t *Telephone) setParameters(w http.ResponseWriter, body io.ReadCloser) {
 	decoder := json.NewDecoder(body)
 	keys := params.Parameters{}
 	err := decoder.Decode(&(keys))
@@ -160,13 +160,27 @@ func (t *Telephone) changeFunctionKeys(w http.ResponseWriter, body io.ReadCloser
 
 func (t *Telephone) backup(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/octet-stream")
-	_, _ = fmt.Fprintf(w, "This is the backup")
-	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(t.Backup)
 }
 
 func (t *Telephone) restore(w http.ResponseWriter, req *http.Request) {
-	content, _ := ioutil.ReadAll(req.Body)
-	log.Printf("Content-Type: %s\n%s", req.Header.Get("Content-Type"), string(content))
+	if fail, status, msg := t.preconditionsFail(req, "multipart/form-data; boundary=", "POST"); fail {
+		w.WriteHeader(status)
+		_, _ = fmt.Fprintf(w, msg)
+		return
+	}
+	err := req.ParseMultipartForm(2 << 20) // 20 MB
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = fmt.Fprintf(w, "could not parse multipart-form")
+		log.Printf("Error while parsing multipart form from %s: %v", req.RemoteAddr, err)
+		return
+	}
+	file, _, _ := req.FormFile("file")
+	defer func() { _ = file.Close() }()
+	var buf bytes.Buffer
+	_, _ = io.Copy(&buf, file)
+	t.Backup = buf.Bytes()
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -176,7 +190,7 @@ func (t *Telephone) getParameters(w http.ResponseWriter) {
 	// {"value": "8080", "flags": 8, "validator": … , …}
 	// However, this mock phone just sends the string value (same format as the POST method expects)
 	// This is due to technical reasons because I don't want to copy the whole Parameters struct just
-	// to define another Marshall method for the settings.
+	// to define another Marshal method for the settings.
 	payload, _ := json.MarshalIndent(t.Parameters, "", "  ")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(payload)

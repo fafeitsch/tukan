@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/fafeitsch/Tukan/tukan"
+	"github.com/fafeitsch/Tukan/tukan/params"
 	"github.com/urfave/cli"
 	"io/ioutil"
 	"net/http"
@@ -143,19 +144,13 @@ func saveConfig(context *cli.Context) {
 
 	handler := actionDownloadParameters.handler(channel)
 	download := func(p *tukan.Phone) {
-		params, err := p.DownloadParameters()
-		if err == nil && params != nil {
+		parameters, err := p.DownloadParameters()
+		if err == nil && parameters != nil {
 			fileName := parametersFileName(p.Address)
-			bytes, _ := json.MarshalIndent(&params, "", "  ")
-			err := ioutil.WriteFile(filepath.Join(targetDirectory, fileName), bytes, os.ModePerm)
-			if err != nil {
-				handler(&tukan.PhoneResult{Address: p.Address, Error: err})
-				return
-			}
-			handler(&tukan.PhoneResult{Address: p.Address, Error: err})
-		} else {
-			handler(&tukan.PhoneResult{Address: p.Address, Error: err})
+			bytes, _ := json.MarshalIndent(&parameters, "", "  ")
+			err = ioutil.WriteFile(filepath.Join(targetDirectory, fileName), bytes, os.ModePerm)
 		}
+		handler(&tukan.PhoneResult{Address: p.Address, Error: err})
 	}
 
 	var wg sync.WaitGroup
@@ -184,11 +179,9 @@ func backup(context *cli.Context) {
 		if err == nil && data != nil {
 			fileName := backupFileName(p.Address)
 			fileName = filepath.Join(targetDirectory, fileName)
-			err := ioutil.WriteFile(fileName, data, os.ModePerm)
-			handler(&tukan.PhoneResult{Address: p.Address, Error: err})
-		} else {
-			handler(&tukan.PhoneResult{Address: p.Address, Error: err})
+			err = ioutil.WriteFile(fileName, data, os.ModePerm)
 		}
+		handler(&tukan.PhoneResult{Address: p.Address, Error: err})
 	}
 
 	var wg sync.WaitGroup
@@ -238,15 +231,15 @@ func replaceFunctionKeys(context *cli.Context) {
 	downloadHandler := actionDownloadParameters.handler(channel)
 	uploadHandler := actionUploadParameters.handler(channel)
 	replaceOperation := func(p *tukan.Phone) {
-		params, err := p.DownloadParameters()
+		parameters, err := p.DownloadParameters()
 		downloadHandler(&tukan.PhoneResult{Address: p.Address, Error: err})
 		if err != nil {
 			return
 		}
-		upload, changed := params.TransformFunctionKeyNames(original, replace)
+		upload, changed := parameters.FunctionKeys.Transform(params.ReplaceDisplayName(original, replace))
 		comment := fmt.Sprintf("%s (changed keys): %v", actionReplaceFunctionKeys.String(), changed)
 		channel <- commentedResult{PhoneResult: &tukan.PhoneResult{Address: p.Address, Error: err}, comment: comment}
-		err = p.UploadParameters(upload)
+		err = p.UploadParameters(params.Parameters{FunctionKeys: upload})
 		uploadHandler(&tukan.PhoneResult{Address: p.Address, Error: err})
 	}
 

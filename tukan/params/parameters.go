@@ -365,24 +365,45 @@ type Parameters struct {
 	XmlYellowDirectoryName                 string               `json:"XmlYellowDirectoryName,omitempty"`
 }
 
-func (p *Parameters) TransformFunctionKeyNames(original, replace string) (Parameters, []int) {
-	keys := make([]FunctionKey, 0, len(p.FunctionKeys))
-	changed := make([]int, 0, 0)
-	for index, fnKey := range p.FunctionKeys {
-		if fnKey.DisplayName == original {
-			fnKey.DisplayName = replace
-			changed = append(changed, index)
-		}
-		keys = append(keys, fnKey)
-	}
-	return Parameters{FunctionKeys: keys}, changed
-}
-
 func (p *Parameters) UnmarshalJSON(data []byte) error {
 	return unmarshalInternal(data, p)
 }
 
 type FunctionKeys []FunctionKey
+
+// Transform changes the function keys according to the passed transformer function. The transformer function
+// takes in index of the function key, as well as a pointer to the function key whose properties it can change.
+// The transformer function should return true if it changed the passed function key.
+//
+// The Transform function returns a slice of FunctionKeys which has the same size of the orignal FunctionKeys, but
+// some keys may have changed according to the transformer. The changed keys are reported back via a second return parameter,
+// an []int slice that contains the indices of updated function keys.
+// The original function keys are not altered.
+func (f FunctionKeys) Transform(tansformer func(index int, key *FunctionKey) bool) (FunctionKeys, []int) {
+	keys := make([]FunctionKey, 0, len(f))
+	changed := make([]int, 0, 0)
+	for index, fnKey := range f {
+		key := &fnKey
+		if tansformer(index, key) {
+			changed = append(changed, index)
+		}
+		keys = append(keys, *key)
+	}
+	return keys, changed
+}
+
+// ReplaceDisplayName returns a transformer function which can be used by FunctionKeys#Transform.
+// The created transformer will replace the DisplayName of FunctionKeys which are equal to original
+// by the value of replace.
+func ReplaceDisplayName(original, replace string) func(index int, key *FunctionKey) bool {
+	return func(index int, key *FunctionKey) bool {
+		if key.DisplayName == original {
+			key.DisplayName = replace
+			return true
+		}
+		return false
+	}
+}
 
 type FunctionKey struct {
 	AutomaticallyFilled string `json:"AutomaticallyFilled,omitempty"`

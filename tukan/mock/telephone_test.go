@@ -199,3 +199,48 @@ func TestTelephone_HandleParameters_POST(t *testing.T) {
 		})
 	}
 }
+
+func TestTelephone_backup(t *testing.T) {
+	telephone := Telephone{Backup: []byte("this is my telephone backup")}
+	request := httptest.NewRequest("GET", "/SaveAllSettings", strings.NewReader(""))
+	recorder := httptest.NewRecorder()
+	telephone.backup(recorder, request)
+	status, data := getStatusAndData(recorder)
+	assert.Equal(t, http.StatusOK, status, "status is wrong")
+	assert.Equal(t, "this is my telephone backup", data, "data is wrong")
+}
+
+func TestTelephone_restore(t *testing.T) {
+	telephone := Telephone{}
+	require.Empty(t, telephone.Backup, "the telephone backup must be empty before the test")
+	t.Run("wrong content-type", func(t *testing.T) {
+		request := httptest.NewRequest("POST", "/RestoreSettings", strings.NewReader("restored backup"))
+		recorder := httptest.NewRecorder()
+		telephone.restore(recorder, request)
+		status, data := getStatusAndData(recorder)
+		assert.Equal(t, http.StatusUnsupportedMediaType, status, "status code is wrong")
+		assert.Equal(t, "Header \"Content-Type\" must begin with value \"multipart/form-data; boundary=\", but was \"\"", data, "message is wrong")
+	})
+	require.Empty(t, telephone.Backup, "the telephone backup must be empty before the test")
+	payload := fmt.Sprintf(payloadTemplate, "BOUNDARY-42", "hooray, a backup", "BOUNDARY-42")
+	t.Run("incompatible boundary", func(t *testing.T) {
+		request := httptest.NewRequest("POST", "/RestoreSettings", strings.NewReader(payload))
+		request.Header.Set("Content-Type", "multipart/form-data; boundary=a")
+		recorder := httptest.NewRecorder()
+		telephone.restore(recorder, request)
+		status, data := getStatusAndData(recorder)
+		assert.Equal(t, http.StatusBadRequest, status, "status code is wrong")
+		assert.Equal(t, "could not parse multipart-form", data, "message is wrong")
+	})
+	require.Empty(t, telephone.Backup, "the telephone backup must be empty before the test")
+	t.Run("incompatible boundary", func(t *testing.T) {
+		request := httptest.NewRequest("POST", "/RestoreSettings", strings.NewReader(payload))
+		request.Header.Set("Content-Type", "multipart/form-data; boundary=BOUNDARY-42")
+		recorder := httptest.NewRecorder()
+		telephone.restore(recorder, request)
+		status, data := getStatusAndData(recorder)
+		assert.Equal(t, http.StatusOK, status, "status code is wrong")
+		assert.Empty(t, data, "message is wrong")
+		assert.Equal(t, "hooray, a backup\n", string(telephone.Backup), "phone must have received the backup")
+	})
+}

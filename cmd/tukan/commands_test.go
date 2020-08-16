@@ -169,6 +169,7 @@ func TestDownloadParameters(t *testing.T) {
 func TestReplaceFunctionKeys(t *testing.T) {
 	handler1, phone1 := mock.CreatePhone(username, password)
 	phone1.Parameters = params.Parameters{
+		PhoneModel: "Phone ABC",
 		FunctionKeys: []params.FunctionKey{
 			{DisplayName: "Linda", PhoneNumber: "89-IN", CallPickupCode: "#0"},
 			{DisplayName: "John", PhoneNumber: "90-DS", CallPickupCode: "#0"},
@@ -176,6 +177,7 @@ func TestReplaceFunctionKeys(t *testing.T) {
 	}
 	handler2, phone2 := mock.CreatePhone(username, password)
 	phone2.Parameters = params.Parameters{
+		PhoneModel: "Phone ABC",
 		FunctionKeys: []params.FunctionKey{
 			{DisplayName: "John", PhoneNumber: "90-DS", CallPickupCode: "#0"},
 			{DisplayName: "Linda", PhoneNumber: "89-IN", CallPickupCode: "#0"},
@@ -204,6 +206,7 @@ func TestReplaceFunctionKeys(t *testing.T) {
 	assert.Equal(t, "Eva", got1[0].DisplayName, "displayName of first phone not correctly replaced")
 	assert.Equal(t, "89-IN", got1[0].PhoneNumber, "phoneNumber of first phone contact should not be changed")
 	assert.Equal(t, params.FunctionKey{DisplayName: "John", PhoneNumber: "90-DS", CallPickupCode: "#0"}, got1[1], "second entry in phone book should still be empty")
+	assert.Empty(t, phone1.Parameters.PhoneModel, "Phone Model should be empty now because only the function keys should be sent to the phone")
 
 	got2 := phone2.Parameters.FunctionKeys
 	assert.Equal(t, 3, len(got2), "length of function keys of second phone not correct")
@@ -212,13 +215,14 @@ func TestReplaceFunctionKeys(t *testing.T) {
 	assert.Equal(t, "Eva", got2[1].DisplayName, "displayName in second phone not correctly replaced")
 	assert.Equal(t, "89-IN", got2[1].PhoneNumber, "phoneNumber of second phone contact should not be changed")
 	assert.Equal(t, params.FunctionKey{DisplayName: "Hugh", PhoneNumber: "65-ID", CallPickupCode: "***"}, got2[2], "third entry in phone book should still be empty")
+	assert.Empty(t, phone2.Parameters.PhoneModel, "Phone Model should be empty now because only the function keys should be sent to the phone")
 
 	assert.Equal(t, 348, len(buff.String()), "output is wrong")
 }
 
-func TestRestorePhoneBook(t *testing.T) {
+func TestRestore(t *testing.T) {
 	handler1, phone1 := mock.CreatePhone(username, password)
-	phone1.Phonebook = ""
+	phone1.Backup = []byte("")
 	server1 := httptest.NewServer(handler1)
 	defer server1.Close()
 
@@ -236,9 +240,9 @@ func TestRestorePhoneBook(t *testing.T) {
 	err := os.Mkdir(tmpDir, os.ModePerm)
 	require.NoError(t, err, "no error expected")
 	defer func() { _ = os.RemoveAll(tmpDir) }()
-	err = ioutil.WriteFile(filepath.Join(tmpDir, parametersFileName(server1.URL)), []byte("{\"PhoneModel\":\"Model XYZ\"}"), os.ModePerm)
+	err = ioutil.WriteFile(filepath.Join(tmpDir, backupFileName(server1.URL)), []byte("Model XYZ"), os.ModePerm)
 	require.NoError(t, err, "no error expected")
-	err = ioutil.WriteFile(filepath.Join(tmpDir, parametersFileName(server2.URL)), []byte("{\"PhoneModel\":\"Model XYZ\"}"), os.ModePerm)
+	err = ioutil.WriteFile(filepath.Join(tmpDir, backupFileName(server2.URL)), []byte("Model XYZ"), os.ModePerm)
 	require.NoError(t, err, "no error expected")
 
 	t.Run("success", func(t *testing.T) {
@@ -251,7 +255,7 @@ func TestRestorePhoneBook(t *testing.T) {
 		assert.Equal(t, 254, len(got), "length of message is wrong")
 		assert.Containsf(t, got, server1.URL, "should contain server1 URL %s", server1.URL)
 		assert.Containsf(t, got, server2.URL, "should contain server2 URL %s", server2.URL)
-		assert.Equal(t, phone1.Parameters.PhoneModel, "Model XYZ", "parameters not uploaded correctly")
+		assert.Equal(t, "Model XYZ", string(phone1.Backup), "parameters not uploaded correctly")
 	})
 	t.Run("file not found", func(t *testing.T) {
 		var buff bytes.Buffer
@@ -262,6 +266,34 @@ func TestRestorePhoneBook(t *testing.T) {
 		_ = flags.Parse([]string{server1.URL})
 		ctx := cli.NewContext(&cli.App{Writer: &buff}, flags, nil)
 		restore(ctx)
-		assert.Contains(t, buff.String(), "Uploading Parameters returned error: open "+filepath.Join(tmpDir, "not_existing", parametersFileName(server1.URL))+": no such file or directory", "result message in case of error wrong")
+		assert.Contains(t, buff.String(), "Uploading Parameters returned error: open "+filepath.Join(tmpDir, "not_existing", backupFileName(server1.URL))+": no such file or directory", "result message in case of error wrong")
 	})
+}
+
+func TestBackup(t *testing.T) {
+	handler1, phone1 := mock.CreatePhone(username, password)
+	phone1.Backup = []byte("this is my backup of phone1")
+	server1 := httptest.NewServer(handler1)
+	defer server1.Close()
+
+	flags := flag.NewFlagSet("", flag.PanicOnError)
+	flags.String(loginFlagName, username, "")
+	flags.String(passwordFlagName, password, "")
+	_ = flags.Parse([]string{server1.URL})
+
+	var buff bytes.Buffer
+	number := rand.Int()
+	tmpDir := filepath.Join(os.TempDir(), fmt.Sprintf("tukan-test%d", number))
+	defer func() { _ = os.RemoveAll(tmpDir) }()
+	flags.String(targetDirFlagName, tmpDir, "")
+	ctx := cli.NewContext(&cli.App{Writer: &buff}, flags, nil)
+	backup(ctx)
+	got := strings.Split(buff.String(), "\n")
+
+	assert.Equal(t, 4, len(got)-1, "expected two lines of result")
+	assert.Equal(t, server1.URL+":", got[0], "message of first download is wrong")
+	assert.Equal(t, "\tLogin successful", got[1], "message of first download is wrong")
+	fileContent, err := ioutil.ReadFile(filepath.Join(tmpDir, backupFileName(server1.URL)))
+	require.NoError(t, err, "reading the file should not give an error")
+	assert.Equal(t, phone1.Backup, fileContent, "downloaded cfg not correct")
 }

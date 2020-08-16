@@ -38,10 +38,7 @@ func (p *Phone) Restore(data []byte) error {
 	if err != nil {
 		return err
 	}
-	request, err := http.NewRequest("POST", url, body)
-	if err != nil {
-		return err
-	}
+	request, _ := http.NewRequest("POST", url, body)
 	request.Header.Add("Authorization", "Bearer "+p.token)
 	request.Header.Add("Content-Type", writer.FormDataContentType())
 	resp, err := p.client.Do(request)
